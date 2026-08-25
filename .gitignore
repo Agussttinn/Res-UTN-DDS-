@@ -1,0 +1,9 @@
+DSWenv/
+__pycache__/
+*.pyc
+*.pyo
+db.sqlite3
+.env
+.vscode/
+staticfiles/
+media/
