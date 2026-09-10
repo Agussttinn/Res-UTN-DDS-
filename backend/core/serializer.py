@@ -5,7 +5,7 @@ from .models import Usuario,Especialidad,Materia,Material,ClaseApoyo,Ponderacion
 class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
-        fields = ('legajo','nombre','correo','rol')
+        fields = ('legajo','nombre_y_apellido','correo','rol')
 
 class EspecialidadSerializer(serializers.ModelSerializer):
     class Meta:
