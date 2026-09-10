@@ -1,4 +1,4 @@
-readme_content = """# 📚 RES-UTN — Portal Estudiantes (Primer Año)
+# 📚 RES-UTN — Portal Estudiantes (Primer Año)
 
 Plataforma colaborativa web/PWA diseñada para centralizar, organizar y distribuir material académico y coordinar clases de apoyo para estudiantes de Ingeniería en Sistemas de Información de la **UTN FRD**.
 
@@ -22,6 +22,14 @@ Plataforma colaborativa web/PWA diseñada para centralizar, organizar y distribu
 - [Roles de Usuario](#-roles-de-usuario)
 - [Stack Tecnológico Sugerido](#-stack-tecnológico-sugerido)
 - [Cronograma de Entregas](#-cronograma-de-entregas-académicas)
+- [Puesta en Marcha del Entorno de Desarrollo](#-puesta-en-marcha-del-entorno-de-desarrollo)
+  - [Requisitos Previos](#requisitos-previos)
+  - [1. Clonar el Repositorio](#1-clonar-el-repositorio)
+  - [2. Instalar y Configurar MariaDB](#2-instalar-y-configurar-mariadb)
+  - [3. Entorno Virtual y Dependencias de Python](#3-entorno-virtual-y-dependencias-de-python)
+  - [4. Variables de Entorno (.env)](#4-variables-de-entorno-env)
+  - [5. Migraciones y Levantar el Servidor](#5-migraciones-y-levantar-el-servidor)
+  - [Consideraciones Importantes](#️-consideraciones-importantes)
 
 ---
 
@@ -133,3 +141,82 @@ Representa las entidades del negocio:
  ┌───────────────────┐
  │    ARCHIVADO      │
  └───────────────────┘
+```
+
+---
+
+## 🚀 Puesta en Marcha del Entorno de Desarrollo
+
+El backend está desarrollado en **Django 5 + Django REST Framework**, con **MariaDB** como base de datos. Esta guía asume Linux (Ubuntu/Debian); los comandos de instalación de paquetes cambian en Windows/Mac pero el resto del flujo es igual.
+
+### Requisitos Previos
+- Python 3.12+
+- Git
+- MariaDB Server (o MySQL, es compatible)
+- Postman (para probar los endpoints de la API)
+
+### 1. Clonar el Repositorio
+```bash
+git clone https://github.com/Agussttinn/Res-UTN-DDS-.git
+cd Res-UTN-DDS-
+```
+El backend vive en la subcarpeta `backend/`, separado del frontend (`frontend/`), para que cada parte del equipo trabaje sin pisarse.
+
+### 2. Instalar y Configurar MariaDB
+```bash
+sudo apt update
+sudo apt install mariadb-server mariadb-client
+sudo systemctl enable --now mariadb
+sudo mysql_secure_installation
+```
+En Ubuntu/Debian, el usuario `root` de MariaDB usa autenticación por `unix_socket` (se valida con tu usuario del sistema, no con contraseña) — es normal que `mysql_secure_installation` no te deje ponerle password a `root`, no hace falta.
+
+Crear la base de datos y un usuario propio para la app (no usar `root` desde Django):
+```bash
+sudo mysql -u root
+```
+```sql
+CREATE DATABASE resutn_db CHARACTER SET utf8mb4;
+CREATE USER 'resutn_user'@'localhost' IDENTIFIED BY 'tu_password_local';
+GRANT ALL PRIVILEGES ON resutn_db.* TO 'resutn_user'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
+### 3. Entorno Virtual y Dependencias de Python
+Cada persona del equipo crea su **propio** entorno virtual local (no se sube a git):
+```bash
+cd backend
+python3 -m venv DSWenv
+source DSWenv/bin/activate      # en Windows: DSWenv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### 4. Variables de Entorno (.env)
+Las credenciales de la base de datos **no** están hardcodeadas en `settings.py` ni se suben a git — se leen desde un archivo `.env` local. Copiá la plantilla y completá con tus propios datos:
+```bash
+cp .env.example .env
+```
+Editá `backend/.env` con los valores que usaste en el paso 2:
+```
+DB_NAME=resutn_db
+DB_USER=resutn_user
+DB_PASSWORD=tu_password_local
+DB_HOST=localhost
+DB_PORT=3306
+```
+
+### 5. Migraciones y Levantar el Servidor
+Con el entorno virtual activado y el `.env` configurado:
+```bash
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver
+```
+Si no tira errores y podés entrar a `http://127.0.0.1:8000/admin/`, el entorno quedó bien configurado.
+
+### ⚠️ Consideraciones Importantes
+- **Nunca commitear** el `.env`, la carpeta `DSWenv/`, ni `db.sqlite3` — ya están excluidos en `.gitignore`.
+- Si instalás un paquete nuevo con `pip install`, actualizá el archivo de dependencias antes de subir tu commit: `pip freeze > requirements.txt`.
+- El `.env.example` sí se sube (es solo una plantilla sin datos reales) — si agregás una variable de entorno nueva, agregala también ahí para que el resto del equipo sepa que existe.
+- Cada uno usa su propia contraseña local de MariaDB en su `.env`; no hace falta que todos coincidan.

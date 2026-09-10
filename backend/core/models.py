@@ -3,7 +3,7 @@ from django.db import models
 # Create your models here.
 class Usuario(models.Model):
     legajo = models.CharField(max_length=20, primary_key=True) #El legajo debería ser único para cada usuario
-    nombre = models.CharField(max_length=100)
+    nombre_y_apellido = models.CharField(max_length=100)
     correo = models.EmailField(unique=True) # valida formato y evita duplicados.
     contraseña = models.CharField(max_length=255)
     rol = models.CharField(max_length=20, choices=[
@@ -12,7 +12,7 @@ class Usuario(models.Model):
         ('administrador', 'Administrador'),
     ])# aca cuando haga usuario.rol deberia devolver el valor de la tupla, no el string que se le asigna al campo rol
     def __str__(self):
-        return self.nombre
+        return self.nombre_y_apellido
 
 class Especialidad(models.Model):
     nombre = models.CharField(max_length=100)
