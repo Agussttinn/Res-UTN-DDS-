@@ -27,7 +27,7 @@ class Materia(models.Model):
         return self.nombre
 
 
-class Material(models.Model):    
+class Material(models.Model): 
     materia = models.ForeignKey(Materia, on_delete=models.CASCADE, related_name='materiales') 
     usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT, related_name='materiales')
     titulo = models.CharField(max_length=100)
