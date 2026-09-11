@@ -1,0 +1,494 @@
+{
+  "nombre": "Ingeniería Química",
+  "materias": [
+    {
+      "idMateria": "QUI-2023-101",
+      "nombre": "Introducción a la Ingeniería Química",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "QUI-2023-102",
+      "nombre": "Ingeniería y Sociedad",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "QUI-2023-103",
+      "nombre": "Álgebra y Geometría Analítica",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "QUI-2023-104",
+      "nombre": "Análisis Matemático 1",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "QUI-2023-105",
+      "nombre": "Física 1",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "QUI-2023-106",
+      "nombre": "Química",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "QUI-2023-107",
+      "nombre": "Sistemas de Representación",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "QUI-2023-108",
+      "nombre": "Fundamentos de Informática",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "QUI-2023-201",
+      "nombre": "Introducción a Equipos y Procesos",
+      "nivel": 2,
+      "cursadas": [
+        "QUI-2023-101",
+        "QUI-2023-106"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "QUI-2023-202",
+      "nombre": "Probabilidad y estadística",
+      "nivel": 2,
+      "cursadas": [
+        "QUI-2023-103",
+        "QUI-2023-104"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "QUI-2023-203",
+      "nombre": "Química Inorgánica",
+      "nivel": 2,
+      "cursadas": [
+        "QUI-2023-106"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "QUI-2023-204",
+      "nombre": "Análisis Matemático 2",
+      "nivel": 2,
+      "cursadas": [
+        "QUI-2023-103",
+        "QUI-2023-104"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "QUI-2023-205",
+      "nombre": "Física 2",
+      "nivel": 2,
+      "cursadas": [
+        "QUI-2023-104",
+        "QUI-2023-105"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "QUI-2023-206",
+      "nombre": "Química Orgánica",
+      "nivel": 2,
+      "cursadas": [
+        "QUI-2023-106"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "QUI-2023-207",
+      "nombre": "Legislación",
+      "nivel": 2,
+      "cursadas": [
+        "QUI-2023-101",
+        "QUI-2023-102"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "QUI-2023-208",
+      "nombre": "Inglés 1",
+      "nivel": 2,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "QUI-2023-301",
+      "nombre": "Balances de Masa y Energía",
+      "nivel": 3,
+      "cursadas": [
+        "QUI-2023-106",
+        "QUI-2023-107",
+        "QUI-2023-108",
+        "QUI-2023-201",
+        "QUI-2023-205"
+      ],
+      "aprobadas": [
+        "QUI-2023-101",
+        "QUI-2023-103",
+        "QUI-2023-104"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-302",
+      "nombre": "Termodinámica",
+      "nivel": 3,
+      "cursadas": [
+        "QUI-2023-203",
+        "QUI-2023-204",
+        "QUI-2023-205"
+      ],
+      "aprobadas": [
+        "QUI-2023-104",
+        "QUI-2023-106"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-303",
+      "nombre": "Matemática Superior Aplicada",
+      "nivel": 3,
+      "cursadas": [
+        "QUI-2023-204"
+      ],
+      "aprobadas": [
+        "QUI-2023-103",
+        "QUI-2023-104"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-304",
+      "nombre": "Ciencia de los Materiales",
+      "nivel": 3,
+      "cursadas": [
+        "QUI-2023-201",
+        "QUI-2023-203",
+        "QUI-2023-206"
+      ],
+      "aprobadas": [
+        "QUI-2023-101",
+        "QUI-2023-106"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-305",
+      "nombre": "Fisicoquímica",
+      "nivel": 3,
+      "cursadas": [
+        "QUI-2023-201",
+        "QUI-2023-204",
+        "QUI-2023-205"
+      ],
+      "aprobadas": [
+        "QUI-2023-103",
+        "QUI-2023-104",
+        "QUI-2023-106"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-306",
+      "nombre": "Fenómenos de Transporte",
+      "nivel": 3,
+      "cursadas": [
+        "QUI-2023-201",
+        "QUI-2023-204",
+        "QUI-2023-205"
+      ],
+      "aprobadas": [
+        "QUI-2023-103",
+        "QUI-2023-104",
+        "QUI-2023-106"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-307",
+      "nombre": "Química Analítica",
+      "nivel": 3,
+      "cursadas": [
+        "QUI-2023-202",
+        "QUI-2023-203",
+        "QUI-2023-206"
+      ],
+      "aprobadas": [
+        "QUI-2023-102",
+        "QUI-2023-106"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-308",
+      "nombre": "Microbiología y Química Biológica",
+      "nivel": 3,
+      "cursadas": [
+        "QUI-2023-203",
+        "QUI-2023-206"
+      ],
+      "aprobadas": [
+        "QUI-2023-106"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-309",
+      "nombre": "Química Aplicada",
+      "nivel": 3,
+      "cursadas": [
+        "QUI-2023-201",
+        "QUI-2023-203",
+        "QUI-2023-205",
+        "QUI-2023-206"
+      ],
+      "aprobadas": [
+        "QUI-2023-101",
+        "QUI-2023-102",
+        "QUI-2023-106"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-310",
+      "nombre": "Inglés 2",
+      "nivel": 3,
+      "cursadas": [
+        "QUI-2023-208"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "QUI-2023-401",
+      "nombre": "Diseño, simulación, optimización y seguridad de procesos",
+      "nivel": 4,
+      "cursadas": [
+        "QUI-2023-301",
+        "QUI-2023-303"
+      ],
+      "aprobadas": [
+        "QUI-2023-107",
+        "QUI-2023-108",
+        "QUI-2023-201",
+        "QUI-2023-204",
+        "QUI-2023-310"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-402",
+      "nombre": "Operaciones Unitarias 1",
+      "nivel": 4,
+      "cursadas": [
+        "QUI-2023-301",
+        "QUI-2023-302",
+        "QUI-2023-306"
+      ],
+      "aprobadas": [
+        "QUI-2023-201",
+        "QUI-2023-204",
+        "QUI-2023-205"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-403",
+      "nombre": "Tecnología de la Energía Térmica",
+      "nivel": 4,
+      "cursadas": [
+        "QUI-2023-301",
+        "QUI-2023-302",
+        "QUI-2023-305",
+        "QUI-2023-306"
+      ],
+      "aprobadas": [
+        "QUI-2023-201",
+        "QUI-2023-204",
+        "QUI-2023-205"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-404",
+      "nombre": "Economía",
+      "nivel": 4,
+      "cursadas": [
+        "QUI-2023-201"
+      ],
+      "aprobadas": [
+        "QUI-2023-102",
+        "QUI-2023-103"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-405",
+      "nombre": "Operaciones Unitarias 2",
+      "nivel": 4,
+      "cursadas": [
+        "QUI-2023-302",
+        "QUI-2023-305",
+        "QUI-2023-306"
+      ],
+      "aprobadas": [
+        "QUI-2023-201",
+        "QUI-2023-204",
+        "QUI-2023-205",
+        "QUI-2023-206"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-406",
+      "nombre": "Ingeniería de las Reacciones Químicas",
+      "nivel": 4,
+      "cursadas": [
+        "QUI-2023-301",
+        "QUI-2023-302",
+        "QUI-2023-305",
+        "QUI-2023-306"
+      ],
+      "aprobadas": [
+        "QUI-2023-203",
+        "QUI-2023-204",
+        "QUI-2023-206"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-407",
+      "nombre": "Calidad y Control Estadístico de Procesos",
+      "nivel": 4,
+      "cursadas": [
+        "QUI-2023-202"
+      ],
+      "aprobadas": [
+        "QUI-2023-104"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-408",
+      "nombre": "Organización Industrial",
+      "nivel": 4,
+      "cursadas": [
+        "QUI-2023-202"
+      ],
+      "aprobadas": [
+        "QUI-2023-102",
+        "QUI-2023-201",
+        "QUI-2023-207"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-501",
+      "nombre": "Control Automático de Procesos",
+      "nivel": 5,
+      "cursadas": [
+        "QUI-2023-401",
+        "QUI-2023-405"
+      ],
+      "aprobadas": [
+        "QUI-2023-301",
+        "QUI-2023-303",
+        "QUI-2023-307"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-502",
+      "nombre": "Mecánica Industrial",
+      "nivel": 5,
+      "cursadas": [
+        "QUI-2023-201",
+        "QUI-2023-305"
+      ],
+      "aprobadas": [
+        "QUI-2023-105",
+        "QUI-2023-203",
+        "QUI-2023-304"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-503",
+      "nombre": "Ingeniería Ambiental",
+      "nivel": 5,
+      "cursadas": [
+        "QUI-2023-309",
+        "QUI-2023-402",
+        "QUI-2023-405",
+        "QUI-2023-406"
+      ],
+      "aprobadas": [
+        "QUI-2023-207",
+        "QUI-2023-301",
+        "QUI-2023-307"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-504",
+      "nombre": "Procesos Biotecnológicos",
+      "nivel": 5,
+      "cursadas": [
+        "QUI-2023-301",
+        "QUI-2023-305",
+        "QUI-2023-306",
+        "QUI-2023-308"
+      ],
+      "aprobadas": [
+        "QUI-2023-201",
+        "QUI-2023-203",
+        "QUI-2023-206"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-505",
+      "nombre": "Higiene y seguridad en el trabajo",
+      "nivel": 5,
+      "cursadas": [
+        "QUI-2023-203",
+        "QUI-2023-206",
+        "QUI-2023-301"
+      ],
+      "aprobadas": [
+        "QUI-2023-201"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-506",
+      "nombre": "Máquinas e instalaciones eléctricas",
+      "nivel": 5,
+      "cursadas": [
+        "QUI-2023-402"
+      ],
+      "aprobadas": [
+        "QUI-2023-201",
+        "QUI-2023-205"
+      ]
+    },
+    {
+      "idMateria": "QUI-2023-507",
+      "nombre": "Proyecto Final",
+      "nivel": 5,
+      "cursadas": [
+        "QUI-2023-401",
+        "QUI-2023-402",
+        "QUI-2023-403",
+        "QUI-2023-405",
+        "QUI-2023-406",
+        "QUI-2023-408"
+      ],
+      "aprobadas": [
+        "QUI-2023-301",
+        "QUI-2023-305",
+        "QUI-2023-306",
+        "QUI-2023-309",
+        "QUI-2023-404"
+      ]
+    }
+  ]
+}

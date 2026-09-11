@@ -1,0 +1,491 @@
+{
+  "nombre": "Ingeniería en Energía Eléctrica",
+  "materias": [
+    {
+      "idMateria": "ELE-2023-101",
+      "nombre": "Análisis Matemático 1",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "ELE-2023-102",
+      "nombre": "Algebra y Geometría Analítica",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "ELE-2023-103",
+      "nombre": "Ingeniería y Sociedad",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "ELE-2023-104",
+      "nombre": "Sistema de Representación",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "ELE-2023-105",
+      "nombre": "Física 1",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "ELE-2023-106",
+      "nombre": "Química General",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "ELE-2023-107",
+      "nombre": "Integración Eléctrica 1",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "ELE-2023-108",
+      "nombre": "Fundamentos de Informática",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "ELE-2023-201",
+      "nombre": "Física II",
+      "nivel": 2,
+      "cursadas": [
+        "ELE-2023-101",
+        "ELE-2023-105"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "ELE-2023-202",
+      "nombre": "Probabilidad y Estadística",
+      "nivel": 2,
+      "cursadas": [
+        "ELE-2023-101",
+        "ELE-2023-102"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "ELE-2023-203",
+      "nombre": "Electrotecnia 1",
+      "nivel": 2,
+      "cursadas": [
+        "ELE-2023-101",
+        "ELE-2023-102",
+        "ELE-2023-105"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "ELE-2023-204",
+      "nombre": "Estabilidad",
+      "nivel": 2,
+      "cursadas": [
+        "ELE-2023-101",
+        "ELE-2023-102",
+        "ELE-2023-105"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "ELE-2023-205",
+      "nombre": "Mecánica Técnica",
+      "nivel": 2,
+      "cursadas": [
+        "ELE-2023-101",
+        "ELE-2023-105"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "ELE-2023-206",
+      "nombre": "Integración Eléctrica 2",
+      "nivel": 2,
+      "cursadas": [
+        "ELE-2023-101",
+        "ELE-2023-105",
+        "ELE-2023-107"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "ELE-2023-207",
+      "nombre": "Inglés 1",
+      "nivel": 2,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "ELE-2023-208",
+      "nombre": "Análisis Matemático 2",
+      "nivel": 2,
+      "cursadas": [
+        "ELE-2023-101",
+        "ELE-2023-102"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "ELE-2023-209",
+      "nombre": "Cálculo Numérico",
+      "nivel": 2,
+      "cursadas": [
+        "ELE-2023-101",
+        "ELE-2023-102",
+        "ELE-2023-105",
+        "ELE-2023-108"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "ELE-2023-301",
+      "nombre": "Tecnologías y Ensayos de Materiales Eléctricos",
+      "nivel": 3,
+      "cursadas": [
+        "ELE-2023-106",
+        "ELE-2023-201"
+      ],
+      "aprobadas": [
+        "ELE-2023-101",
+        "ELE-2023-105"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-302",
+      "nombre": "Instrumentos y Mediciones Eléctricas",
+      "nivel": 3,
+      "cursadas": [
+        "ELE-2023-202",
+        "ELE-2023-203"
+      ],
+      "aprobadas": [
+        "ELE-2023-101",
+        "ELE-2023-102",
+        "ELE-2023-105"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-303",
+      "nombre": "Teoría de los Campos",
+      "nivel": 3,
+      "cursadas": [
+        "ELE-2023-201",
+        "ELE-2023-208"
+      ],
+      "aprobadas": [
+        "ELE-2023-101",
+        "ELE-2023-102",
+        "ELE-2023-105"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-304",
+      "nombre": "Física 3",
+      "nivel": 3,
+      "cursadas": [
+        "ELE-2023-201",
+        "ELE-2023-208"
+      ],
+      "aprobadas": [
+        "ELE-2023-101",
+        "ELE-2023-102",
+        "ELE-2023-105"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-305",
+      "nombre": "Máquinas Eléctricas 1",
+      "nivel": 3,
+      "cursadas": [
+        "ELE-2023-201",
+        "ELE-2023-203",
+        "ELE-2023-208",
+        "ELE-2023-209"
+      ],
+      "aprobadas": [
+        "ELE-2023-101",
+        "ELE-2023-105"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-306",
+      "nombre": "Electrotecnia 2",
+      "nivel": 3,
+      "cursadas": [
+        "ELE-2023-201",
+        "ELE-2023-203",
+        "ELE-2023-208"
+      ],
+      "aprobadas": [
+        "ELE-2023-101",
+        "ELE-2023-102",
+        "ELE-2023-105"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-307",
+      "nombre": "Termodinámica",
+      "nivel": 3,
+      "cursadas": [
+        "ELE-2023-201",
+        "ELE-2023-208"
+      ],
+      "aprobadas": [
+        "ELE-2023-101",
+        "ELE-2023-102",
+        "ELE-2023-105"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-308",
+      "nombre": "Fundamentos para el Análisis de Señales",
+      "nivel": 3,
+      "cursadas": [
+        "ELE-2023-208",
+        "ELE-2023-209"
+      ],
+      "aprobadas": [
+        "ELE-2023-101",
+        "ELE-2023-102"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-309",
+      "nombre": "Taller Interdisciplinario",
+      "nivel": 3,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "ELE-2023-401",
+      "nombre": "Inglés 2",
+      "nivel": 4,
+      "cursadas": [],
+      "aprobadas": [
+        "ELE-2023-207"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-402",
+      "nombre": "Economía",
+      "nivel": 4,
+      "cursadas": [],
+      "aprobadas": [
+        "ELE-2023-103"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-403",
+      "nombre": "Electrónica 1",
+      "nivel": 4,
+      "cursadas": [
+        "ELE-2023-203"
+      ],
+      "aprobadas": [
+        "ELE-2023-101",
+        "ELE-2023-105"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-404",
+      "nombre": "Máquinas Eléctricas 2",
+      "nivel": 4,
+      "cursadas": [
+        "ELE-2023-301",
+        "ELE-2023-302",
+        "ELE-2023-303",
+        "ELE-2023-305",
+        "ELE-2023-306"
+      ],
+      "aprobadas": [
+        "ELE-2023-106",
+        "ELE-2023-201",
+        "ELE-2023-202",
+        "ELE-2023-203",
+        "ELE-2023-207",
+        "ELE-2023-208"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-405",
+      "nombre": "Seguridad, Riesgo Eléctrico y Medio Ambiente",
+      "nivel": 4,
+      "cursadas": [
+        "ELE-2023-106",
+        "ELE-2023-203",
+        "ELE-2023-301",
+        "ELE-2023-303"
+      ],
+      "aprobadas": [
+        "ELE-2023-101",
+        "ELE-2023-102",
+        "ELE-2023-105",
+        "ELE-2023-201",
+        "ELE-2023-208"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-406",
+      "nombre": "Instalaciones Eléctricas y Luminotecnia",
+      "nivel": 4,
+      "cursadas": [
+        "ELE-2023-301",
+        "ELE-2023-305",
+        "ELE-2023-306"
+      ],
+      "aprobadas": [
+        "ELE-2023-106",
+        "ELE-2023-201",
+        "ELE-2023-203",
+        "ELE-2023-206",
+        "ELE-2023-207",
+        "ELE-2023-208"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-407",
+      "nombre": "Control Automático",
+      "nivel": 4,
+      "cursadas": [
+        "ELE-2023-306",
+        "ELE-2023-308"
+      ],
+      "aprobadas": [
+        "ELE-2023-203",
+        "ELE-2023-208"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-408",
+      "nombre": "Máquinas Térmicas, Hidráulicas y de Fluído",
+      "nivel": 4,
+      "cursadas": [
+        "ELE-2023-204",
+        "ELE-2023-205",
+        "ELE-2023-307"
+      ],
+      "aprobadas": [
+        "ELE-2023-201",
+        "ELE-2023-208"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-409",
+      "nombre": "Legislación",
+      "nivel": 4,
+      "cursadas": [],
+      "aprobadas": [
+        "ELE-2023-103"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-501",
+      "nombre": "Electrónica 2",
+      "nivel": 5,
+      "cursadas": [
+        "ELE-2023-306",
+        "ELE-2023-403"
+      ],
+      "aprobadas": [
+        "ELE-2023-203",
+        "ELE-2023-309"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-502",
+      "nombre": "Generación, Transmisión y Distribución de la Energía Eléctrica",
+      "nivel": 5,
+      "cursadas": [
+        "ELE-2023-304",
+        "ELE-2023-404",
+        "ELE-2023-408"
+      ],
+      "aprobadas": [
+        "ELE-2023-204",
+        "ELE-2023-205",
+        "ELE-2023-301",
+        "ELE-2023-305",
+        "ELE-2023-306",
+        "ELE-2023-307",
+        "ELE-2023-309"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-503",
+      "nombre": "Sistemas de Potencia",
+      "nivel": 5,
+      "cursadas": [
+        "ELE-2023-404",
+        "ELE-2023-407"
+      ],
+      "aprobadas": [
+        "ELE-2023-301",
+        "ELE-2023-305",
+        "ELE-2023-306",
+        "ELE-2023-309"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-504",
+      "nombre": "Accionamientos y Controles Eléctricos",
+      "nivel": 5,
+      "cursadas": [
+        "ELE-2023-403",
+        "ELE-2023-404",
+        "ELE-2023-407"
+      ],
+      "aprobadas": [
+        "ELE-2023-203",
+        "ELE-2023-301",
+        "ELE-2023-305",
+        "ELE-2023-306",
+        "ELE-2023-308",
+        "ELE-2023-309"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-505",
+      "nombre": "Organización y Administración de Empresas",
+      "nivel": 5,
+      "cursadas": [
+        "ELE-2023-402",
+        "ELE-2023-409"
+      ],
+      "aprobadas": [
+        "ELE-2023-309"
+      ]
+    },
+    {
+      "idMateria": "ELE-2023-506",
+      "nombre": "Proyecto Final (integradora)",
+      "nivel": 5,
+      "cursadas": [
+        "ELE-2023-402",
+        "ELE-2023-404",
+        "ELE-2023-406",
+        "ELE-2023-407"
+      ],
+      "aprobadas": [
+        "ELE-2023-301",
+        "ELE-2023-302",
+        "ELE-2023-305",
+        "ELE-2023-306",
+        "ELE-2023-308",
+        "ELE-2023-309",
+        "ELE-2023-401"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,470 @@
+{
+  "nombre": "Ingeniería Mecánica",
+  "materias": [
+    {
+      "idMateria": "MEC-2023-101",
+      "nombre": "Análisis Matemático 1",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "MEC-2023-102",
+      "nombre": "Química General",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "MEC-2023-103",
+      "nombre": "Algebra y Geometría Analítica",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "MEC-2023-104",
+      "nombre": "Física 1",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "MEC-2023-105",
+      "nombre": "Ingeniería y Sociedad",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "MEC-2023-106",
+      "nombre": "Ingeniería Mecánica 1",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "MEC-2023-107",
+      "nombre": "Sistemas de Representación",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "MEC-2023-108",
+      "nombre": "Fundamentos de Informática",
+      "nivel": 1,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "MEC-2023-201",
+      "nombre": "Materiales No Metálicos",
+      "nivel": 2,
+      "cursadas": [
+        "MEC-2023-102",
+        "MEC-2023-104"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "MEC-2023-202",
+      "nombre": "Estabilidad 1",
+      "nivel": 2,
+      "cursadas": [
+        "MEC-2023-101",
+        "MEC-2023-103",
+        "MEC-2023-104"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "MEC-2023-203",
+      "nombre": "Materiales Metálicos",
+      "nivel": 2,
+      "cursadas": [
+        "MEC-2023-102",
+        "MEC-2023-104"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "MEC-2023-204",
+      "nombre": "Análisis Matemático 2",
+      "nivel": 2,
+      "cursadas": [
+        "MEC-2023-101",
+        "MEC-2023-103"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "MEC-2023-205",
+      "nombre": "Física 2",
+      "nivel": 2,
+      "cursadas": [
+        "MEC-2023-101",
+        "MEC-2023-104"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "MEC-2023-206",
+      "nombre": "Ingeniería Ambiental y Seguridad Industrial",
+      "nivel": 2,
+      "cursadas": [
+        "MEC-2023-102",
+        "MEC-2023-104"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "MEC-2023-207",
+      "nombre": "Ingeniería Mecánica 2",
+      "nivel": 2,
+      "cursadas": [
+        "MEC-2023-104",
+        "MEC-2023-106"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "MEC-2023-208",
+      "nombre": "Inglés 1",
+      "nivel": 2,
+      "cursadas": [],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "MEC-2023-301",
+      "nombre": "Termodinámica",
+      "nivel": 3,
+      "cursadas": [
+        "MEC-2023-204",
+        "MEC-2023-205"
+      ],
+      "aprobadas": [
+        "MEC-2023-101",
+        "MEC-2023-103",
+        "MEC-2023-104"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-302",
+      "nombre": "Mecánica Racional",
+      "nivel": 3,
+      "cursadas": [
+        "MEC-2023-202",
+        "MEC-2023-204"
+      ],
+      "aprobadas": [
+        "MEC-2023-101",
+        "MEC-2023-103",
+        "MEC-2023-104"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-303",
+      "nombre": "Mediciones y Ensayos",
+      "nivel": 3,
+      "cursadas": [
+        "MEC-2023-202",
+        "MEC-2023-203",
+        "MEC-2023-205"
+      ],
+      "aprobadas": [
+        "MEC-2023-101",
+        "MEC-2023-104"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-304",
+      "nombre": "Diseño Mecánico",
+      "nivel": 3,
+      "cursadas": [
+        "MEC-2023-201",
+        "MEC-2023-202",
+        "MEC-2023-203"
+      ],
+      "aprobadas": [
+        "MEC-2023-104",
+        "MEC-2023-106",
+        "MEC-2023-107",
+        "MEC-2023-108"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-305",
+      "nombre": "Cálculo Avanzado",
+      "nivel": 3,
+      "cursadas": [
+        "MEC-2023-204"
+      ],
+      "aprobadas": [
+        "MEC-2023-101",
+        "MEC-2023-103",
+        "MEC-2023-108"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-306",
+      "nombre": "Ingeniería Mecánica 3",
+      "nivel": 3,
+      "cursadas": [
+        "MEC-2023-201",
+        "MEC-2023-203",
+        "MEC-2023-207"
+      ],
+      "aprobadas": [
+        "MEC-2023-101",
+        "MEC-2023-102",
+        "MEC-2023-104",
+        "MEC-2023-106"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-307",
+      "nombre": "Probabilidad y Estadística",
+      "nivel": 3,
+      "cursadas": [
+        "MEC-2023-101",
+        "MEC-2023-103"
+      ],
+      "aprobadas": []
+    },
+    {
+      "idMateria": "MEC-2023-308",
+      "nombre": "Estabilidad 2",
+      "nivel": 3,
+      "cursadas": [
+        "MEC-2023-202",
+        "MEC-2023-204"
+      ],
+      "aprobadas": [
+        "MEC-2023-101",
+        "MEC-2023-103",
+        "MEC-2023-104"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-309",
+      "nombre": "Inglés 2",
+      "nivel": 3,
+      "cursadas": [],
+      "aprobadas": [
+        "MEC-2023-208"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-401",
+      "nombre": "Economía",
+      "nivel": 4,
+      "cursadas": [
+        "MEC-2023-207"
+      ],
+      "aprobadas": [
+        "MEC-2023-105"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-402",
+      "nombre": "Elementos de Máquina",
+      "nivel": 4,
+      "cursadas": [
+        "MEC-2023-201",
+        "MEC-2023-203",
+        "MEC-2023-302",
+        "MEC-2023-303",
+        "MEC-2023-307"
+      ],
+      "aprobadas": [
+        "MEC-2023-102",
+        "MEC-2023-201",
+        "MEC-2023-202",
+        "MEC-2023-204",
+        "MEC-2023-207",
+        "MEC-2023-208"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-403",
+      "nombre": "Tecnología del Calor",
+      "nivel": 4,
+      "cursadas": [
+        "MEC-2023-301"
+      ],
+      "aprobadas": [
+        "MEC-2023-204",
+        "MEC-2023-205"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-404",
+      "nombre": "Metrología e Ingeniería de la Calidad",
+      "nivel": 4,
+      "cursadas": [
+        "MEC-2023-304",
+        "MEC-2023-308"
+      ],
+      "aprobadas": [
+        "MEC-2023-103",
+        "MEC-2023-203",
+        "MEC-2023-205"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-405",
+      "nombre": "Mecánica de los Fluídos",
+      "nivel": 4,
+      "cursadas": [
+        "MEC-2023-301"
+      ],
+      "aprobadas": [
+        "MEC-2023-204",
+        "MEC-2023-205"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-406",
+      "nombre": "Electrotecnia y Máquinas Eléctricas",
+      "nivel": 4,
+      "cursadas": [
+        "MEC-2023-204",
+        "MEC-2023-205"
+      ],
+      "aprobadas": [
+        "MEC-2023-101",
+        "MEC-2023-103",
+        "MEC-2023-104"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-407",
+      "nombre": "Electrónica y Sistemas de Control",
+      "nivel": 4,
+      "cursadas": [
+        "MEC-2023-204",
+        "MEC-2023-205",
+        "MEC-2023-306"
+      ],
+      "aprobadas": [
+        "MEC-2023-101",
+        "MEC-2023-103",
+        "MEC-2023-104"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-408",
+      "nombre": "Estabilidad 3",
+      "nivel": 4,
+      "cursadas": [
+        "MEC-2023-303"
+      ],
+      "aprobadas": [
+        "MEC-2023-101",
+        "MEC-2023-103",
+        "MEC-2023-104",
+        "MEC-2023-202"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-501",
+      "nombre": "Mantenimiento",
+      "nivel": 5,
+      "cursadas": [
+        "MEC-2023-304",
+        "MEC-2023-401",
+        "MEC-2023-402"
+      ],
+      "aprobadas": [
+        "MEC-2023-203",
+        "MEC-2023-205",
+        "MEC-2023-302",
+        "MEC-2023-303"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-502",
+      "nombre": "Máquinas Alternativas y Turbo Máquinas",
+      "nivel": 5,
+      "cursadas": [
+        "MEC-2023-403"
+      ],
+      "aprobadas": [
+        "MEC-2023-205",
+        "MEC-2023-301"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-503",
+      "nombre": "Instalaciones Industriales",
+      "nivel": 5,
+      "cursadas": [
+        "MEC-2023-304",
+        "MEC-2023-403",
+        "MEC-2023-405",
+        "MEC-2023-406",
+        "MEC-2023-407"
+      ],
+      "aprobadas": [
+        "MEC-2023-202",
+        "MEC-2023-206",
+        "MEC-2023-301"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-504",
+      "nombre": "Organización Industrial",
+      "nivel": 5,
+      "cursadas": [
+        "MEC-2023-401"
+      ],
+      "aprobadas": [
+        "MEC-2023-207"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-505",
+      "nombre": "Legislación",
+      "nivel": 5,
+      "cursadas": [
+        "MEC-2023-207"
+      ],
+      "aprobadas": [
+        "MEC-2023-105"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-506",
+      "nombre": "Tecnología de Fabricación",
+      "nivel": 5,
+      "cursadas": [
+        "MEC-2023-402",
+        "MEC-2023-404"
+      ],
+      "aprobadas": [
+        "MEC-2023-201",
+        "MEC-2023-202",
+        "MEC-2023-203",
+        "MEC-2023-305"
+      ]
+    },
+    {
+      "idMateria": "MEC-2023-507",
+      "nombre": "Proyecto Final",
+      "nivel": 5,
+      "cursadas": [
+        "MEC-2023-402",
+        "MEC-2023-404",
+        "MEC-2023-406",
+        "MEC-2023-407"
+      ],
+      "aprobadas": [
+        "MEC-2023-302",
+        "MEC-2023-303",
+        "MEC-2023-304",
+        "MEC-2023-305"
+      ]
+    }
+  ]
+}

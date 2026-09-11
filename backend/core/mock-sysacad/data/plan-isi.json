@@ -1,0 +1,3943 @@
+{
+    "nombre": "Ingeniería en Sistemas de Información",
+    "materias": [
+        {
+            "idMateria": "5-2023-475",
+            "nombre": "Dinámica de Sistemas (Elec.)",
+            "nivel": 0,
+            "cursadas": [
+                "5-2023-301"
+            ],
+            "aprobadas": [
+                "5-2023-108",
+                "5-2023-201"
+            ]
+        },
+        {
+            "idMateria": "5-2023-101",
+            "nombre": "Análisis Matemático I",
+            "nivel": 1,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-102",
+            "nombre": "Álgebra y Geometría Analítica",
+            "nivel": 1,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-103",
+            "nombre": "Física I",
+            "nivel": 1,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-104",
+            "nombre": "Inglés I",
+            "nivel": 1,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-105",
+            "nombre": "Lógica y Estructuras Discretas",
+            "nivel": 1,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-106",
+            "nombre": "Algoritmos y Estructuras de Datos",
+            "nivel": 1,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-107",
+            "nombre": "Arquitectura de Computadoras",
+            "nivel": 1,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-108",
+            "nombre": "Sistemas y Procesos de Negocio",
+            "nivel": 1,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-201",
+            "nombre": "Análisis Matemático II",
+            "nivel": 2,
+            "cursadas": [
+                "5-2023-101",
+                "5-2023-102"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-202",
+            "nombre": "Física II",
+            "nivel": 2,
+            "cursadas": [
+                "5-2023-101",
+                "5-2023-103"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-203",
+            "nombre": "Ingeniería y Sociedad",
+            "nivel": 2,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-204",
+            "nombre": "Inglés II",
+            "nivel": 2,
+            "cursadas": [
+                "5-2023-104"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-205",
+            "nombre": "Sintaxis y Semántica de los Lenguajes",
+            "nivel": 2,
+            "cursadas": [
+                "5-2023-105",
+                "5-2023-106"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-206",
+            "nombre": "Paradigmas de Programación",
+            "nivel": 2,
+            "cursadas": [
+                "5-2023-105",
+                "5-2023-106"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-207",
+            "nombre": "Sistemas Operativos",
+            "nivel": 2,
+            "cursadas": [
+                "5-2023-107"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-208",
+            "nombre": "Análisis de Sistemas de Información",
+            "nivel": 2,
+            "cursadas": [
+                "5-2023-106",
+                "5-2023-108"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-209",
+            "nombre": "Programación Competitiva I (Elec.)",
+            "nivel": 2,
+            "cursadas": [],
+            "aprobadas": [
+                "5-2023-106"
+            ]
+        },
+        {
+            "idMateria": "5-2023-210",
+            "nombre": "Programación Competitiva II (Elec.)",
+            "nivel": 2,
+            "cursadas": [],
+            "aprobadas": [
+                "5-2023-209"
+            ]
+        },
+        {
+            "idMateria": "5-2023-211",
+            "nombre": "Análisis y Diseño de Datos e Información (Elec.)",
+            "nivel": 2,
+            "cursadas": [
+                "5-2023-108",
+                "5-2023-205"
+            ],
+            "aprobadas": [
+                "5-2023-106"
+            ]
+        },
+        {
+            "idMateria": "5-2023-212",
+            "nombre": "Entornos Gráficos (Elec.)",
+            "nivel": 2,
+            "cursadas": [
+                "5-2023-105"
+            ],
+            "aprobadas": [
+                "5-2023-106",
+                "5-2023-108"
+            ]
+        },
+        {
+            "idMateria": "5-2023-213",
+            "nombre": "Sistemas de Información Geográfica (Elec.)",
+            "nivel": 2,
+            "cursadas": [
+                "5-2023-101",
+                "5-2023-106",
+                "5-2023-303",
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-102",
+                "5-2023-201",
+                "5-2023-203",
+                "5-2023-204",
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-207",
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-214",
+            "nombre": "Química (Elec.)",
+            "nivel": 2,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-215",
+            "nombre": "Sistemas de Representación (Elec.)",
+            "nivel": 2,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-216",
+            "nombre": "Programación Competitiva (Elec.)",
+            "nivel": 2,
+            "cursadas": [
+                "5-2023-106"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-300",
+            "nombre": "Administración de Base de Datos (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-303"
+            ],
+            "aprobadas": [
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-301",
+            "nombre": "Probabilidad y Estadística",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-101",
+                "5-2023-102"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-302",
+            "nombre": "Economía",
+            "nivel": 3,
+            "cursadas": [],
+            "aprobadas": [
+                "5-2023-101",
+                "5-2023-102"
+            ]
+        },
+        {
+            "idMateria": "5-2023-303",
+            "nombre": "Bases de Datos",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-208"
+            ],
+            "aprobadas": [
+                "5-2023-105",
+                "5-2023-106"
+            ]
+        },
+        {
+            "idMateria": "5-2023-304",
+            "nombre": "Desarrollo de Software",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": [
+                "5-2023-105",
+                "5-2023-106"
+            ]
+        },
+        {
+            "idMateria": "5-2023-305",
+            "nombre": "Comunicación de Datos",
+            "nivel": 3,
+            "cursadas": [],
+            "aprobadas": [
+                "5-2023-103",
+                "5-2023-107"
+            ]
+        },
+        {
+            "idMateria": "5-2023-306",
+            "nombre": "Análisis Numérico",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-201"
+            ],
+            "aprobadas": [
+                "5-2023-101",
+                "5-2023-102"
+            ]
+        },
+        {
+            "idMateria": "5-2023-307",
+            "nombre": "Diseño de Sistemas de Información",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": [
+                "5-2023-104",
+                "5-2023-106",
+                "5-2023-108"
+            ]
+        },
+        {
+            "idMateria": "5-2023-308",
+            "nombre": "Seminario Integrador",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-208"
+            ],
+            "aprobadas": [
+                "5-2023-106",
+                "5-2023-108",
+                "5-2023-205",
+                "5-2023-206"
+            ]
+        },
+        {
+            "idMateria": "5-2023-309",
+            "nombre": "Diseño e Implementación de Estructuras de Datos (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": [
+                "5-2023-106",
+                "5-2023-206"
+            ]
+        },
+        {
+            "idMateria": "5-2023-310",
+            "nombre": "Bases de Datos NoSQL (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-206",
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-311",
+            "nombre": "Administración y Finanzas (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-208",
+                "5-2023-302"
+            ],
+            "aprobadas": [
+                "5-2023-108"
+            ]
+        },
+        {
+            "idMateria": "5-2023-312",
+            "nombre": "Nuevos Paradigamas de Gestión y la Tecnología de la Información (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-303"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-313",
+            "nombre": "Innovación y Emprendedorismo (Elec.)",
+            "nivel": 3,
+            "cursadas": [],
+            "aprobadas": [
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-314",
+            "nombre": "Algoritmos Genéticos (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206"
+            ],
+            "aprobadas": [
+                "5-2023-105",
+                "5-2023-106",
+                "5-2023-107",
+                "5-2023-108"
+            ]
+        },
+        {
+            "idMateria": "5-2023-315",
+            "nombre": "Gestión Ingenieril (Elec.)",
+            "nivel": 3,
+            "cursadas": [],
+            "aprobadas": [
+                "5-2023-108"
+            ]
+        },
+        {
+            "idMateria": "5-2023-316",
+            "nombre": "Introducción a la Práctica Profesional (Elec.)",
+            "nivel": 3,
+            "cursadas": [],
+            "aprobadas": [
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-317",
+            "nombre": "Lenguaje de Programación Java (Elec.)",
+            "nivel": 3,
+            "cursadas": [],
+            "aprobadas": [
+                "5-2023-206"
+            ]
+        },
+        {
+            "idMateria": "5-2023-318",
+            "nombre": "Tecnologías de Desarrollo de Software IDE (Elec.)",
+            "nivel": 3,
+            "cursadas": [],
+            "aprobadas": [
+                "5-2023-105",
+                "5-2023-205",
+                "5-2023-206"
+            ]
+        },
+        {
+            "idMateria": "5-2023-320",
+            "nombre": "Investigación Tecnológica (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-321",
+            "nombre": "Informática Jurídica (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-207"
+            ],
+            "aprobadas": [
+                "5-2023-106",
+                "5-2023-107",
+                "5-2023-108"
+            ]
+        },
+        {
+            "idMateria": "5-2023-323",
+            "nombre": "Sistemas de Gestión de Bases de Datos (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-303"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-324",
+            "nombre": "Complejidad y Técnicas de Diseño de Algoritmos (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-206"
+            ],
+            "aprobadas": [
+                "5-2023-106"
+            ]
+        },
+        {
+            "idMateria": "5-2023-325",
+            "nombre": "Planificación (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-208",
+                "5-2023-302"
+            ],
+            "aprobadas": [
+                "5-2023-108"
+            ]
+        },
+        {
+            "idMateria": "5-2023-326",
+            "nombre": "Comunicación Gráfica y Visual (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-327",
+            "nombre": "Metodología de la Ciencia (Elec.)",
+            "nivel": 3,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-328",
+            "nombre": "Comunicación Lingüística (Elec.)",
+            "nivel": 3,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-329",
+            "nombre": "Sistemas de Transmisión Inalámbricos (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-201"
+            ],
+            "aprobadas": [
+                "5-2023-107"
+            ]
+        },
+        {
+            "idMateria": "5-2023-330",
+            "nombre": "Tecnología y Gestión Web (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-207"
+            ],
+            "aprobadas": [
+                "5-2023-106"
+            ]
+        },
+        {
+            "idMateria": "5-2023-331",
+            "nombre": "Responsabilidad Social e Institucional (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-108",
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-332",
+            "nombre": "Comunicación Profesional (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-203"
+            ],
+            "aprobadas": [
+                "5-2023-108"
+            ]
+        },
+        {
+            "idMateria": "5-2023-333",
+            "nombre": "Backend de Aplicaciones (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206"
+            ],
+            "aprobadas": [
+                "5-2023-106"
+            ]
+        },
+        {
+            "idMateria": "5-2023-334",
+            "nombre": "Administración de Proyectos (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-208"
+            ],
+            "aprobadas": [
+                "5-2023-108"
+            ]
+        },
+        {
+            "idMateria": "5-2023-335",
+            "nombre": "Computación Paralela (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-207"
+            ],
+            "aprobadas": [
+                "5-2023-107",
+                "5-2023-206"
+            ]
+        },
+        {
+            "idMateria": "5-2023-336",
+            "nombre": "Química Aplicada a la Informática (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-101",
+                "5-2023-102",
+                "5-2023-103",
+                "5-2023-104",
+                "5-2023-105",
+                "5-2023-106",
+                "5-2023-107",
+                "5-2023-108"
+            ],
+            "aprobadas": [
+                "5-2023-101",
+                "5-2023-102",
+                "5-2023-103"
+            ]
+        },
+        {
+            "idMateria": "5-2023-337",
+            "nombre": "Reingeniería de Procesos de Negocios (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-338",
+            "nombre": "Sistemas de Gestión Integral (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": [
+                "5-2023-108"
+            ]
+        },
+        {
+            "idMateria": "5-2023-339",
+            "nombre": "Programación de Aplicaciones Visuales I (Elec.)",
+            "nivel": 3,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-340",
+            "nombre": "Tecnología de Software de Base (Elec.)",
+            "nivel": 3,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-341",
+            "nombre": "Ingeniería de Requisitos (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-342",
+            "nombre": "Gestión del Talento Humano (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-343",
+            "nombre": "Experiencia de Usuario y Accesibilidad (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-344",
+            "nombre": "Creatividad e Innovación (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-345",
+            "nombre": "Química para Ingeniería en Sistemas de Información (Elec.)",
+            "nivel": 3,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-346",
+            "nombre": "Sistemas de Representación para Ingeniería en Sistemas de Información (Elec.)",
+            "nivel": 3,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-347",
+            "nombre": "Desarrollo de Aplicaciones Web Full Stack (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-106",
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-348",
+            "nombre": "Teledetección (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-208"
+            ],
+            "aprobadas": [
+                "5-2023-106"
+            ]
+        },
+        {
+            "idMateria": "5-2023-349",
+            "nombre": "Implementación de Base de Datos (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-303"
+            ],
+            "aprobadas": [
+                "5-2023-101",
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-207",
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-350",
+            "nombre": "Implementaciones de Bases de Datos (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-303"
+            ],
+            "aprobadas": [
+                "5-2023-101",
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-207",
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-351",
+            "nombre": "Gestión de Procesos de Negocio (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": [
+                "5-2023-106",
+                "5-2023-108"
+            ]
+        },
+        {
+            "idMateria": "5-2023-352",
+            "nombre": "Técnicas y Tecnologías Avanzadas de Desarrollo de Software (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": [
+                "5-2023-105",
+                "5-2023-106"
+            ]
+        },
+        {
+            "idMateria": "5-2023-353",
+            "nombre": "Diseño UX para Productos Digitales (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-108",
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-354",
+            "nombre": "Fundamentos del Diseño de UX/UI (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-355",
+            "nombre": "Programación de Aplicaciones Visuales (Elec.)",
+            "nivel": 3,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": [
+                "5-2023-101",
+                "5-2023-102",
+                "5-2023-105",
+                "5-2023-106",
+                "5-2023-107",
+                "5-2023-108",
+                "5-2023-203"
+            ]
+        },
+        {
+            "idMateria": "5-2023-356",
+            "nombre": "Ingles III (Elec.)",
+            "nivel": 3,
+            "cursadas": [],
+            "aprobadas": [
+                "5-2023-104",
+                "5-2023-204"
+            ]
+        },
+        {
+            "idMateria": "5-2023-619",
+            "nombre": "Modelado de Procesos de Negocios (Elec.)",
+            "nivel": 3,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-624",
+            "nombre": "Sistemas de Gestión de Procesos BPM (Elec.)",
+            "nivel": 3,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-628",
+            "nombre": "Visión Computacional (Elec.)",
+            "nivel": 3,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-400",
+            "nombre": "Fundamentos de Ingeniería de Datos (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-305"
+            ],
+            "aprobadas": [
+                "5-2023-106"
+            ]
+        },
+        {
+            "idMateria": "5-2023-401",
+            "nombre": "Legislación",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-203"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-402",
+            "nombre": "Ingeniería y Calidad de Software",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-304",
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-205",
+                "5-2023-206"
+            ]
+        },
+        {
+            "idMateria": "5-2023-403",
+            "nombre": "Redes de Datos",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-207",
+                "5-2023-305"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-404",
+            "nombre": "Investigación Operativa",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-301",
+                "5-2023-306"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-405",
+            "nombre": "Simulación",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-301"
+            ],
+            "aprobadas": [
+                "5-2023-201"
+            ]
+        },
+        {
+            "idMateria": "5-2023-406",
+            "nombre": "Tecnologías para la Automatización",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-202",
+                "5-2023-306"
+            ],
+            "aprobadas": [
+                "5-2023-201"
+            ]
+        },
+        {
+            "idMateria": "5-2023-407",
+            "nombre": "Administración de Sistemas de Información",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-302",
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-408",
+            "nombre": "Taller de Redes (Elec.)",
+            "nivel": 4,
+            "cursadas": [],
+            "aprobadas": [
+                "5-2023-403"
+            ]
+        },
+        {
+            "idMateria": "5-2023-409",
+            "nombre": "Programación Concurrente (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-206",
+                "5-2023-207"
+            ],
+            "aprobadas": [
+                "5-2023-206",
+                "5-2023-207"
+            ]
+        },
+        {
+            "idMateria": "5-2023-410",
+            "nombre": "Desarrollo de Aplicaciones Móviles (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-206",
+                "5-2023-303",
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-106",
+                "5-2023-206"
+            ]
+        },
+        {
+            "idMateria": "5-2023-411",
+            "nombre": "Seguridad en Aplicaciones Web (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": [
+                "5-2023-303",
+                "5-2023-307",
+                "5-2023-403"
+            ]
+        },
+        {
+            "idMateria": "5-2023-412",
+            "nombre": "Métodos Ágiles para el Diseño de Software (Elec.)",
+            "nivel": 4,
+            "cursadas": [],
+            "aprobadas": [
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-413",
+            "nombre": "Agilidad Avanzada (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-307",
+                "5-2023-402"
+            ],
+            "aprobadas": [
+                "5-2023-304",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-414",
+            "nombre": "Análisis de Datos Empresariales (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-405"
+            ],
+            "aprobadas": [
+                "5-2023-301",
+                "5-2023-303"
+            ]
+        },
+        {
+            "idMateria": "5-2023-415",
+            "nombre": "Aspectos Avanzados de Calidad de Software (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-307",
+                "5-2023-402"
+            ],
+            "aprobadas": [
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-417",
+            "nombre": "Innovación Abierta como Herramienta de Desarrollo Profesional (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-204"
+            ],
+            "aprobadas": [
+                "5-2023-108",
+                "5-2023-208",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-418",
+            "nombre": "Química Ambiental (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-207",
+                "5-2023-208",
+                "5-2023-303",
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-419",
+            "nombre": "Epistemología de las Ciencias de la Ingeniería (Elec.)",
+            "nivel": 4,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-420",
+            "nombre": "Metodologías de la Investigación (Elec.)",
+            "nivel": 4,
+            "cursadas": [],
+            "aprobadas": [
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-421",
+            "nombre": "Tecnologías para la Explotación de la Información (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-301",
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-206"
+            ]
+        },
+        {
+            "idMateria": "5-2023-422",
+            "nombre": "Desarrollo de Software Cloud (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-207",
+                "5-2023-304",
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-205",
+                "5-2023-206"
+            ]
+        },
+        {
+            "idMateria": "5-2023-423",
+            "nombre": "Diseño Inclusivo para Usuarios con Discapacidad (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-424",
+            "nombre": "Metodologías Ágiles (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-304",
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-425",
+            "nombre": "Administración de Bases de Datos (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-303"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-426",
+            "nombre": "Aplicaciones Móviles (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-206",
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-106"
+            ]
+        },
+        {
+            "idMateria": "5-2023-427",
+            "nombre": "Tecnologías de Interfaces Interactivas (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-428",
+            "nombre": "Product Owner (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-429",
+            "nombre": "Programación Web (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208",
+                "5-2023-301",
+                "5-2023-303",
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-102",
+                "5-2023-105",
+                "5-2023-106",
+                "5-2023-107",
+                "5-2023-108",
+                "5-2023-201",
+                "5-2023-203",
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-215",
+                "5-2023-301",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-430",
+            "nombre": "Arquitectura de Software (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-304"
+            ],
+            "aprobadas": [
+                "5-2023-205",
+                "5-2023-206"
+            ]
+        },
+        {
+            "idMateria": "5-2023-431",
+            "nombre": "Comunicación Multimedial en el Desarrollo de Sistemas de Información (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-303"
+            ],
+            "aprobadas": [
+                "5-2023-108",
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-432",
+            "nombre": "Desarrollo de Aplicaciones con Objetos (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-205"
+            ],
+            "aprobadas": [
+                "5-2023-106"
+            ]
+        },
+        {
+            "idMateria": "5-2023-433",
+            "nombre": "Desarrollo y Operaciones DevOps (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-304",
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-205",
+                "5-2023-206"
+            ]
+        },
+        {
+            "idMateria": "5-2023-434",
+            "nombre": "Gestión de la Mejora de Procesos (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-208",
+                "5-2023-303"
+            ],
+            "aprobadas": [
+                "5-2023-106",
+                "5-2023-108",
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-435",
+            "nombre": "Gestión Industrial de la Producción (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-303"
+            ],
+            "aprobadas": [
+                "5-2023-108",
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-436",
+            "nombre": "Arquitecturas Móviles (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-307",
+                "5-2023-402"
+            ],
+            "aprobadas": [
+                "5-2023-206"
+            ]
+        },
+        {
+            "idMateria": "5-2023-437",
+            "nombre": "Arquitectura de Microservicios (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-304"
+            ],
+            "aprobadas": [
+                "5-2023-106",
+                "5-2023-206"
+            ]
+        },
+        {
+            "idMateria": "5-2023-438",
+            "nombre": "Desarrollo de Software Dirigido por Modelos (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-206",
+                "5-2023-208",
+                "5-2023-303"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-439",
+            "nombre": "Gobierno Digital e Innovación (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-208"
+            ],
+            "aprobadas": [
+                "5-2023-108"
+            ]
+        },
+        {
+            "idMateria": "5-2023-440",
+            "nombre": "Bases de Datos Avanzada (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-207",
+                "5-2023-303"
+            ],
+            "aprobadas": [
+                "5-2023-106",
+                "5-2023-107"
+            ]
+        },
+        {
+            "idMateria": "5-2023-441",
+            "nombre": "Diseño de Experiencia de Usuario (UX) (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-442",
+            "nombre": "Introducción a la Investigación Científica (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-201",
+                "5-2023-202"
+            ],
+            "aprobadas": [
+                "5-2023-105",
+                "5-2023-107"
+            ]
+        },
+        {
+            "idMateria": "5-2023-443",
+            "nombre": "Metodología de la Investigación (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-301"
+            ],
+            "aprobadas": [
+                "5-2023-108"
+            ]
+        },
+        {
+            "idMateria": "5-2023-444",
+            "nombre": "Soporte a la Gestión de Datos con Programación Visual (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-303"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-445",
+            "nombre": "Metodologías Ágiles en el Desarrollo de Software (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-304",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-204",
+                "5-2023-206",
+                "5-2023-208",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-446",
+            "nombre": "Infraestructura Tecnológica (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-207",
+                "5-2023-307"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-447",
+            "nombre": "Estadística Aplicada (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-201",
+                "5-2023-301"
+            ],
+            "aprobadas": [
+                "5-2023-101",
+                "5-2023-102",
+                "5-2023-301"
+            ]
+        },
+        {
+            "idMateria": "5-2023-448",
+            "nombre": "Programación Avanzada (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-304"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-449",
+            "nombre": "Enfoque Lean Ágil en la Ingeniería de Software (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-307"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-450",
+            "nombre": "Sistema de Soporte a las Desiciones (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-307"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-451",
+            "nombre": "Administración de Proyectos de Tecnología de la Información (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-452",
+            "nombre": "Fundamentos de Mercadotecnia (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-302"
+            ],
+            "aprobadas": [
+                "5-2023-203"
+            ]
+        },
+        {
+            "idMateria": "5-2023-453",
+            "nombre": "Programación de Aplicaciones Visuales II (Elec.)",
+            "nivel": 4,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-454",
+            "nombre": "Diseño de Lenguaje de Consulta (Elec.)",
+            "nivel": 4,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-455",
+            "nombre": "Administración Estratégica del Capital Humano (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-456",
+            "nombre": "Ciberseguridad (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-457",
+            "nombre": "Transformación Digital (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-458",
+            "nombre": "Tendencias y Escenarios Tecnológicos (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-459",
+            "nombre": "Tecnologías Avanzadas en la Construcción de Software (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-460",
+            "nombre": "Técnicas de Gráficos por Computadora (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-461",
+            "nombre": "Procesamiento de Lenguaje Natural (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-462",
+            "nombre": "Patrones Algorítmicos (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-463",
+            "nombre": "Metodología de la Construcción de Equipos de Trabajo (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-464",
+            "nombre": "Metodología de la Investigación Científico-Tecnológica (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-465",
+            "nombre": "Gerenciamiento de Proyectos de Sistemas de Información (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-466",
+            "nombre": "Criptografía (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-467",
+            "nombre": "Técnicas Avanzadas de Programación (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-468",
+            "nombre": "Acústica Física (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-306"
+            ],
+            "aprobadas": [
+                "5-2023-202"
+            ]
+        },
+        {
+            "idMateria": "5-2023-469",
+            "nombre": "Pensamiento Computacional  y Programación (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-304"
+            ]
+        },
+        {
+            "idMateria": "5-2023-470",
+            "nombre": "Planificación de Proyectos de Software (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-108",
+                "5-2023-208",
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-108"
+            ]
+        },
+        {
+            "idMateria": "5-2023-471",
+            "nombre": "Lenguajes, Computabilidad y Aplicaciones Modernas (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206"
+            ],
+            "aprobadas": [
+                "5-2023-105"
+            ]
+        },
+        {
+            "idMateria": "5-2023-472",
+            "nombre": "Experiencia e Interfaces de Usuario (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-307"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-473",
+            "nombre": "Planeamiento y Gestión de Productos Digitales (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-304",
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-476",
+            "nombre": "Sistemas Distribuidos (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-403"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-477",
+            "nombre": "Relaciones Humanas (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-407"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-478",
+            "nombre": "Heurísticas y Auto Machine Learning (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-306"
+            ],
+            "aprobadas": [
+                "5-2023-206",
+                "5-2023-301"
+            ]
+        },
+        {
+            "idMateria": "5-2023-479",
+            "nombre": "Sistemas de Gestión de la Calidad (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-208",
+                "5-2023-307"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-480",
+            "nombre": "Seguridad en Redes e Infraestructura (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-403"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-305"
+            ]
+        },
+        {
+            "idMateria": "5-2023-481",
+            "nombre": "Auditoria en Sistemas de Información (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-203",
+                "5-2023-303",
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-482",
+            "nombre": "Ingenieria de Requerimientos (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-483",
+            "nombre": "Algoritmos Geneticos y Optimización Heuristica (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-306"
+            ],
+            "aprobadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-301"
+            ]
+        },
+        {
+            "idMateria": "5-2023-484",
+            "nombre": "Programación de Aplicaciones Distribuidas (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-104",
+                "5-2023-201",
+                "5-2023-206",
+                "5-2023-207",
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-485",
+            "nombre": "Arduino (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-106",
+                "5-2023-107",
+                "5-2023-206"
+            ]
+        },
+        {
+            "idMateria": "5-2023-486",
+            "nombre": "Transformación Digital: Negocios y Sistemas de Información (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-303"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-487",
+            "nombre": "Fundamentos de Desarrollo Backend (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-304",
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-206",
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-488",
+            "nombre": "Modelos de Lenguaje (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-104",
+                "5-2023-304"
+            ],
+            "aprobadas": [
+                "5-2023-106",
+                "5-2023-306"
+            ]
+        },
+        {
+            "idMateria": "5-2023-489",
+            "nombre": "Seguridad Ofensiva Avanzada (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-206",
+                "5-2023-207"
+            ]
+        },
+        {
+            "idMateria": "5-2023-617",
+            "nombre": "Computación en la Nube (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-618",
+            "nombre": "Informática Forence (Elec.)",
+            "nivel": 4,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-627",
+            "nombre": "Taller de Progamación Avanzada (Elec.)",
+            "nivel": 4,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-629",
+            "nombre": "Aprendizaje de Máquinas (Elec.)",
+            "nivel": 4,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-667",
+            "nombre": "Co-Inteligencia, Racionalidad Aumentada y Decisión (Elec.)",
+            "nivel": 4,
+            "cursadas": [
+                "5-2023-208"
+            ],
+            "aprobadas": [
+                "5-2023-105",
+                "5-2023-203"
+            ]
+        },
+        {
+            "idMateria": "5-2023-500",
+            "nombre": "Tecnologías Avanzadas de Base de Datos (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-106",
+                "5-2023-303"
+            ],
+            "aprobadas": [
+                "5-2023-106"
+            ]
+        },
+        {
+            "idMateria": "5-2023-501",
+            "nombre": "Inteligencia Artificial",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-405"
+            ],
+            "aprobadas": [
+                "5-2023-301",
+                "5-2023-306"
+            ]
+        },
+        {
+            "idMateria": "5-2023-502",
+            "nombre": "Ciencia de Datos",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-405"
+            ],
+            "aprobadas": [
+                "5-2023-301",
+                "5-2023-303"
+            ]
+        },
+        {
+            "idMateria": "5-2023-503",
+            "nombre": "Sistemas de Gestión",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-302",
+                "5-2023-404"
+            ],
+            "aprobadas": [
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-504",
+            "nombre": "Gestión Gerencial",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-401",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-302"
+            ]
+        },
+        {
+            "idMateria": "5-2023-505",
+            "nombre": "Seguridad en los Sistemas de Información",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-403",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-304",
+                "5-2023-305"
+            ]
+        },
+        {
+            "idMateria": "5-2023-506",
+            "nombre": "Proyecto Final",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-204",
+                "5-2023-304",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-507",
+            "nombre": "Práctica Profesional Supervisada",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-204",
+                "5-2023-304",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-508",
+            "nombre": "Formación en Áreas Ingenieriles en el Extranjero (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-509",
+            "nombre": "Virtualización y Sistemas Operativos Avanzados (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-204",
+                "5-2023-403"
+            ],
+            "aprobadas": [
+                "5-2023-104",
+                "5-2023-207"
+            ]
+        },
+        {
+            "idMateria": "5-2023-510",
+            "nombre": "Desarrollo de Aplicaciones en la Nube (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-333",
+                "5-2023-402"
+            ],
+            "aprobadas": [
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-511",
+            "nombre": "Sistemas de Información Geográficos (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-307",
+                "5-2023-407",
+                "5-2023-503"
+            ],
+            "aprobadas": [
+                "5-2023-208",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-512",
+            "nombre": "Auditoría Informática (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": [
+                "5-2023-301",
+                "5-2023-407"
+            ]
+        },
+        {
+            "idMateria": "5-2023-513",
+            "nombre": "Modelado Semántico de Datos (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-307",
+                "5-2023-402"
+            ],
+            "aprobadas": [
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-514",
+            "nombre": "Inteligencia de Negocio: Data Warehouse y Data Mining (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-503"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-515",
+            "nombre": "Taller de Sistemas de Información ERP (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-407",
+                "5-2023-503"
+            ],
+            "aprobadas": [
+                "5-2023-302",
+                "5-2023-307",
+                "5-2023-403"
+            ]
+        },
+        {
+            "idMateria": "5-2023-516",
+            "nombre": "Inteligencia Computacional (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-501"
+            ],
+            "aprobadas": [
+                "5-2023-405"
+            ]
+        },
+        {
+            "idMateria": "5-2023-517",
+            "nombre": "Ética Profesional (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-307"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-518",
+            "nombre": "Aspectos Avanzados de Redes de Información (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-202",
+                "5-2023-403"
+            ],
+            "aprobadas": [
+                "5-2023-305"
+            ]
+        },
+        {
+            "idMateria": "5-2023-519",
+            "nombre": "Analítica de Datos Moderna (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-405",
+                "5-2023-502"
+            ],
+            "aprobadas": [
+                "5-2023-301",
+                "5-2023-303"
+            ]
+        },
+        {
+            "idMateria": "5-2023-520",
+            "nombre": "Auditoría e Informática Forense (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-505"
+            ],
+            "aprobadas": [
+                "5-2023-304",
+                "5-2023-307",
+                "5-2023-401"
+            ]
+        },
+        {
+            "idMateria": "5-2023-521",
+            "nombre": "DevOps - Cultura, Herramientas y Procesos (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-304",
+                "5-2023-402",
+                "5-2023-403"
+            ],
+            "aprobadas": [
+                "5-2023-207"
+            ]
+        },
+        {
+            "idMateria": "5-2023-522",
+            "nombre": "Formación de Emprendedores (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-302",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-203",
+                "5-2023-302"
+            ]
+        },
+        {
+            "idMateria": "5-2023-523",
+            "nombre": "Fundamentos de Ciberseguridad (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-304",
+                "5-2023-305"
+            ],
+            "aprobadas": [
+                "5-2023-307",
+                "5-2023-403"
+            ]
+        },
+        {
+            "idMateria": "5-2023-524",
+            "nombre": "Formación Inicial en Áreas Ingenieriles en el Extranjero (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-525",
+            "nombre": "Formación Básica en Áreas Ingenieriles en el Extranjero (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-526",
+            "nombre": "Formación en Tecnología en Áreas Ingenieriles en el Extranjero (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-527",
+            "nombre": "Formación Avanzada en Áreas Ingenieriles en el Extranjero (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-528",
+            "nombre": "Formación Internacional Básica (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-529",
+            "nombre": "Formación Internacional en Tecnología (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-530",
+            "nombre": "Formación Internacional Avanzada (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-531",
+            "nombre": "Formación Internacional (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-532",
+            "nombre": "Competencias en Idiomas (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-533",
+            "nombre": "Competencias Tecnológicas (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-534",
+            "nombre": "Aptitudes en Idioma (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-535",
+            "nombre": "Aptitudes Tecnológicas (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-536",
+            "nombre": "Ingeniería y Desarrollo (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-537",
+            "nombre": "Internetworking (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-403"
+            ]
+        },
+        {
+            "idMateria": "5-2023-538",
+            "nombre": "Sistemas de Tiempo Real (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-207"
+            ],
+            "aprobadas": [
+                "5-2023-107"
+            ]
+        },
+        {
+            "idMateria": "5-2023-539",
+            "nombre": "Sistemas en la Industria 4.0 (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-305",
+                "5-2023-402",
+                "5-2023-403"
+            ],
+            "aprobadas": [
+                "5-2023-107"
+            ]
+        },
+        {
+            "idMateria": "5-2023-540",
+            "nombre": "Protocolos y Seguridad en Redes Inalámbricas (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-305",
+                "5-2023-403"
+            ],
+            "aprobadas": [
+                "5-2023-201",
+                "5-2023-202"
+            ]
+        },
+        {
+            "idMateria": "5-2023-541",
+            "nombre": "Tecnologías de la Información para la Gestión Empresarial (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402"
+            ],
+            "aprobadas": [
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-542",
+            "nombre": "Ingeniería en Calidad (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-543",
+            "nombre": "Emprendedorismo (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-201",
+                "5-2023-202",
+                "5-2023-302",
+                "5-2023-401"
+            ],
+            "aprobadas": [
+                "5-2023-102",
+                "5-2023-201"
+            ]
+        },
+        {
+            "idMateria": "5-2023-544",
+            "nombre": "Prospectiva Profesional (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-203",
+                "5-2023-302",
+                "5-2023-407"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-545",
+            "nombre": "Informática Industrial Avanzada (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-307",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-307",
+                "5-2023-407"
+            ]
+        },
+        {
+            "idMateria": "5-2023-546",
+            "nombre": "Auditoría de SI/TI (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-304"
+            ]
+        },
+        {
+            "idMateria": "5-2023-547",
+            "nombre": "Consultoría en Negocios Digitales (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-304"
+            ]
+        },
+        {
+            "idMateria": "5-2023-548",
+            "nombre": "Creatividad e Innovación en Ingeniería (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-304"
+            ]
+        },
+        {
+            "idMateria": "5-2023-549",
+            "nombre": "Desarrollo con Tecnologías Blockchain (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-403"
+            ],
+            "aprobadas": [
+                "5-2023-206",
+                "5-2023-304"
+            ]
+        },
+        {
+            "idMateria": "5-2023-550",
+            "nombre": "Testing de Software (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-208",
+                "5-2023-402"
+            ],
+            "aprobadas": [
+                "5-2023-303",
+                "5-2023-304"
+            ]
+        },
+        {
+            "idMateria": "5-2023-551",
+            "nombre": "Decisiones en Escenarios Complejos (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-404"
+            ],
+            "aprobadas": [
+                "5-2023-303"
+            ]
+        },
+        {
+            "idMateria": "5-2023-552",
+            "nombre": "Emprendimientos Tecnológicos (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-303",
+                "5-2023-407"
+            ]
+        },
+        {
+            "idMateria": "5-2023-553",
+            "nombre": "Gerenciamiento Estratégico (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-304"
+            ]
+        },
+        {
+            "idMateria": "5-2023-554",
+            "nombre": "Green Software (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-304"
+            ],
+            "aprobadas": [
+                "5-2023-205",
+                "5-2023-206"
+            ]
+        },
+        {
+            "idMateria": "5-2023-555",
+            "nombre": "Ingeniería de Software de Fuentes Abiertas/Libres (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-304",
+                "5-2023-403"
+            ],
+            "aprobadas": [
+                "5-2023-205",
+                "5-2023-206"
+            ]
+        },
+        {
+            "idMateria": "5-2023-556",
+            "nombre": "Seguridad en el Desarrollo de Software (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-304",
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-108",
+                "5-2023-207"
+            ]
+        },
+        {
+            "idMateria": "5-2023-557",
+            "nombre": "Integración de Aplicaciones en Entorno Web (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-403"
+            ],
+            "aprobadas": [
+                "5-2023-303",
+                "5-2023-304"
+            ]
+        },
+        {
+            "idMateria": "5-2023-558",
+            "nombre": "Sistemas de Apoyo a la Gestión y a las Decisiones (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-404"
+            ],
+            "aprobadas": [
+                "5-2023-303",
+                "5-2023-307",
+                "5-2023-404"
+            ]
+        },
+        {
+            "idMateria": "5-2023-559",
+            "nombre": "Calidad de Software (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-307",
+                "5-2023-402",
+                "5-2023-407"
+            ]
+        },
+        {
+            "idMateria": "5-2023-560",
+            "nombre": "Visión por Computadora (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-301",
+                "5-2023-306",
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-106",
+                "5-2023-207",
+                "5-2023-301",
+                "5-2023-303",
+                "5-2023-306",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-561",
+            "nombre": "Bioinformática (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-401",
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-106",
+                "5-2023-204",
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-562",
+            "nombre": "Ingeniería y Desarrollo Sostenible (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-563",
+            "nombre": "Base de Datos Avanzadas (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-450"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-564",
+            "nombre": "Calidad en el Desarrollo de Software (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-448"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-565",
+            "nombre": "Desarrollo de Aplicaciones Web (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-448"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-566",
+            "nombre": "Tecnologías DLT/Blockchain y Contratos Inteligentes (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-403"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-567",
+            "nombre": "Seguridad Informática (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-207",
+                "5-2023-208",
+                "5-2023-403"
+            ],
+            "aprobadas": [
+                "5-2023-101",
+                "5-2023-102",
+                "5-2023-105",
+                "5-2023-106",
+                "5-2023-107",
+                "5-2023-108",
+                "5-2023-203"
+            ]
+        },
+        {
+            "idMateria": "5-2023-568",
+            "nombre": "Diseño de Software Basado en Arquitecturas (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-412"
+            ],
+            "aprobadas": [
+                "5-2023-208",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-569",
+            "nombre": "Administración de Servicios en Linux (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-207",
+                "5-2023-403"
+            ],
+            "aprobadas": [
+                "5-2023-305"
+            ]
+        },
+        {
+            "idMateria": "5-2023-570",
+            "nombre": "Evaluación e Innovación de Tecnologías desde la Perspectiva CTS (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-203",
+                "5-2023-302"
+            ],
+            "aprobadas": [
+                "5-2023-108"
+            ]
+        },
+        {
+            "idMateria": "5-2023-571",
+            "nombre": "Informática Industrial (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-404"
+            ],
+            "aprobadas": [
+                "5-2023-206",
+                "5-2023-208"
+            ]
+        },
+        {
+            "idMateria": "5-2023-572",
+            "nombre": "Redes Neuronales Profundas (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-104",
+                "5-2023-304",
+                "5-2023-501"
+            ],
+            "aprobadas": [
+                "5-2023-106",
+                "5-2023-306"
+            ]
+        },
+        {
+            "idMateria": "5-2023-573",
+            "nombre": "Seguridad en Redes (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-304",
+                "5-2023-403",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-208",
+                "5-2023-305"
+            ]
+        },
+        {
+            "idMateria": "5-2023-574",
+            "nombre": "Taller de Auditoría en Sistemas de Información (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-207",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-302"
+            ]
+        },
+        {
+            "idMateria": "5-2023-575",
+            "nombre": "Modelado y Optimización de Sistemas (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-404"
+            ],
+            "aprobadas": [
+                "5-2023-306"
+            ]
+        },
+        {
+            "idMateria": "5-2023-576",
+            "nombre": "Análisis de Datos: Aplicaciones con Minería de Datos (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-577",
+            "nombre": "Big Data: Arq. y Estrat. para el Análisis de Datos Masivos (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-578",
+            "nombre": "Consultoria en Seguridad de SI/TI (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-579",
+            "nombre": "Inteligencia de Negocios (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-580",
+            "nombre": "Servicios de Software (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-581",
+            "nombre": "Gestión de la Calidad (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-582",
+            "nombre": "Desarrollo de Software Multi-Pantalla (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-583",
+            "nombre": "Neurociencia Aplicada (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-584",
+            "nombre": "Arquitecturas de Software Concurrente (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-585",
+            "nombre": "Tecnologías Avanzadas en Redes (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-586",
+            "nombre": "Tecnologías Aplicadas a Soluciones de Datos (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-587",
+            "nombre": "Sistemas de Costos y Presupuestos (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-588",
+            "nombre": "Sistemas Avanzados de Servicios Tecnológicos y Telecomunicaciones (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-589",
+            "nombre": "Procesamiento de Imágenes y Señales (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-590",
+            "nombre": "Plataformas de Virtualización (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-591",
+            "nombre": "Pericias Informáticas (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-592",
+            "nombre": "Modelos Organizacionales (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-593",
+            "nombre": "Marcos de Referencia de Calidad en TI (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-594",
+            "nombre": "Inteligencia Artifical Avanzada (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-595",
+            "nombre": "Gestión de la Transformación Organizacional (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-596",
+            "nombre": "Gestión de Empresas Digitales (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-597",
+            "nombre": "Gestión Comercial de Soluciones de Tecnologías de la Información (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-598",
+            "nombre": "Economía del Conocimiento (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-599",
+            "nombre": "Dirección Estratégica (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-600",
+            "nombre": "Desarrollo de Modelos Analíticos (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-601",
+            "nombre": "Desarrollo de Aplicaciones para Dispositivos Móviles(Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-602",
+            "nombre": "Ciudades Digitales y Gobierno Electrónico (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-603",
+            "nombre": "Ciberseguridad Industrial (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-604",
+            "nombre": "Gestión Operativa y Seguridad en Redes (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": [
+                "5-2023-403"
+            ]
+        },
+        {
+            "idMateria": "5-2023-605",
+            "nombre": "Fabricación Aditiva (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207"
+            ]
+        },
+        {
+            "idMateria": "5-2023-606",
+            "nombre": "Informática en la Administración Pública (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-401"
+            ],
+            "aprobadas": [
+                "5-2023-407"
+            ]
+        },
+        {
+            "idMateria": "5-2023-607",
+            "nombre": "Sistemas de Información Integrados para la Industria (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-302",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-608",
+            "nombre": "Infraestructura Cloud Avanzada (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-307",
+                "5-2023-403"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-609",
+            "nombre": "Calidad y Testing de Software (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-108",
+                "5-2023-304",
+                "5-2023-307",
+                "5-2023-402"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-610",
+            "nombre": "Internet de las Cosas y Aplicaciones en Tiempo Real (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-106",
+                "5-2023-107",
+                "5-2023-207",
+                "5-2023-403"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-611",
+            "nombre": "Habilidades Blandas (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-407"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-612",
+            "nombre": "Idioma Extranjero Avanzado (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-613",
+            "nombre": "Arquitectura de la Información (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-614",
+            "nombre": "Arquitectura de la Información en Entornos Web (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-615",
+            "nombre": "Aseguramiento de la Calidad del Software (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-616",
+            "nombre": "Comportamiento Organizacional (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-620",
+            "nombre": "Modelos Probabilísticos Gráficos (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-621",
+            "nombre": "Nuevas Tecnologías de Redes (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-622",
+            "nombre": "Organización Industrial Empresarial (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-623",
+            "nombre": "Razonamiento Probabilístico (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-625",
+            "nombre": "Sistemas de Transmisión de Datos (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-626",
+            "nombre": "Taller de Informática Forense (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-630",
+            "nombre": "Auditoria de Sistemas de Información (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-407"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-631",
+            "nombre": "Gestión Avanzada de Datos (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-403"
+            ],
+            "aprobadas": [
+                "5-2023-303"
+            ]
+        },
+        {
+            "idMateria": "5-2023-632",
+            "nombre": "Desarrollo de Aplicaciones Cliente-Servidor (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-403"
+            ],
+            "aprobadas": [
+                "5-2023-303"
+            ]
+        },
+        {
+            "idMateria": "5-2023-633",
+            "nombre": "Creatividad y Desarrollo de Entornos Virtuales (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-304"
+            ]
+        },
+        {
+            "idMateria": "5-2023-634",
+            "nombre": "Dirección de Rescursos Humanos (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-635",
+            "nombre": "Tecnologías de Desarrollo de Aplicaciones Moviles (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-636",
+            "nombre": "Taller de Desarrollo y Elaboración de Documentación Técnica (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-208"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-637",
+            "nombre": "Administración y Seguridad de Infraestructuras de Red (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": [
+                "5-2023-403"
+            ]
+        },
+        {
+            "idMateria": "5-2023-638",
+            "nombre": "Sistemas Informáticos Industriales (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-202",
+                "5-2023-303",
+                "5-2023-306",
+                "5-2023-307",
+                "5-2023-406"
+            ],
+            "aprobadas": [
+                "5-2023-201",
+                "5-2023-202",
+                "5-2023-203",
+                "5-2023-204",
+                "5-2023-205",
+                "5-2023-206",
+                "5-2023-207",
+                "5-2023-208",
+                "5-2023-209",
+                "5-2023-210",
+                "5-2023-211",
+                "5-2023-212",
+                "5-2023-213",
+                "5-2023-214",
+                "5-2023-215",
+                "5-2023-216",
+                "5-2023-306",
+                "5-2023-406"
+            ]
+        },
+        {
+            "idMateria": "5-2023-639",
+            "nombre": "Redes Neuronales (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-202",
+                "5-2023-406"
+            ],
+            "aprobadas": [
+                "5-2023-202",
+                "5-2023-406"
+            ]
+        },
+        {
+            "idMateria": "5-2023-640",
+            "nombre": "Procesamiento Digital de Imágenes (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-202",
+                "5-2023-301",
+                "5-2023-306",
+                "5-2023-406"
+            ],
+            "aprobadas": [
+                "5-2023-202",
+                "5-2023-301",
+                "5-2023-306",
+                "5-2023-406"
+            ]
+        },
+        {
+            "idMateria": "5-2023-641",
+            "nombre": "Laboratorio de Microcontroladores y DSP (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-107",
+                "5-2023-306",
+                "5-2023-406"
+            ],
+            "aprobadas": [
+                "5-2023-107",
+                "5-2023-306",
+                "5-2023-406"
+            ]
+        },
+        {
+            "idMateria": "5-2023-642",
+            "nombre": "Ingeniería de Mantenimiento y Confiabiidad (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-201",
+                "5-2023-202",
+                "5-2023-301",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-643",
+            "nombre": "Centrales Nucleares (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": [
+                "5-2023-201",
+                "5-2023-202"
+            ]
+        },
+        {
+            "idMateria": "5-2023-644",
+            "nombre": "Agilidad y Gestión de Productos Digitales (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-304",
+                "5-2023-402",
+                "5-2023-407"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-645",
+            "nombre": "Diseño de Redes Lan Modernas (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-403"
+            ],
+            "aprobadas": [
+                "5-2023-305"
+            ]
+        },
+        {
+            "idMateria": "5-2023-646",
+            "nombre": "Virtualización Consolidación de Servidores (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-403"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-647",
+            "nombre": "Capital Humano y Gestión del Conocimiento (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-407"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-648",
+            "nombre": "Nuevas Tecnologías de Redes Wan (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-305",
+                "5-2023-403"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-649",
+            "nombre": "Testing Automatizado de Software (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-303",
+                "5-2023-304",
+                "5-2023-307"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-650",
+            "nombre": "Innovación y Gestión de la Tecnología (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-407"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-651",
+            "nombre": "Aprendizaje Automático (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-652",
+            "nombre": "Aprendizaje Profundo (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-653",
+            "nombre": "Aspectos legales en la Ciberseguridad (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-654",
+            "nombre": "Ética y Legislacion en IA (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-655",
+            "nombre": "Gobierno y Gestión de la Ciberseguridad (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-656",
+            "nombre": "Hacking Ético (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-657",
+            "nombre": "IA Generativa (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-658",
+            "nombre": "Paradigmas Alternativos de Inteligencia Artificial (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-659",
+            "nombre": "Seguridad en Infraestructura (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-405",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-660",
+            "nombre": "Testing y Calidad de Software (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-403",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-204",
+                "5-2023-301",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-661",
+            "nombre": "Sector Público y Privado. Interacciones y Desafíos (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-401",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-302"
+            ]
+        },
+        {
+            "idMateria": "5-2023-662",
+            "nombre": "Conducción y Gestión en la Ingeniería (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-401",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-302"
+            ]
+        },
+        {
+            "idMateria": "5-2023-663",
+            "nombre": "Robótica (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": [
+                "5-2023-102",
+                "5-2023-201"
+            ]
+        },
+        {
+            "idMateria": "5-2023-664",
+            "nombre": "Inglés Para Profesionales (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-104",
+                "5-2023-204"
+            ],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-665",
+            "nombre": "Teleinformática IoT (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-107",
+                "5-2023-207",
+                "5-2023-305"
+            ],
+            "aprobadas": [
+                "5-2023-103",
+                "5-2023-202"
+            ]
+        },
+        {
+            "idMateria": "5-2023-666",
+            "nombre": "Competencias Ingenieriles (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-668",
+            "nombre": "Introducción al Análisis de Datos (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-306",
+                "5-2023-307"
+            ],
+            "aprobadas": [
+                "5-2023-206",
+                "5-2023-301",
+                "5-2023-303"
+            ]
+        },
+        {
+            "idMateria": "5-2023-669",
+            "nombre": "Ingeniería de Datos (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-403",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-670",
+            "nombre": "Gestión de Arquitecturas de Implementación Tecnólogica (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-402",
+                "5-2023-407"
+            ],
+            "aprobadas": [
+                "5-2023-207",
+                "5-2023-302",
+                "5-2023-303",
+                "5-2023-307"
+            ]
+        },
+        {
+            "idMateria": "5-2023-671",
+            "nombre": "Negociación (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-672",
+            "nombre": "Oratoria y Técnicas de Expresión (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-673",
+            "nombre": "Management de RRHH (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-674",
+            "nombre": "Decisiones de Inversión (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-675",
+            "nombre": "Liderazgo, Conflictos y Negociación (Elec.)",
+            "nivel": 5,
+            "cursadas": [],
+            "aprobadas": []
+        },
+        {
+            "idMateria": "5-2023-676",
+            "nombre": "Transformación Digital con IA Aplicada (Elec.)",
+            "nivel": 5,
+            "cursadas": [
+                "5-2023-206",
+                "5-2023-303"
+            ],
+            "aprobadas": [
+                "5-2023-305"
+            ]
+        }
+    ]
+}

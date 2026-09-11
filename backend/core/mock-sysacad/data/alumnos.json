@@ -1,0 +1,214 @@
+[
+  {
+    "legajo": "48293",
+    "nombre": "Sofía Martínez",
+    "correo": "smartinez@frd.utn.edu.ar",
+    "carrera": "ISI",
+    "cursadas": [],
+    "aprobadas": []
+  },
+  {
+    "legajo": "47110",
+    "nombre": "Nicolás Fernández",
+    "correo": "nfernandez@frd.utn.edu.ar",
+    "carrera": "ISI",
+    "cursadas": [
+      "5-2023-104",
+      "5-2023-105"
+    ],
+    "aprobadas": [
+      "5-2023-101",
+      "5-2023-102",
+      "5-2023-103"
+    ]
+  },
+  {
+    "legajo": "45820",
+    "nombre": "Camila Rodríguez",
+    "correo": "crodriguez@frd.utn.edu.ar",
+    "carrera": "ISI",
+    "cursadas": [
+      "5-2023-201",
+      "5-2023-202"
+    ],
+    "aprobadas": [
+      "5-2023-101",
+      "5-2023-102",
+      "5-2023-103",
+      "5-2023-104",
+      "5-2023-105",
+      "5-2023-106",
+      "5-2023-107",
+      "5-2023-108"
+    ]
+  },
+  {
+    "legajo": "44005",
+    "nombre": "Tomás López",
+    "correo": "tlopez@frd.utn.edu.ar",
+    "carrera": "ISI",
+    "cursadas": [
+      "5-2023-203",
+      "5-2023-204",
+      "5-2023-205"
+    ],
+    "aprobadas": [
+      "5-2023-101",
+      "5-2023-102",
+      "5-2023-103",
+      "5-2023-104",
+      "5-2023-105",
+      "5-2023-106",
+      "5-2023-107",
+      "5-2023-108",
+      "5-2023-201",
+      "5-2023-202"
+    ]
+  },
+  {
+    "legajo": "42117",
+    "nombre": "Valentina Torres",
+    "correo": "vtorres@frd.utn.edu.ar",
+    "carrera": "ISI",
+    "cursadas": [
+      "5-2023-300",
+      "5-2023-301"
+    ],
+    "aprobadas": [
+      "5-2023-101",
+      "5-2023-102",
+      "5-2023-103",
+      "5-2023-104",
+      "5-2023-105",
+      "5-2023-106",
+      "5-2023-107",
+      "5-2023-108",
+      "5-2023-201",
+      "5-2023-202",
+      "5-2023-203",
+      "5-2023-204",
+      "5-2023-205",
+      "5-2023-206",
+      "5-2023-207",
+      "5-2023-208",
+      "5-2023-209",
+      "5-2023-210",
+      "5-2023-211",
+      "5-2023-212",
+      "5-2023-213",
+      "5-2023-214",
+      "5-2023-215",
+      "5-2023-216"
+    ]
+  },
+  {
+    "legajo": "49301",
+    "nombre": "Lucía Fernández",
+    "correo": "lfernandez@frd.utn.edu.ar",
+    "carrera": "QUI",
+    "cursadas": [],
+    "aprobadas": []
+  },
+  {
+    "legajo": "46215",
+    "nombre": "Franco Giménez",
+    "correo": "fgimenez@frd.utn.edu.ar",
+    "carrera": "QUI",
+    "cursadas": [
+      "QUI-2023-206",
+      "QUI-2023-207"
+    ],
+    "aprobadas": [
+      "QUI-2023-101",
+      "QUI-2023-102",
+      "QUI-2023-103",
+      "QUI-2023-104",
+      "QUI-2023-105",
+      "QUI-2023-106",
+      "QUI-2023-107",
+      "QUI-2023-108"
+    ]
+  },
+  {
+    "legajo": "48870",
+    "nombre": "Ana Belén Suárez",
+    "correo": "asuarez@frd.utn.edu.ar",
+    "carrera": "ELE",
+    "cursadas": [],
+    "aprobadas": []
+  },
+  {
+    "legajo": "45390",
+    "nombre": "Matías Herrera",
+    "correo": "mherrera@frd.utn.edu.ar",
+    "carrera": "ELE",
+    "cursadas": [
+      "ELE-2023-303",
+      "ELE-2023-304"
+    ],
+    "aprobadas": [
+      "ELE-2023-101",
+      "ELE-2023-102",
+      "ELE-2023-103",
+      "ELE-2023-104",
+      "ELE-2023-105",
+      "ELE-2023-106",
+      "ELE-2023-107",
+      "ELE-2023-108",
+      "ELE-2023-201",
+      "ELE-2023-202",
+      "ELE-2023-203",
+      "ELE-2023-204",
+      "ELE-2023-205",
+      "ELE-2023-206",
+      "ELE-2023-207",
+      "ELE-2023-208",
+      "ELE-2023-209"
+    ]
+  },
+  {
+    "legajo": "49102",
+    "nombre": "Ornella Castro",
+    "correo": "ocastro@frd.utn.edu.ar",
+    "carrera": "MEC",
+    "cursadas": [],
+    "aprobadas": []
+  },
+  {
+    "legajo": "44780",
+    "nombre": "Bruno Acosta",
+    "correo": "bacosta@frd.utn.edu.ar",
+    "carrera": "MEC",
+    "cursadas": [
+      "MEC-2023-401",
+      "MEC-2023-402"
+    ],
+    "aprobadas": [
+      "MEC-2023-101",
+      "MEC-2023-102",
+      "MEC-2023-103",
+      "MEC-2023-104",
+      "MEC-2023-105",
+      "MEC-2023-106",
+      "MEC-2023-107",
+      "MEC-2023-108",
+      "MEC-2023-201",
+      "MEC-2023-202",
+      "MEC-2023-203",
+      "MEC-2023-204",
+      "MEC-2023-205",
+      "MEC-2023-206",
+      "MEC-2023-207",
+      "MEC-2023-208",
+      "MEC-2023-301",
+      "MEC-2023-302",
+      "MEC-2023-303",
+      "MEC-2023-304",
+      "MEC-2023-305",
+      "MEC-2023-306",
+      "MEC-2023-307",
+      "MEC-2023-308",
+      "MEC-2023-309"
+    ]
+  }
+]
