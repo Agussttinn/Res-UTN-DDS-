@@ -1,6 +1,6 @@
 from django.shortcuts import render
 import requests
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import check_password, make_password
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -75,6 +75,29 @@ class PonderacionListCreate(generics.ListCreateAPIView):
 class PonderacionDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Ponderacion.objects.all()
     serializer_class = PonderacionSerializer
+
+class LoginAlumno(APIView):
+    def post(self,request):
+        legajo = request.data.get('legajo')
+        contrasena = request.data.get('contraseña')
+
+        usuario = Usuario.objects.filter(legajo=legajo).first()
+        if not usuario:
+            return Response(
+                {"error": "No existe un usuario con ese legajo"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        if not check_password(contrasena, usuario.contraseña):
+            return Response(
+                {"error": "Contraseña incorrecta"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        return Response(
+            {"message": "Login exitoso"},
+            status=status.HTTP_200_OK
+        )
 
 
 class RegistroAlumno(APIView):
