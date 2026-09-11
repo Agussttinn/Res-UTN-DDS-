@@ -20,6 +20,7 @@ urlpatterns = [
 
     path('ponderaciones/', views.PonderacionListCreate.as_view()),
     path('ponderaciones/<int:pk>/', views.PonderacionDetail.as_view()),
-    
+
+    path('login/', views.LoginAlumno.as_view()),
     path('registro/', views.RegistroAlumno.as_view()),
 ]
