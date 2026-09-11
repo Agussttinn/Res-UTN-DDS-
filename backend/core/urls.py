@@ -10,6 +10,7 @@ urlpatterns = [
 
     path('materias/', views.MateriaListCreate.as_view()),
     path('materias/<int:pk>/', views.MateriaDetail.as_view()),
+    path('materias/sincronizar/<str:carrera>/', views.MateriaSincronizar.as_view()),
 
     path('materiales/', views.MaterialListCreate.as_view()),
     path('materiales/<int:pk>/', views.MaterialDetail.as_view()),

@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 # Create your views here.
 from rest_framework import generics
+from . import sysacad_client, sysacad_sync
 from .models import Usuario, Especialidad, Materia, Material, ClaseApoyo, Ponderacion
 from .serializer import (
     UsuarioSerializer,
@@ -45,6 +46,25 @@ class MateriaListCreate(generics.ListCreateAPIView):
 class MateriaDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Materia.objects.all()
     serializer_class = MateriaSerializer
+
+
+class MateriaSincronizar(APIView):
+    """Trae el plan de estudio de una carrera desde SySACAD y actualiza
+    Especialidad/Materia locales. Devuelve las materias ya en el formato
+    habitual de la API (MateriaSerializer), no el formato de SySACAD."""
+
+    def post(self, request, carrera):
+        try:
+            materias = sysacad_sync.sync_materias(carrera.upper())
+        except sysacad_client.PlanNoEncontrado:
+            return Response(
+                {"error": f'No existe un plan de estudio para la carrera "{carrera}" en SySACAD'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except sysacad_client.SysacadError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_502_BAD_GATEWAY)
+
+        return Response(MateriaSerializer(materias, many=True).data, status=status.HTTP_200_OK)
 
 
 class MaterialListCreate(generics.ListCreateAPIView):

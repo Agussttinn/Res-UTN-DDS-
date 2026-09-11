@@ -16,6 +16,8 @@ class Usuario(models.Model):
 
 class Especialidad(models.Model):
     nombre = models.CharField(max_length=100)
+    # Código de carrera en SySACAD (ej. "ISI", "QUI"), usado para sincronizar el plan de estudio. Null si la especialidad no viene de SySACAD.
+    codigo_sysacad = models.CharField(max_length=10, unique=True, null=True, blank=True)
     def __str__(self):
         return self.nombre
 
@@ -23,6 +25,8 @@ class Materia(models.Model):
     nombre = models.CharField(max_length=100)
     anio = models.IntegerField()
     especialidad = models.ForeignKey(Especialidad, on_delete=models.PROTECT, related_name='materias')#aca va a buscar en la tabla Especialidad y va a traer el id de la especialidad que le corresponde a la materia. El related_name es para poder acceder a las materias desde la especialidad.
+    # idMateria en SySACAD (ej. "QUI-2023-301"), usado para sincronizar y para consultar el estado de un alumno en esta materia. Null si la materia no viene de SySACAD.
+    id_sysacad = models.CharField(max_length=30, unique=True, null=True, blank=True)
     def __str__(self):
         return self.nombre
 
