@@ -1,0 +1,46 @@
+<section class="space-y-6">
+  <div class="border-b pb-4">
+    <h1 class="text-2xl font-black text-slate-800">Panel de Moderación</h1>
+    <p class="text-xs sm:text-sm text-slate-500">Revisión de documentos compartidos por la comunidad estudiantil.</p>
+  </div>
+
+  @if (cargando) {
+    <div class="text-center py-12 text-slate-400">Consultando documentos pendientes...</div>
+  } @else if (pendientes.length === 0) {
+    <div class="text-center py-12 bg-white rounded-xl border border-slate-200 text-slate-500">
+      No hay documentos pendientes de revisión.
+    </div>
+  } @else {
+    <div class="space-y-3">
+      @for (item of pendientes; track item.id) {
+        <div class="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row justify-between sm:items-center gap-4 shadow-sm">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 uppercase">
+                {{ item.tipo }}
+              </span>
+              <span class="text-xs text-slate-500">{{ item.materia_nombre }}</span>
+            </div>
+            <h3 class="font-bold text-slate-800">{{ item.titulo }}</h3>
+            <p class="text-xs text-slate-400 mt-0.5">Enviado por {{ item.autor_username || 'Usuario' }} el {{ item.fecha_carga | date:'shortDate' }}</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a [href]="item.archivo" target="_blank"
+               class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">
+              Previsualizar
+            </a>
+            <button (click)="moderar(item.id, 'rechazar')"
+                    class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600">
+              Rechazar
+            </button>
+            <button (click)="moderar(item.id, 'aprobar')"
+                    class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
+              Aprobar
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</section>

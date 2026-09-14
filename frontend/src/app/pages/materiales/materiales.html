@@ -1,1 +1,133 @@
-<p>materiales works!</p>
+<section class="space-y-6">
+  <!-- Encabezado y Acciones -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
+    <div>
+      <h1 class="text-2xl font-black text-slate-800">Repositorio de Apuntes</h1>
+      <p class="text-xs sm:text-sm text-slate-500">Documentos verificados por tutores y la comunidad.</p>
+    </div>
+    <button (click)="mostrarModal = true"
+            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm transition-all flex items-center gap-2">
+      <span>➕</span> Compartir Apunte
+    </button>
+  </div>
+
+  <!-- Barra de Filtros -->
+  <div class="flex flex-wrap gap-2 items-center">
+    <button (click)="filtroTipo = ''"
+            [class]="filtroTipo === '' ? 'bg-slate-800 text-white' : 'bg-white text-slate-700 border border-slate-200'"
+            class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+      Todos
+    </button>
+    <button (click)="filtroTipo = 'RESUMEN'"
+            [class]="filtroTipo === 'RESUMEN' ? 'bg-blue-600 text-white' : 'bg-white text-slate-700 border border-slate-200'"
+            class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+      Resúmenes
+    </button>
+    <button (click)="filtroTipo = 'PARCIAL'"
+            [class]="filtroTipo === 'PARCIAL' ? 'bg-amber-600 text-white' : 'bg-white text-slate-700 border border-slate-200'"
+            class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+      Parciales
+    </button>
+    <button (click)="filtroTipo = 'FINAL'"
+            [class]="filtroTipo === 'FINAL' ? 'bg-purple-600 text-white' : 'bg-white text-slate-700 border border-slate-200'"
+            class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+      Finales
+    </button>
+  </div>
+
+  <!-- Grilla de Tarjetas -->
+  @if (cargando) {
+    <div class="text-center py-12 text-slate-400">Buscando recursos...</div>
+  } @else if (materialesFiltrados.length === 0) {
+    <div class="text-center py-12 bg-white rounded-xl border border-slate-200 text-slate-500">
+      No hay apuntes disponibles para este filtro.
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      @for (item of materialesFiltrados; track item.id) {
+        <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all">
+          <div>
+            <div class="flex justify-between items-start mb-2">
+              <span class="text-[10px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                {{ item.tipo }}
+              </span>
+              <span class="text-xs text-slate-400">{{ item.fecha_carga | date:'shortDate' }}</span>
+            </div>
+            <h3 class="font-bold text-slate-800 text-base leading-tight mb-1">{{ item.titulo }}</h3>
+            <p class="text-xs text-slate-500 mb-2">{{ item.materia_nombre || 'Asignatura' }}</p>
+            <p class="text-[11px] text-slate-400">Subido por: {{ item.autor_username || 'Estudiante' }}</p>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+            <button (click)="darLike(item)"
+                    class="flex items-center gap-1.5 text-xs text-slate-600 hover:text-red-600 transition-colors">
+              <span>❤️</span>
+              <span class="font-semibold">{{ item.likes_count || 0 }}</span>
+            </button>
+
+            <a [href]="item.archivo" target="_blank" download
+               class="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-medium px-3 py-1.5 rounded-md transition-colors flex items-center gap-1">
+              <span>📥</span> Descargar
+            </a>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Modal Cargar Recurso -->
+  @if (mostrarModal) {
+    <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+        <h2 class="text-lg font-bold text-slate-800">Compartir Documento</h2>
+        
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Título</label>
+            <input type="text" [(ngModel)]="nuevoMaterial.titulo" placeholder="Ej: Resumen U1 y U2 - Parcial"
+                   class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Materia</label>
+            <select [(ngModel)]="nuevoMaterial.materia"
+                    class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500">
+              <option [ngValue]="null">Seleccionar materia...</option>
+              @for (m of materias; track m.id) {
+                <option [ngValue]="m.id">{{ m.nombre }}</option>
+              }
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo de Recurso</label>
+            <select [(ngModel)]="nuevoMaterial.tipo"
+                    class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500">
+              <option value="RESUMEN">Resumen</option>
+              <option value="PARCIAL">Modelo de Parcial</option>
+              <option value="FINAL">Modelo de Final</option>
+              <option value="GUIA">Guía Práctica</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Archivo (PDF o Imagen)</label>
+            <input type="file" (change)="onFileSelected($event)" accept=".pdf,.png,.jpg,.jpeg"
+                   class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button (click)="mostrarModal = false"
+                  class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg">
+            Cancelar
+          </button>
+          <button (click)="subirRecurso()"
+                  class="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm">
+            Enviar a Revisión
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</section>

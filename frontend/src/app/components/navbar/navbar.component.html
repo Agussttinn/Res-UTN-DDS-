@@ -1,0 +1,44 @@
+<header class="bg-blue-700 text-white shadow-md sticky top-0 z-50">
+  <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
+    <a routerLink="/" class="text-xl font-bold tracking-wide flex items-center gap-2">
+      <span>🎓 RES-UTN</span>
+    </a>
+
+    <nav class="hidden md:flex gap-6 font-medium text-sm">
+      <a routerLink="/admin" routerLinkActive="text-yellow-300 font-semibold" class="hover:text-blue-200">Moderación</a>
+      <a routerLink="/materias" routerLinkActive="text-yellow-300 font-semibold" class="hover:text-blue-200">Materias</a>
+      <a routerLink="/materiales" routerLinkActive="text-yellow-300 font-semibold" class="hover:text-blue-200">Apuntes</a>
+      <a routerLink="/clases" routerLinkActive="text-yellow-300 font-semibold" class="hover:text-blue-200">Clases de Apoyo</a>
+    </nav>
+
+    <div class="flex items-center gap-3">
+      @if (api.isLoggedIn()) {
+        <button (click)="cerrarSesion()" 
+                class="bg-blue-800 hover:bg-red-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors">
+          Cerrar Sesión
+        </button>
+      } @else {
+        <a routerLink="/login" 
+           class="bg-blue-800 hover:bg-blue-900 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors">
+          Iniciar Sesión
+        </a>
+      }
+    </div>
+  </div>
+
+  <!-- Bottom Navigation para Mobile -->
+  <nav class="md:hidden flex justify-around bg-blue-800 py-2 border-t border-blue-600 text-xs text-blue-100">
+    <a routerLink="/admin" routerLinkActive="text-white font-bold" class="flex flex-col items-center">
+  <span>🛡️</span> Admin
+  </a>
+    <a routerLink="/materias" routerLinkActive="text-white font-bold" class="flex flex-col items-center">
+      <span>📚</span> Materias
+    </a>
+    <a routerLink="/materiales" routerLinkActive="text-white font-bold" class="flex flex-col items-center">
+      <span>📄</span> Apuntes
+    </a>
+    <a routerLink="/clases" routerLinkActive="text-white font-bold" class="flex flex-col items-center">
+      <span>👥</span> Tutorías
+    </a>
+  </nav>
+</header>

@@ -1,1 +1,54 @@
-<p>clases-apoyo works!</p>
+<section class="space-y-6">
+  <div class="border-b pb-4">
+    <h1 class="text-2xl font-black text-slate-800">Cronograma de Tutorías</h1>
+    <p class="text-xs sm:text-sm text-slate-500">Clases presenciales y virtuales de acompañamiento académico.</p>
+  </div>
+
+  @if (cargando) {
+    <div class="text-center py-12 text-slate-400">Buscando clases de apoyo...</div>
+  } @else if (error) {
+    <div class="p-4 bg-red-100 text-red-700 rounded-lg text-sm">
+      No se pudo obtener el cronograma. Verificá la conexión con la API.
+    </div>
+  } @else if (clases.length === 0) {
+    <div class="text-center py-12 bg-white rounded-xl border border-slate-200 text-slate-500">
+      No hay sesiones de apoyo programadas por el momento.
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      @for (clase of clases; track clase.id) {
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <div>
+            <div class="flex justify-between items-start mb-2">
+              <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full border" [ngClass]="getEstadoBadge(clase.estado)">
+                {{ clase.estado || 'PROGRAMADA' }}
+              </span>
+              <span class="text-xs text-slate-400 font-mono">{{ clase.fecha | date:'dd/MM/yyyy' }}</span>
+            </div>
+
+            <h3 class="text-lg font-bold text-slate-800">{{ clase.materia_nombre || 'Asignatura' }}</h3>
+            <p class="text-xs text-slate-500 mt-1">Dictada por: <span class="font-medium text-slate-700">{{ clase.tutor_nombre || 'Tutor Asignado' }}</span></p>
+
+            <div class="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100">
+              <div>
+                <span class="block text-[10px] text-slate-400 font-semibold uppercase">Horario</span>
+                <span class="font-medium">{{ clase.hora_inicio }} - {{ clase.hora_fin }} hs</span>
+              </div>
+              <div>
+                <span class="block text-[10px] text-slate-400 font-semibold uppercase">Ubicación / Aula</span>
+                <span class="font-medium">{{ clase.aula || 'A confirmar' }}</span>
+              </div>
+            </div>
+          </div>
+
+          @if (clase.enlace_virtual) {
+            <a [href]="clase.enlace_virtual" target="_blank"
+               class="mt-4 text-center bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2 rounded-lg text-xs transition-colors">
+              Unirse a reunión virtual
+            </a>
+          }
+        </div>
+      }
+    </div>
+  }
+</section>
