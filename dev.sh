@@ -37,8 +37,10 @@ if [ ! -x "$ROOT_DIR/backend/DSWenv/bin/python" ]; then
 fi
 
 # Backend Django (uso el python del venv directo, sin necesidad de "activate")
+# PYTHONUNBUFFERED=1 evita que Python bufferee su salida al pasar por el pipe
+# de abajo -- sin esto, los logs de cada request se ven con retraso o no se ven.
 run_prefixed "$COLOR_BACK" BACKEND \
-    "$ROOT_DIR/backend/DSWenv/bin/python" "$ROOT_DIR/backend/manage.py" runserver &
+    env PYTHONUNBUFFERED=1 "$ROOT_DIR/backend/DSWenv/bin/python" "$ROOT_DIR/backend/manage.py" runserver &
 
 # Mock de SysAcad
 run_prefixed "$COLOR_MOCK" MOCK \
