@@ -220,3 +220,44 @@ Si no tira errores y podés entrar a `http://127.0.0.1:8000/admin/`, el entorno 
 - Si instalás un paquete nuevo con `pip install`, actualizá el archivo de dependencias antes de subir tu commit: `pip freeze > requirements.txt`.
 - El `.env.example` sí se sube (es solo una plantilla sin datos reales) — si agregás una variable de entorno nueva, agregala también ahí para que el resto del equipo sepa que existe.
 - Cada uno usa su propia contraseña local de MariaDB en su `.env`; no hace falta que todos coincidan.
+
+
+
+### 🚀 Levantar todo el entorno junto (backend + mock-sysacad + frontend)
+
+Con `dev.sh` (en la raíz del repo) se levantan los tres servicios con un solo comando.
+Requiere Node.js y Python ya instalados, y (en Linux/Mac/WSL) usar `bash`.
+
+#### Primera vez (instalar dependencias de cada parte)
+
+1. **Backend** — crear el entorno virtual e instalar dependencias:
+   ```bash
+   cd backend
+   python3 -m venv DSWenv
+   source DSWenv/bin/activate
+   pip install -r requirements.txt
+   Configurar el .env (copiando .env.example) y correr las migraciones:
+cp .env.example .env    # completar con tus datos de MariaDB
+python manage.py migrate
+
+2. Mock de SysAcad — instalar sus dependencias de Node:
+cd backend/core/mock-sysacad
+npm install
+3. Frontend — instalar sus dependencias de Node:
+cd frontend
+npm install
+
+Uso diario (con todo ya instalado)
+
+Desde la raíz del repo:
+./dev.sh
+Esto levanta los tres al mismo tiempo, con la salida de cada uno identificada por color:
+- [BACKEND] (azul) → Django en http://127.0.0.1:8000
+- [MOCK] (amarillo) → mock de SysAcad en http://localhost:4000
+- [FRONTEND] (verde) → Angular en http://localhost:4200
+
+Para cortar los tres juntos: Ctrl+C en esa misma terminal.
+
+▎ Si el script no tiene permiso de ejecución (Permission denied), correr una vez:
+▎ chmod +x dev.sh
+▎ En Windows sin WSL, dev.sh no corre directo (es un script de bash) — hay que usar Git Bash, WSL, o levantar los tres servicios a mano en terminales separadas.
