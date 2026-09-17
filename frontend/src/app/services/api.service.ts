@@ -23,7 +23,7 @@ export class ApiService {
   }
 
   getClasesApoyo(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/clases/`);
+    return this.http.get<any[]>(`${this.baseUrl}/clases-apoyo/`);
   }
 
   darLike(materialId: number): Observable<any> {
