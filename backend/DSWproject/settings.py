@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 import os
 from pathlib import Path
+
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -23,13 +25,24 @@ load_dotenv(BASE_DIR / '.env')
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-wd#0p8fk9t_l33tn4xd)3dz50!by193@gs)wccz8n@g$i(ua4='
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Se controla desde el .env (DEBUG=False en producción). Por defecto: desarrollo local.
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
-ALLOWED_HOSTS = []
+# SECURITY WARNING: keep the secret key used in production secret!
+# También firma los tokens de login (JWT), así que NO puede estar publicada en el repo.
+# En desarrollo (DEBUG=True) se usa una clave local por defecto; en producción es obligatoria.
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'django-insecure-solo-para-desarrollo-local'
+    else:
+        raise ImproperlyConfigured('Falta la variable SECRET_KEY en el .env (obligatoria si DEBUG=False).')
+
+ALLOWED_HOSTS = [host.strip() for host in os.environ.get('ALLOWED_HOSTS', '').split(',') if host.strip()]
+
+# URL base de la API de SySACAD (hoy, el mock de backend/core/mock-sysacad).
+SYSACAD_API_URL = os.environ.get('SYSACAD_API_URL', 'http://localhost:4000').rstrip('/')
 
 
 # Application definition
@@ -135,7 +148,26 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Archivos subidos por los usuarios (apuntes, resúmenes, parciales...). La carpeta media/ está en el .gitignore.
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# API REST: todo requiere estar logueado (token JWT) salvo lo que cada vista declare público (login y registro).
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': ['core.auth.JWTAuthentication'],
+    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated'],
+    # Límite de intentos por IP, para frenar la fuerza bruta de contraseñas y el abuso del registro.
+    'DEFAULT_THROTTLE_RATES': {
+        'login': '10/min',
+        'registro': '10/min',
+    },
+}
+
+# Duración del token de login, en horas.
+JWT_EXPIRACION_HORAS = 8

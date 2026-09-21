@@ -1,6 +1,8 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+from .archivos import ruta_material, validar_extension, validar_tamano
+
 # Create your models here.
 class Usuario(models.Model):
     legajo = models.CharField(max_length=20, primary_key=True) #El legajo debería ser único para cada usuario
@@ -14,6 +16,16 @@ class Usuario(models.Model):
     ])# aca cuando haga usuario.rol deberia devolver el valor de la tupla, no el string que se le asigna al campo rol
     def __str__(self):
         return self.nombre_y_apellido
+
+    # DRF necesita estas dos propiedades para tratar a un Usuario (que no hereda del User de Django)
+    # como "usuario logueado" cuando llega un token válido.
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
 
 class Especialidad(models.Model):
     nombre = models.CharField(max_length=100)
@@ -44,6 +56,12 @@ class Material(models.Model):
         ])
     validacion = models.BooleanField(default=False)
     comentario = models.TextField(blank=True, null=True)
+    # El apunte en sí. Nullable en la base solo para no romper los materiales cargados antes de que
+    # existiera este campo; al crear uno nuevo por la API, el serializer lo exige.
+    archivo = models.FileField(
+        upload_to=ruta_material, null=True, blank=True,
+        validators=[validar_extension, validar_tamano],
+    )
     def __str__(self):
         return self.titulo
 

@@ -13,7 +13,9 @@ urlpatterns = [
     path('materias/sincronizar/<str:carrera>/', views.MateriaSincronizar.as_view()),
 
     path('materiales/', views.MaterialListCreate.as_view()),
+    path('materiales/pendientes/', views.MaterialPendientes.as_view()),
     path('materiales/<int:pk>/', views.MaterialDetail.as_view()),
+    path('materiales/<int:pk>/moderar/', views.MaterialModerar.as_view()),
 
     path('clases-apoyo/', views.ClaseApoyoListCreate.as_view()),
     path('clases-apoyo/<int:pk>/', views.ClaseApoyoDetail.as_view()),
