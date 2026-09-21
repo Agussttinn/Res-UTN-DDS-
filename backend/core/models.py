@@ -1,3 +1,4 @@
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 # Create your models here.
@@ -57,7 +58,14 @@ class ClaseApoyo(models.Model):
 class Ponderacion(models.Model):
     material = models.ForeignKey(Material, on_delete=models.CASCADE, related_name='ponderaciones')
     usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT, related_name='ponderaciones')
-    valor = models.IntegerField()
+    valor = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])  # estrellas de 1 a 5
     fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # un usuario solo puede tener una ponderación por material (si vota de nuevo, se actualiza la anterior)
+        constraints = [
+            models.UniqueConstraint(fields=['material', 'usuario'], name='ponderacion_unica_por_usuario_y_material'),
+        ]
+
     def __str__(self):
         return f"{self.material} - {self.usuario}"
