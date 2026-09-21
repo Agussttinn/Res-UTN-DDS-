@@ -1,51 +1,58 @@
-import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { ApiService } from '../../services/api.service';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+
+import { AuthService } from '../../services/auth.service';
+import { mensajeDeError } from '../../utils/errores';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './login.html', 
-  styleUrl: './login.css'       
+  imports: [FormsModule, RouterLink],
+  templateUrl: './login.html',
+  styleUrl: './login.css'
 })
-export class LoginComponent {
-  private api = inject(ApiService);
-  private router = inject(Router);
+export class LoginComponent implements OnInit {
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
-  credenciales = {
-    username: '',
-    password: ''
-  };
+  legajo = '';
+  contrasena = '';
 
-  cargando = false;
-  errorMensaje = '';
+  readonly cargando = signal(false);
+  readonly error = signal('');
+  /** El backend respondió 401 a una página que ya estaba abierta: el token dura 8 horas. */
+  readonly sesionVencida = this.route.snapshot.queryParamMap.has('vencida');
+
+  ngOnInit(): void {
+    if (this.auth.estaLogueado()) {
+      void this.router.navigateByUrl(this.destino());
+    }
+  }
 
   onSubmit(): void {
-    if (!this.credenciales.username || !this.credenciales.password) {
-      this.errorMensaje = 'Por favor ingresá tu legajo/usuario y contraseña.';
+    const legajo = this.legajo.trim();
+    if (!legajo || !this.contrasena) {
+      this.error.set('Ingresá tu legajo y tu contraseña.');
       return;
     }
 
-    this.cargando = true;
-    this.errorMensaje = '';
+    this.cargando.set(true);
+    this.error.set('');
 
-    this.api.login(this.credenciales).subscribe({
-      next: (res) => {
-        const token = res.access || res.token;
-        if (token) {
-          this.api.setToken(token);
-          this.router.navigate(['/materias']);
-        }
-        this.cargando = false;
-      },
-      error: (err) => {
-        console.error(err);
-        this.errorMensaje = 'Credenciales inválidas o servidor no disponible.';
-        this.cargando = false;
+    this.auth.login(legajo, this.contrasena).subscribe({
+      next: () => void this.router.navigateByUrl(this.destino()),
+      error: (err: unknown) => {
+        this.error.set(mensajeDeError(err, 'No se pudo iniciar sesión. Intentá de nuevo.'));
+        this.cargando.set(false);
       }
     });
+  }
+
+  /** Página a la que quería entrar antes de que lo mandaran al login (solo rutas internas). */
+  private destino(): string {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    return returnUrl && returnUrl.startsWith('/') && !returnUrl.startsWith('//') ? returnUrl : '/materias';
   }
 }

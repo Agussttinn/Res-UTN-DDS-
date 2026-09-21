@@ -1,73 +1,84 @@
-import { Injectable, inject, PLATFORM_ID } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-@Injectable({
-  providedIn: 'root'
-})
+import { API_URL } from '../api.config';
+import { AccionModeracion, ClaseApoyo, Materia, Material, Ponderacion } from '../models/api.models';
+
+/** Datos que hay que mandar para crear o modificar una clase de apoyo. */
+export interface DatosClaseApoyo {
+  materia_id: number;
+  horario: string;
+  aula: string;
+}
+
+/**
+ * Llamadas a la API de datos de RES-UTN. El token de login lo agrega solo el interceptor;
+ * la sesión (quién está logueado) vive en AuthService.
+ */
+@Injectable({ providedIn: 'root' })
 export class ApiService {
-  private http = inject(HttpClient);
-  private platformId = inject(PLATFORM_ID);
-  private baseUrl = 'http://127.0.0.1:8000/api';
+  private readonly http = inject(HttpClient);
 
-  getMaterias(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/materias/`);
+  // ---- materias ----
+  getMaterias(): Observable<Materia[]> {
+    return this.http.get<Materia[]>(`${API_URL}/materias/`);
   }
 
-  getMateriales(materiaId?: number): Observable<any[]> {
-    const url = materiaId 
-      ? `${this.baseUrl}/materiales/?materia=${materiaId}` 
-      : `${this.baseUrl}/materiales/`;
-    return this.http.get<any[]>(url);
+  // ---- materiales (apuntes) ----
+  /** Los validados más los propios pendientes. Con `materiaId`, solo los de esa materia. */
+  getMateriales(materiaId?: number): Observable<Material[]> {
+    return this.http.get<Material[]>(`${API_URL}/materiales/`, { params: this.filtro('materia', materiaId) });
   }
 
-  getClasesApoyo(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/clases-apoyo/`);
+  getMaterial(id: number): Observable<Material> {
+    return this.http.get<Material>(`${API_URL}/materiales/${id}/`);
   }
 
-  darLike(materialId: number): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/materiales/${materialId}/like/`, {});
+  /** `formData`: materia_id, titulo, tipo, comentario (opcional) y archivo. El autor sale del token. */
+  subirMaterial(formData: FormData): Observable<Material> {
+    return this.http.post<Material>(`${API_URL}/materiales/`, formData);
   }
 
-  login(credentials: { username: string; password: string }): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/token/`, credentials);
+  // ---- moderación (solo administradores) ----
+  getMaterialesPendientes(): Observable<Material[]> {
+    return this.http.get<Material[]>(`${API_URL}/materiales/pendientes/`);
   }
 
-  setToken(token: string): void {
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.setItem('auth_token', token);
-    }
+  moderarMaterial(id: number, accion: AccionModeracion): Observable<unknown> {
+    return this.http.post(`${API_URL}/materiales/${id}/moderar/`, { accion });
   }
 
-  getToken(): string | null {
-    if (isPlatformBrowser(this.platformId)) {
-      return localStorage.getItem('auth_token');
-    }
-    return null;
+  // ---- estrellas ----
+  /** Las estrellas que puso el usuario logueado (la API solo devuelve las propias). */
+  getMisPonderaciones(): Observable<Ponderacion[]> {
+    return this.http.get<Ponderacion[]>(`${API_URL}/ponderaciones/`);
   }
 
-  logout(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem('auth_token');
-    }
+  /** Puntúa un material de 1 a 5. Si ya lo había puntuado, cambia su voto. */
+  ponderar(materialId: number, valor: number): Observable<Ponderacion> {
+    return this.http.post<Ponderacion>(`${API_URL}/ponderaciones/`, { material_id: materialId, valor });
   }
 
-  isLoggedIn(): boolean {
-    return !!this.getToken();
-  }
-  // Subida de archivos con FormData
-  subirMaterial(formData: FormData): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/materiales/`, formData);
+  // ---- clases de apoyo ----
+  getClasesApoyo(materiaId?: number): Observable<ClaseApoyo[]> {
+    return this.http.get<ClaseApoyo[]>(`${API_URL}/clases-apoyo/`, { params: this.filtro('materia', materiaId) });
   }
 
-  // Obtener pendientes de moderación (tutores/admin)
-  getMaterialesPendientes(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/materiales/pendientes/`);
+  /** Solo tutores: la clase queda a nombre de quien está logueado. */
+  crearClaseApoyo(datos: DatosClaseApoyo): Observable<ClaseApoyo> {
+    return this.http.post<ClaseApoyo>(`${API_URL}/clases-apoyo/`, datos);
   }
 
-  // Aprobar o rechazar apunte
-  moderarMaterial(id: number, accion: 'aprobar' | 'rechazar'): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/materiales/${id}/moderar/`, { accion });
+  actualizarClaseApoyo(id: number, datos: DatosClaseApoyo): Observable<ClaseApoyo> {
+    return this.http.patch<ClaseApoyo>(`${API_URL}/clases-apoyo/${id}/`, datos);
+  }
+
+  eliminarClaseApoyo(id: number): Observable<void> {
+    return this.http.delete<void>(`${API_URL}/clases-apoyo/${id}/`);
+  }
+
+  private filtro(nombre: string, valor: number | undefined): HttpParams {
+    return valor === undefined ? new HttpParams() : new HttpParams().set(nombre, String(valor));
   }
 }

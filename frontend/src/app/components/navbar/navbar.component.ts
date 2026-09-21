@@ -1,21 +1,21 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { ApiService } from '../../services/api.service';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+
+import { ETIQUETA_ROL } from '../../models/api.models';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
-  templateUrl: './navbar.component.html', 
-  styleUrl: './navbar.css'      
+  imports: [RouterLink, RouterLinkActive],
+  templateUrl: './navbar.component.html',
+  styleUrl: './navbar.css'
 })
 export class NavbarComponent {
-  api = inject(ApiService);
-  private router = inject(Router);
+  readonly auth = inject(AuthService);
+  readonly etiquetaRol = ETIQUETA_ROL;
 
   cerrarSesion(): void {
-    this.api.logout();
-    this.router.navigate(['/login']);
+    this.auth.cerrarSesion();
   }
 }

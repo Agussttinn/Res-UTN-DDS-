@@ -1,54 +1,136 @@
 <section class="space-y-6">
-  <div class="border-b pb-4">
-    <h1 class="text-2xl font-black text-slate-800">Cronograma de Tutorías</h1>
-    <p class="text-xs sm:text-sm text-slate-500">Clases presenciales y virtuales de acompañamiento académico.</p>
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
+    <div>
+      <h1 class="text-2xl font-black text-slate-800">Cronograma de Tutorías</h1>
+      <p class="text-xs sm:text-sm text-slate-500">Clases de apoyo de los tutores: cuándo y en qué aula.</p>
+    </div>
+    @if (auth.esTutor()) {
+      <button type="button" (click)="abrirModal()"
+              class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm transition-all flex items-center gap-2">
+        <span>➕</span> Publicar clase
+      </button>
+    }
   </div>
 
-  @if (cargando) {
-    <div class="text-center py-12 text-slate-400">Buscando clases de apoyo...</div>
-  } @else if (error) {
-    <div class="p-4 bg-red-100 text-red-700 rounded-lg text-sm">
-      No se pudo obtener el cronograma. Verificá la conexión con la API.
+  <div class="flex items-center gap-2">
+    <label for="filtro-materia" class="text-xs font-semibold text-slate-600">Materia:</label>
+    <select id="filtro-materia" [ngModel]="filtroMateria()" (ngModelChange)="filtrarPorMateria($event)"
+            class="border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none focus:border-blue-500">
+      <option [ngValue]="null">Todas</option>
+      @for (m of materias(); track m.id) {
+        <option [ngValue]="m.id">{{ m.nombre }}</option>
+      }
+    </select>
+  </div>
+
+  @if (aviso()) {
+    <div role="status" class="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-lg flex items-start justify-between gap-3">
+      <span>{{ aviso() }}</span>
+      <button type="button" (click)="aviso.set('')" class="font-semibold shrink-0" aria-label="Cerrar aviso">✕</button>
     </div>
-  } @else if (clases.length === 0) {
+  }
+
+  @if (errorAccion()) {
+    <div role="alert" class="p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">{{ errorAccion() }}</div>
+  }
+
+  @if (cargando()) {
+    <div class="text-center py-12 text-slate-400">Buscando clases de apoyo...</div>
+  } @else if (error()) {
+    <div role="alert" class="p-4 bg-red-100 text-red-700 rounded-lg text-sm flex items-center justify-between gap-3">
+      <span>{{ error() }}</span>
+      <button type="button" (click)="cargarClases()" class="font-semibold underline shrink-0">Reintentar</button>
+    </div>
+  } @else if (clases().length === 0) {
     <div class="text-center py-12 bg-white rounded-xl border border-slate-200 text-slate-500">
-      No hay sesiones de apoyo programadas por el momento.
+      No hay clases de apoyo programadas por el momento.
     </div>
   } @else {
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      @for (clase of clases; track clase.id) {
+      @for (clase of clases(); track clase.id) {
         <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
           <div>
-            <div class="flex justify-between items-start mb-2">
-              <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full border" [ngClass]="getEstadoBadge(clase.estado)">
-                {{ clase.estado || 'PROGRAMADA' }}
-              </span>
-              <span class="text-xs text-slate-400 font-mono">{{ clase.fecha | date:'dd/MM/yyyy' }}</span>
-            </div>
-
-            <h3 class="text-lg font-bold text-slate-800">{{ clase.materia_nombre || 'Asignatura' }}</h3>
-            <p class="text-xs text-slate-500 mt-1">Dictada por: <span class="font-medium text-slate-700">{{ clase.tutor_nombre || 'Tutor Asignado' }}</span></p>
+            <h3 class="text-lg font-bold text-slate-800">{{ clase.materia.nombre }}</h3>
+            <p class="text-xs text-slate-500 mt-1">Dictada por: <span class="font-medium text-slate-700">{{ clase.tutor.nombre_y_apellido }}</span></p>
 
             <div class="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100">
               <div>
                 <span class="block text-[10px] text-slate-400 font-semibold uppercase">Horario</span>
-                <span class="font-medium">{{ clase.hora_inicio }} - {{ clase.hora_fin }} hs</span>
+                <span class="font-medium">{{ clase.horario }}</span>
               </div>
               <div>
-                <span class="block text-[10px] text-slate-400 font-semibold uppercase">Ubicación / Aula</span>
-                <span class="font-medium">{{ clase.aula || 'A confirmar' }}</span>
+                <span class="block text-[10px] text-slate-400 font-semibold uppercase">Aula</span>
+                <span class="font-medium">{{ clase.aula }}</span>
               </div>
             </div>
           </div>
 
-          @if (clase.enlace_virtual) {
-            <a [href]="clase.enlace_virtual" target="_blank"
-               class="mt-4 text-center bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2 rounded-lg text-xs transition-colors">
-              Unirse a reunión virtual
-            </a>
+          @if (puedeGestionar(clase)) {
+            <div class="mt-4 flex justify-end gap-2">
+              <button type="button" (click)="abrirModal(clase)"
+                      class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">
+                Modificar
+              </button>
+              <button type="button" (click)="cancelarClase(clase)"
+                      class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600">
+                Cancelar clase
+              </button>
+            </div>
           }
         </div>
       }
+    </div>
+  }
+
+  <!-- Modal publicar / modificar clase -->
+  @if (mostrarModal()) {
+    <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div role="dialog" aria-modal="true" aria-labelledby="titulo-modal-clase"
+           class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+        <h2 id="titulo-modal-clase" class="text-lg font-bold text-slate-800">
+          {{ editandoId === null ? 'Publicar clase de apoyo' : 'Modificar clase de apoyo' }}
+        </h2>
+
+        @if (errorModal()) {
+          <div role="alert" class="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg">{{ errorModal() }}</div>
+        }
+
+        <div class="space-y-3">
+          <div>
+            <label for="clase-materia" class="block text-xs font-semibold text-slate-600 mb-1">Materia</label>
+            <select id="clase-materia" [(ngModel)]="form.materia"
+                    class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500">
+              <option [ngValue]="null">Seleccionar materia...</option>
+              @for (m of materias(); track m.id) {
+                <option [ngValue]="m.id">{{ m.nombre }}</option>
+              }
+            </select>
+          </div>
+
+          <div>
+            <label for="clase-horario" class="block text-xs font-semibold text-slate-600 mb-1">Día y horario</label>
+            <input id="clase-horario" type="text" [(ngModel)]="form.horario" maxlength="20" placeholder="Ej: Lun 14:00-16:00"
+                   class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500" />
+          </div>
+
+          <div>
+            <label for="clase-aula" class="block text-xs font-semibold text-slate-600 mb-1">Aula</label>
+            <input id="clase-aula" type="text" [(ngModel)]="form.aula" maxlength="20" placeholder="Ej: L-203"
+                   class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500" />
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" (click)="cerrarModal()" [disabled]="guardando()"
+                  class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg disabled:opacity-50">
+            Cancelar
+          </button>
+          <button type="button" (click)="guardar()" [disabled]="guardando()"
+                  class="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 rounded-lg shadow-sm">
+            {{ guardando() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
     </div>
   }
 </section>

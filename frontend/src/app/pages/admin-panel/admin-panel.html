@@ -4,38 +4,57 @@
     <p class="text-xs sm:text-sm text-slate-500">Revisión de documentos compartidos por la comunidad estudiantil.</p>
   </div>
 
-  @if (cargando) {
+  @if (aviso()) {
+    <div role="status" class="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-lg flex items-start justify-between gap-3">
+      <span>{{ aviso() }}</span>
+      <button type="button" (click)="aviso.set('')" class="font-semibold shrink-0" aria-label="Cerrar aviso">✕</button>
+    </div>
+  }
+
+  @if (cargando()) {
     <div class="text-center py-12 text-slate-400">Consultando documentos pendientes...</div>
-  } @else if (pendientes.length === 0) {
+  } @else if (error()) {
+    <div role="alert" class="p-4 bg-red-100 text-red-700 rounded-lg text-sm flex items-center justify-between gap-3">
+      <span>{{ error() }}</span>
+      <button type="button" (click)="cargarPendientes()" class="font-semibold underline shrink-0">Reintentar</button>
+    </div>
+  } @else if (pendientes().length === 0) {
     <div class="text-center py-12 bg-white rounded-xl border border-slate-200 text-slate-500">
-      No hay documentos pendientes de revisión.
+      No hay documentos pendientes de revisión. 🎉
     </div>
   } @else {
     <div class="space-y-3">
-      @for (item of pendientes; track item.id) {
+      @for (item of pendientes(); track item.id) {
         <div class="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row justify-between sm:items-center gap-4 shadow-sm">
           <div>
             <div class="flex items-center gap-2 mb-1">
               <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 uppercase">
-                {{ item.tipo }}
+                {{ etiquetaTipo[item.tipo] }}
               </span>
-              <span class="text-xs text-slate-500">{{ item.materia_nombre }}</span>
+              <span class="text-xs text-slate-500">{{ item.materia.nombre }}</span>
             </div>
             <h3 class="font-bold text-slate-800">{{ item.titulo }}</h3>
-            <p class="text-xs text-slate-400 mt-0.5">Enviado por {{ item.autor_username || 'Usuario' }} el {{ item.fecha_carga | date:'shortDate' }}</p>
+            @if (item.comentario) {
+              <p class="text-xs text-slate-600 mt-0.5">{{ item.comentario }}</p>
+            }
+            <p class="text-xs text-slate-400 mt-0.5">
+              Enviado por {{ item.usuario.nombre_y_apellido }} (legajo {{ item.usuario.legajo }}) el {{ item.fecha_de_carga | date:'dd/MM/yyyy' }}
+            </p>
           </div>
 
-          <div class="flex items-center gap-2">
-            <a [href]="item.archivo" target="_blank"
-               class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">
-              Previsualizar
-            </a>
-            <button (click)="moderar(item.id, 'rechazar')"
-                    class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600">
+          <div class="flex items-center gap-2 shrink-0">
+            @if (item.archivo) {
+              <a [href]="item.archivo" target="_blank" rel="noopener"
+                 class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">
+                Previsualizar
+              </a>
+            }
+            <button type="button" (click)="moderar(item, 'rechazar')" [disabled]="procesando() === item.id"
+                    class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 disabled:opacity-50">
               Rechazar
             </button>
-            <button (click)="moderar(item.id, 'aprobar')"
-                    class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
+            <button type="button" (click)="moderar(item, 'aprobar')" [disabled]="procesando() === item.id"
+                    class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white shadow-sm">
               Aprobar
             </button>
           </div>

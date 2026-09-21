@@ -1,1 +1,23 @@
-/* You can add global styles to this file, and also import other style files */
+/* Estilos globales. Tailwind CSS: las clases utilitarias (bg-blue-700, flex, rounded-xl...) que usan los templates. */
+@import "tailwindcss";
+
+/*
+ * Tailwind 4 cambió dos valores por defecto respecto de la versión 3 (para la que se escribieron estos templates).
+ * Se restauran para que se vea como se diseñó:
+ *  - el color de borde por defecto era gris claro (ahora es "currentColor", o sea negro);
+ *  - los botones mostraban la manito (ahora muestran la flecha).
+ */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-slate-200, currentcolor);
+  }
+
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
