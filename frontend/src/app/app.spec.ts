@@ -16,6 +16,6 @@ describe('AppComponent', () => {
 
     expect(pagina.querySelector('app-navbar')).toBeTruthy();
     expect(pagina.querySelector('main router-outlet')).toBeTruthy();
-    expect(textoDe(fixture)).toContain('RES-UTN');
+    expect(textoDe(fixture)).toContain('Portal Estudiantes');
   });
 });

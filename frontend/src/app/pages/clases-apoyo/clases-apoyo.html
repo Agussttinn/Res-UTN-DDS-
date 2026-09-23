@@ -6,7 +6,7 @@
     </div>
     @if (auth.esTutor()) {
       <button type="button" (click)="abrirModal()"
-              class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm transition-all flex items-center gap-2">
+              class="bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm transition-all flex items-center gap-2">
         <span>➕</span> Publicar clase
       </button>
     }
@@ -15,7 +15,7 @@
   <div class="flex items-center gap-2">
     <label for="filtro-materia" class="text-xs font-semibold text-slate-600">Materia:</label>
     <select id="filtro-materia" [ngModel]="filtroMateria()" (ngModelChange)="filtrarPorMateria($event)"
-            class="border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none focus:border-blue-500">
+            class="border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none focus:border-brand-500">
       <option [ngValue]="null">Todas</option>
       @for (m of materias(); track m.id) {
         <option [ngValue]="m.id">{{ m.nombre }}</option>
@@ -99,7 +99,7 @@
           <div>
             <label for="clase-materia" class="block text-xs font-semibold text-slate-600 mb-1">Materia</label>
             <select id="clase-materia" [(ngModel)]="form.materia"
-                    class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500">
+                    class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-brand-500">
               <option [ngValue]="null">Seleccionar materia...</option>
               @for (m of materias(); track m.id) {
                 <option [ngValue]="m.id">{{ m.nombre }}</option>
@@ -110,13 +110,13 @@
           <div>
             <label for="clase-horario" class="block text-xs font-semibold text-slate-600 mb-1">Día y horario</label>
             <input id="clase-horario" type="text" [(ngModel)]="form.horario" maxlength="20" placeholder="Ej: Lun 14:00-16:00"
-                   class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500" />
+                   class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-brand-500" />
           </div>
 
           <div>
             <label for="clase-aula" class="block text-xs font-semibold text-slate-600 mb-1">Aula</label>
             <input id="clase-aula" type="text" [(ngModel)]="form.aula" maxlength="20" placeholder="Ej: L-203"
-                   class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500" />
+                   class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-brand-500" />
           </div>
         </div>
 
@@ -126,7 +126,7 @@
             Cancelar
           </button>
           <button type="button" (click)="guardar()" [disabled]="guardando()"
-                  class="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 rounded-lg shadow-sm">
+                  class="px-4 py-2 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 disabled:bg-brand-300 rounded-lg shadow-sm">
             {{ guardando() ? 'Guardando...' : 'Guardar' }}
           </button>
         </div>

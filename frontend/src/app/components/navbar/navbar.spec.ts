@@ -26,7 +26,7 @@ describe('NavbarComponent', () => {
 
     expect(texto).toContain('Iniciar Sesión');
     expect(texto).toContain('Registrarme');
-    for (const oculto of ['Materias', 'Apuntes', 'Clases de Apoyo', 'Moderación', 'Cerrar Sesión']) {
+    for (const oculto of ['Materias', 'Apuntes', 'Clases de Apoyo', 'Moderación', 'Salir']) {
       expect(texto).not.toContain(oculto);
     }
   });
@@ -35,8 +35,8 @@ describe('NavbarComponent', () => {
     const texto = textoDe(await montar(ALUMNA));
 
     expect(texto).toContain('Ana Alumna');
-    expect(texto).toContain('Alumno · Legajo 200');
-    for (const visible of ['Materias', 'Apuntes', 'Clases de Apoyo', 'Cerrar Sesión']) {
+    expect(texto).toContain('Alumno'); // el badge de rol, en el pill del usuario
+    for (const visible of ['Materias', 'Apuntes', 'Clases de Apoyo', 'Salir']) {
       expect(texto).toContain(visible);
     }
     expect(texto).not.toContain('Moderación');
@@ -51,7 +51,8 @@ describe('NavbarComponent', () => {
     const texto = textoDe(await montar(ADMINISTRADORA));
 
     expect(texto).toContain('Moderación');
-    expect(texto).toContain('Administrador · Legajo 100');
+    expect(texto).toContain('Ada Administradora');
+    expect(texto).toContain('Administrador'); // el badge de rol
   });
 
   it('"Cerrar Sesión" cierra la sesión, lleva al login y la barra vuelve a mostrar "Iniciar Sesión"', async () => {

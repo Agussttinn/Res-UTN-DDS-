@@ -1,53 +1,75 @@
-<div class="flex items-center justify-center py-12 px-4">
-  <div class="max-w-md w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-6">
-    <div class="text-center">
-      <span class="text-4xl">🎓</span>
-      <h2 class="mt-3 text-2xl font-black text-slate-800">Crear cuenta</h2>
-      <p class="text-xs text-slate-500 mt-1">
-        Verificamos tu legajo en SySACAD y tomamos de ahí tu nombre y tu correo institucional.
+<div class="flex items-center justify-center py-10 px-4">
+  <div class="max-w-3xl w-full bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden grid md:grid-cols-2">
+    <!-- Panel de marca -->
+    <div class="bg-gradient-to-br from-brand-600 to-brand-800 text-white p-8 flex flex-col justify-center gap-6">
+      <div class="flex items-center gap-3">
+        <app-logo [tamano]="48" />
+        <span class="text-xl font-extrabold">Portal Estudiantes</span>
+      </div>
+      <p class="text-brand-50 text-sm leading-relaxed">
+        Verificamos tu legajo en SySACAD y tomamos de ahí tu nombre y tu correo institucional: no hace falta que los tipees.
       </p>
+      <ul class="space-y-2.5 text-sm">
+        <li class="flex items-center gap-2.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-brand-100 shrink-0"></span> Acceso a materiales de estudio
+        </li>
+        <li class="flex items-center gap-2.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-brand-100 shrink-0"></span> Horarios de clases de apoyo
+        </li>
+        <li class="flex items-center gap-2.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-brand-100 shrink-0"></span> Gestión y ponderación de contenidos
+        </li>
+      </ul>
     </div>
 
-    @if (error()) {
-      <div role="alert" class="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg text-center">
-        {{ error() }}
-      </div>
-    }
-
-    <form (ngSubmit)="onSubmit()" class="space-y-4">
+    <!-- Formulario -->
+    <div class="p-8 space-y-6 flex flex-col justify-center">
       <div>
-        <label for="legajo" class="block text-xs font-bold text-slate-700 uppercase mb-1">Legajo</label>
-        <input id="legajo" type="text" [(ngModel)]="legajo" name="legajo" required autocomplete="username"
-               placeholder="Ej: 48123"
-               class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" />
+        <h2 class="text-2xl font-black text-slate-800">Crear cuenta</h2>
+        <p class="text-xs text-slate-500 mt-1">Registrate con tu legajo institucional</p>
       </div>
 
-      <div>
-        <label for="contrasena" class="block text-xs font-bold text-slate-700 uppercase mb-1">Contraseña</label>
-        <input id="contrasena" type="password" [(ngModel)]="contrasena" name="contrasena" required autocomplete="new-password"
-               placeholder="••••••••"
-               class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" />
-        <p class="text-[11px] text-slate-400 mt-1">
-          Mínimo {{ largoMinimo }} caracteres. No puede ser una clave muy común ni solo números.
-        </p>
-      </div>
+      @if (error()) {
+        <div role="alert" class="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg text-center">
+          {{ error() }}
+        </div>
+      }
 
-      <div>
-        <label for="repetir" class="block text-xs font-bold text-slate-700 uppercase mb-1">Repetir contraseña</label>
-        <input id="repetir" type="password" [(ngModel)]="repetir" name="repetir" required autocomplete="new-password"
-               placeholder="••••••••"
-               class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" />
-      </div>
+      <form (ngSubmit)="onSubmit()" class="space-y-4">
+        <div>
+          <label for="legajo" class="block text-xs font-bold text-slate-700 uppercase mb-1">Legajo</label>
+          <input id="legajo" type="text" [(ngModel)]="legajo" name="legajo" required autocomplete="username"
+                 placeholder="Ej: 48123"
+                 class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors" />
+        </div>
 
-      <button type="submit" [disabled]="cargando()"
-              class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold py-2.5 rounded-lg text-sm shadow-sm transition-all">
-        {{ cargando() ? 'Creando tu cuenta...' : 'Crear cuenta' }}
-      </button>
-    </form>
+        <div>
+          <label for="contrasena" class="block text-xs font-bold text-slate-700 uppercase mb-1">Contraseña</label>
+          <input id="contrasena" type="password" [(ngModel)]="contrasena" name="contrasena" required autocomplete="new-password"
+                 placeholder="••••••••"
+                 class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors" />
+          <p class="text-[11px] text-slate-400 mt-1">
+            Mínimo {{ largoMinimo }} caracteres. No puede ser una clave muy común ni solo números.
+          </p>
+        </div>
 
-    <p class="text-center text-xs text-slate-500">
-      ¿Ya tenés cuenta?
-      <a routerLink="/login" class="font-semibold text-blue-600 hover:text-blue-800">Ingresá</a>
-    </p>
+        <div>
+          <label for="repetir" class="block text-xs font-bold text-slate-700 uppercase mb-1">Repetir contraseña</label>
+          <input id="repetir" type="password" [(ngModel)]="repetir" name="repetir" required autocomplete="new-password"
+                 placeholder="••••••••"
+                 class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors" />
+        </div>
+
+        <button type="submit" [disabled]="cargando()"
+                class="w-full bg-brand-600 hover:bg-brand-700 disabled:bg-brand-300 text-white font-semibold py-2.5 rounded-lg text-sm shadow-sm transition-all">
+          {{ cargando() ? 'Creando tu cuenta...' : 'Crear cuenta' }}
+        </button>
+      </form>
+
+      <p class="text-center text-xs text-slate-500">
+        ¿Ya tenés cuenta?
+        <a routerLink="/login" class="font-semibold text-brand-700 hover:text-brand-800">Ingresá</a>
+      </p>
+    </div>
   </div>
 </div>

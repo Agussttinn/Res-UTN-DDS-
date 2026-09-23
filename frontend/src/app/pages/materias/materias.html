@@ -20,7 +20,7 @@
       @for (materia of materias(); track materia.id) {
         <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow flex flex-col justify-between">
           <div>
-            <span class="text-xs font-semibold px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+            <span class="text-xs font-semibold px-2 py-1 bg-brand-100 text-brand-800 rounded-full">
               {{ materia.anio }}° Año
             </span>
             <h2 class="text-lg font-bold text-slate-800 mt-2">{{ materia.nombre }}</h2>
@@ -28,7 +28,7 @@
           </div>
 
           <a [routerLink]="['/materiales', materia.id]"
-             class="mt-4 block text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg text-sm transition-colors">
+             class="mt-4 block text-center bg-brand-600 hover:bg-brand-700 text-white font-medium py-2 rounded-lg text-sm transition-colors">
             Ver Recursos
           </a>
         </div>

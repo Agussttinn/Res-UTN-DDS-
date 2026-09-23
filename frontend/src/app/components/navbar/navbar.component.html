@@ -1,60 +1,96 @@
-<header class="bg-blue-700 text-white shadow-md sticky top-0 z-50">
-  <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center gap-4">
-    <a routerLink="/" class="text-xl font-bold tracking-wide flex items-center gap-2">
-      <span>🎓 RES-UTN</span>
-    </a>
+<header class="sticky top-0 z-50 shadow-sm">
+  <!-- Fila superior: marca + usuario -->
+  <div class="bg-brand-600 text-white">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center gap-4">
+      <a routerLink="/" class="flex items-center gap-2.5 shrink-0">
+        <app-logo [tamano]="36" />
+        <span class="text-lg font-extrabold tracking-wide">Portal Estudiantes</span>
+      </a>
 
-    @if (auth.estaLogueado()) {
-      <nav class="hidden md:flex gap-6 font-medium text-sm">
-        @if (auth.esAdministrador()) {
-          <a routerLink="/admin" routerLinkActive="text-yellow-300 font-semibold" class="hover:text-blue-200">Moderación</a>
+      <div class="flex items-center gap-2.5">
+        @if (auth.usuario(); as usuario) {
+          <div class="hidden sm:flex items-center gap-2 bg-white/10 rounded-full pl-3 pr-2.5 py-1.5">
+            <span class="text-xs font-semibold">{{ usuario.nombre_y_apellido }}</span>
+            <span class="text-[10px] font-bold uppercase bg-white/20 rounded-full px-2 py-0.5">
+              {{ etiquetaRol[usuario.rol] }}
+            </span>
+          </div>
+          <button type="button" (click)="cerrarSesion()"
+                  class="bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5">
+            <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 6v1a3 3 0 01-3 3H6a3 3 0 01-3-3V5a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Salir
+          </button>
+        } @else {
+          <a routerLink="/registro"
+             class="hidden sm:block text-white/90 hover:text-white px-2 py-1.5 text-xs font-semibold">
+            Registrarme
+          </a>
+          <a routerLink="/login"
+             class="bg-white text-brand-700 hover:bg-brand-50 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors">
+            Iniciar Sesión
+          </a>
         }
-        <a routerLink="/materias" routerLinkActive="text-yellow-300 font-semibold" class="hover:text-blue-200">Materias</a>
-        <a routerLink="/materiales" routerLinkActive="text-yellow-300 font-semibold" class="hover:text-blue-200">Apuntes</a>
-        <a routerLink="/clases" routerLinkActive="text-yellow-300 font-semibold" class="hover:text-blue-200">Clases de Apoyo</a>
-      </nav>
-    }
-
-    <div class="flex items-center gap-3">
-      @if (auth.usuario(); as usuario) {
-        <div class="hidden sm:block text-right leading-tight">
-          <div class="text-xs font-semibold">{{ usuario.nombre_y_apellido }}</div>
-          <div class="text-[10px] text-blue-200">{{ etiquetaRol[usuario.rol] }} · Legajo {{ usuario.legajo }}</div>
-        </div>
-        <button type="button" (click)="cerrarSesion()"
-                class="bg-blue-800 hover:bg-red-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors">
-          Cerrar Sesión
-        </button>
-      } @else {
-        <a routerLink="/registro"
-           class="hidden sm:block hover:text-blue-200 px-2 py-1.5 text-xs font-semibold">
-          Registrarme
-        </a>
-        <a routerLink="/login"
-           class="bg-blue-800 hover:bg-blue-900 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors">
-          Iniciar Sesión
-        </a>
-      }
+      </div>
     </div>
   </div>
 
+  <!-- Fila de navegación (tabs) -->
+  @if (auth.estaLogueado()) {
+    <nav class="hidden md:block bg-white border-b border-slate-200">
+      <div class="max-w-5xl mx-auto px-4 flex gap-1">
+        <a routerLink="/materias" routerLinkActive="!text-brand-700 !border-brand-600"
+           class="flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-brand-700 transition-colors">
+          <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+          </svg>
+          Materias
+        </a>
+        <a routerLink="/materiales" routerLinkActive="!text-brand-700 !border-brand-600"
+           class="flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-brand-700 transition-colors">
+          <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+          </svg>
+          Apuntes
+        </a>
+        <a routerLink="/clases" routerLinkActive="!text-brand-700 !border-brand-600"
+           class="flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-brand-700 transition-colors">
+          <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+          </svg>
+          Clases de Apoyo
+        </a>
+        @if (auth.esAdministrador()) {
+          <a routerLink="/admin" routerLinkActive="!text-brand-700 !border-brand-600"
+             class="flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-brand-700 transition-colors">
+            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+            </svg>
+            Moderación
+          </a>
+        }
+      </div>
+    </nav>
+  }
+
   <!-- Bottom Navigation para Mobile -->
   @if (auth.estaLogueado()) {
-    <nav class="md:hidden flex justify-around bg-blue-800 py-2 border-t border-blue-600 text-xs text-blue-100">
+    <nav class="md:hidden flex justify-around bg-brand-700 py-2 border-t border-brand-800 text-xs text-brand-50">
+      <a routerLink="/materias" routerLinkActive="text-white font-bold" class="flex flex-col items-center gap-0.5 px-2">
+        <span>📚</span> Materias
+      </a>
+      <a routerLink="/materiales" routerLinkActive="text-white font-bold" class="flex flex-col items-center gap-0.5 px-2">
+        <span>📄</span> Apuntes
+      </a>
+      <a routerLink="/clases" routerLinkActive="text-white font-bold" class="flex flex-col items-center gap-0.5 px-2">
+        <span>👥</span> Tutorías
+      </a>
       @if (auth.esAdministrador()) {
-        <a routerLink="/admin" routerLinkActive="text-white font-bold" class="flex flex-col items-center">
+        <a routerLink="/admin" routerLinkActive="text-white font-bold" class="flex flex-col items-center gap-0.5 px-2">
           <span>🛡️</span> Moderación
         </a>
       }
-      <a routerLink="/materias" routerLinkActive="text-white font-bold" class="flex flex-col items-center">
-        <span>📚</span> Materias
-      </a>
-      <a routerLink="/materiales" routerLinkActive="text-white font-bold" class="flex flex-col items-center">
-        <span>📄</span> Apuntes
-      </a>
-      <a routerLink="/clases" routerLinkActive="text-white font-bold" class="flex flex-col items-center">
-        <span>👥</span> Tutorías
-      </a>
     </nav>
   }
 </header>

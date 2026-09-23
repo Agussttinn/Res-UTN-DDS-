@@ -2,6 +2,23 @@
 @import "tailwindcss";
 
 /*
+ * Paleta de marca (Portal Estudiantes / RES-UTN), medida en píxeles del diseño de Figma que se le mostró
+ * al profesor. No es ninguno de los verdes estándar de Tailwind (el teal-600 de Tailwind es #0d9488, más
+ * apagado), por eso se define acá como tokens propios: "brand-*". Uso: bg-brand-600, text-brand-700, etc.
+ */
+@theme {
+  --color-brand-50: #ecfffa;
+  --color-brand-100: #bafff2;
+  --color-brand-200: #7dffe6;
+  --color-brand-400: #00c9ae;
+  --color-brand-500: #00b39c;
+  --color-brand-600: #00a390; /* color principal: navbar, botones, panel del login */
+  --color-brand-700: #00897a;
+  --color-brand-800: #006f61; /* extremo oscuro del degradé del panel de login */
+  --color-brand-900: #00594e;
+}
+
+/*
  * Tailwind 4 cambió dos valores por defecto respecto de la versión 3 (para la que se escribieron estos templates).
  * Se restauran para que se vea como se diseñó:
  *  - el color de borde por defecto era gris claro (ahora es "currentColor", o sea negro);

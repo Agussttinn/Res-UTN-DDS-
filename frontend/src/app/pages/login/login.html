@@ -1,47 +1,76 @@
-<div class="flex items-center justify-center py-12 px-4">
-  <div class="max-w-md w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-6">
-    <div class="text-center">
-      <span class="text-4xl">🎓</span>
-      <h2 class="mt-3 text-2xl font-black text-slate-800">Ingresar a RES-UTN</h2>
-      <p class="text-xs text-slate-500 mt-1">Accedé con tu legajo institucional para ponderar y compartir recursos</p>
+<div class="flex items-center justify-center py-10 px-4">
+  <div class="max-w-3xl w-full bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden grid md:grid-cols-2">
+    <!-- Panel de marca -->
+    <div class="bg-gradient-to-br from-brand-600 to-brand-800 text-white p-8 flex flex-col justify-center gap-6">
+      <div class="flex items-center gap-3">
+        <app-logo [tamano]="48" />
+        <span class="text-xl font-extrabold">Portal Estudiantes</span>
+      </div>
+      <p class="text-brand-50 text-sm leading-relaxed">
+        Plataforma de gestión académica para primer año universitario
+      </p>
+      <ul class="space-y-2.5 text-sm">
+        <li class="flex items-center gap-2.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-brand-100 shrink-0"></span> Acceso a materiales de estudio
+        </li>
+        <li class="flex items-center gap-2.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-brand-100 shrink-0"></span> Horarios de clases de apoyo
+        </li>
+        <li class="flex items-center gap-2.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-brand-100 shrink-0"></span> Gestión y ponderación de contenidos
+        </li>
+      </ul>
     </div>
 
-    @if (sesionVencida) {
-      <div class="p-3 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg text-center">
-        Tu sesión venció. Ingresá de nuevo para continuar.
-      </div>
-    }
-
-    @if (error()) {
-      <div role="alert" class="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg text-center">
-        {{ error() }}
-      </div>
-    }
-
-    <form (ngSubmit)="onSubmit()" class="space-y-4">
+    <!-- Formulario -->
+    <div class="p-8 space-y-6 flex flex-col justify-center">
       <div>
-        <label for="legajo" class="block text-xs font-bold text-slate-700 uppercase mb-1">Legajo</label>
-        <input id="legajo" type="text" [(ngModel)]="legajo" name="legajo" required autocomplete="username"
-               placeholder="Ej: 48123"
-               class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" />
+        <h2 class="text-2xl font-black text-slate-800">Iniciar Sesión</h2>
+        <p class="text-xs text-slate-500 mt-1">Ingresá con tu legajo institucional</p>
       </div>
 
-      <div>
-        <label for="contrasena" class="block text-xs font-bold text-slate-700 uppercase mb-1">Contraseña</label>
-        <input id="contrasena" type="password" [(ngModel)]="contrasena" name="contrasena" required autocomplete="current-password"
-               placeholder="••••••••"
-               class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" />
-      </div>
+      @if (sesionVencida) {
+        <div class="p-3 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg text-center">
+          Tu sesión venció. Ingresá de nuevo para continuar.
+        </div>
+      }
 
-      <button type="submit" [disabled]="cargando()"
-              class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold py-2.5 rounded-lg text-sm shadow-sm transition-all">
-        {{ cargando() ? 'Iniciando sesión...' : 'Ingresar' }}
-      </button>
-    </form>
+      @if (error()) {
+        <div role="alert" class="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg text-center">
+          {{ error() }}
+        </div>
+      }
 
-    <p class="text-center text-xs text-slate-500">
-      ¿Todavía no tenés cuenta?
-      <a routerLink="/registro" class="font-semibold text-blue-600 hover:text-blue-800">Registrate con tu legajo</a>
-    </p>
+      <form (ngSubmit)="onSubmit()" class="space-y-4">
+        <div>
+          <label for="legajo" class="block text-xs font-bold text-slate-700 uppercase mb-1">Legajo</label>
+          <input id="legajo" type="text" [(ngModel)]="legajo" name="legajo" required autocomplete="username"
+                 placeholder="Ej: 48123"
+                 class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors" />
+        </div>
+
+        <div>
+          <label for="contrasena" class="block text-xs font-bold text-slate-700 uppercase mb-1">Contraseña</label>
+          <input id="contrasena" type="password" [(ngModel)]="contrasena" name="contrasena" required autocomplete="current-password"
+                 placeholder="••••••••"
+                 class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors" />
+        </div>
+
+        <button type="submit" [disabled]="cargando()"
+                class="w-full bg-brand-600 hover:bg-brand-700 disabled:bg-brand-300 text-white font-semibold py-2.5 rounded-lg text-sm shadow-sm transition-all flex items-center justify-center gap-2">
+          @if (!cargando()) {
+            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M20 12H4" />
+            </svg>
+          }
+          {{ cargando() ? 'Iniciando sesión...' : 'Ingresar' }}
+        </button>
+      </form>
+
+      <p class="text-center text-xs text-slate-500">
+        ¿Todavía no tenés cuenta?
+        <a routerLink="/registro" class="font-semibold text-brand-700 hover:text-brand-800">Registrate con tu legajo</a>
+      </p>
+    </div>
   </div>
 </div>

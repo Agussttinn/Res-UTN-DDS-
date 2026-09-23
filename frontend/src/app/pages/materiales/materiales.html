@@ -3,7 +3,7 @@
   <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
     <div>
       @if (materiaSeleccionada(); as materia) {
-        <a routerLink="/materias" class="text-xs text-blue-600 hover:text-blue-800">← Todas las materias</a>
+        <a routerLink="/materias" class="text-xs text-brand-600 hover:text-brand-800">← Todas las materias</a>
         <h1 class="text-2xl font-black text-slate-800">Apuntes de {{ materia.nombre }}</h1>
       } @else {
         <h1 class="text-2xl font-black text-slate-800">Repositorio de Apuntes</h1>
@@ -11,7 +11,7 @@
       <p class="text-xs sm:text-sm text-slate-500">Documentos validados por administradores y puntuados por la comunidad.</p>
     </div>
     <button type="button" (click)="abrirModal()"
-            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm transition-all flex items-center gap-2">
+            class="bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm transition-all flex items-center gap-2">
       <span>➕</span> Compartir Apunte
     </button>
   </div>
@@ -124,13 +124,13 @@
             <label for="nuevo-titulo" class="block text-xs font-semibold text-slate-600 mb-1">Título</label>
             <input id="nuevo-titulo" type="text" [(ngModel)]="nuevoMaterial.titulo" maxlength="100"
                    placeholder="Ej: Resumen U1 y U2 - Parcial"
-                   class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500" />
+                   class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-brand-500" />
           </div>
 
           <div>
             <label for="nueva-materia" class="block text-xs font-semibold text-slate-600 mb-1">Materia</label>
             <select id="nueva-materia" [(ngModel)]="nuevoMaterial.materia"
-                    class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500">
+                    class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-brand-500">
               <option [ngValue]="null">Seleccionar materia...</option>
               @for (m of materias(); track m.id) {
                 <option [ngValue]="m.id">{{ m.nombre }}</option>
@@ -141,7 +141,7 @@
           <div>
             <label for="nuevo-tipo" class="block text-xs font-semibold text-slate-600 mb-1">Tipo de Recurso</label>
             <select id="nuevo-tipo" [(ngModel)]="nuevoMaterial.tipo"
-                    class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500">
+                    class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-brand-500">
               <option value="resumen">Resumen</option>
               <option value="parcial">Modelo de Parcial</option>
               <option value="final">Modelo de Final</option>
@@ -152,13 +152,13 @@
             <label for="nuevo-comentario" class="block text-xs font-semibold text-slate-600 mb-1">Comentario (opcional)</label>
             <textarea id="nuevo-comentario" [(ngModel)]="nuevoMaterial.comentario" rows="2"
                       placeholder="Ej: Incluye los ejercicios resueltos de la guía 3"
-                      class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500"></textarea>
+                      class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-brand-500"></textarea>
           </div>
 
           <div>
             <label for="nuevo-archivo" class="block text-xs font-semibold text-slate-600 mb-1">Archivo (hasta {{ tamanoMaximoMb }} MB)</label>
             <input id="nuevo-archivo" type="file" (change)="onFileSelected($event)" [accept]="extensionesAceptadas"
-                   class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                   class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100" />
             <p class="text-[10px] text-slate-400 mt-1">PDF, Word, PowerPoint, Excel, texto o imagen.</p>
           </div>
         </div>
@@ -169,7 +169,7 @@
             Cancelar
           </button>
           <button type="button" (click)="subirRecurso()" [disabled]="subiendo()"
-                  class="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 rounded-lg shadow-sm">
+                  class="px-4 py-2 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 disabled:bg-brand-300 rounded-lg shadow-sm">
             {{ subiendo() ? 'Enviando...' : 'Enviar a Revisión' }}
           </button>
         </div>

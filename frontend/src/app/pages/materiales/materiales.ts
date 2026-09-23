@@ -30,7 +30,7 @@ export class MaterialesComponent implements OnInit {
   readonly etiquetaTipo = ETIQUETA_TIPO;
   readonly etiquetaTipoPlural = ETIQUETA_TIPO_PLURAL;
   readonly colorTipo: Record<TipoMaterial, string> = {
-    resumen: 'bg-blue-600 text-white',
+    resumen: 'bg-brand-600 text-white',
     parcial: 'bg-amber-600 text-white',
     final: 'bg-purple-600 text-white'
   };
