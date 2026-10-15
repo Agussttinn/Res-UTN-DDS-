@@ -7,7 +7,7 @@ import { provideRouter } from '@angular/router';
 
 import { API_URL } from '../api.config';
 import { authInterceptor } from '../interceptors/auth-interceptor';
-import { ClaseApoyo, Materia, Material, Usuario } from '../models/api.models';
+import { ClaseApoyo, Materia, Material, Notificacion, Usuario } from '../models/api.models';
 
 export { API_URL };
 
@@ -96,6 +96,21 @@ export function unaClase(cambios: Partial<ClaseApoyo> = {}): ClaseApoyo {
     tutor: { legajo: TUTOR.legajo, nombre_y_apellido: TUTOR.nombre_y_apellido, rol: 'tutor' },
     horario: 'Lun 14:00-16:00',
     aula: 'L-203',
+    suscrito: false,
+    cantidad_suscritos: 0,
+    ...cambios,
+  };
+}
+
+export function unaNotificacion(cambios: Partial<Notificacion> = {}): Notificacion {
+  return {
+    id: 1,
+    tipo: 'mensaje',
+    titulo: 'Mensaje de Tomás Tutor (Algoritmos y Estructuras de Datos)',
+    texto: 'Traigan la guía 3',
+    fecha: '2026-10-15T15:00:00-03:00',
+    leida: false,
+    clase: 3,
     ...cambios,
   };
 }

@@ -126,3 +126,57 @@ describe('BuscadorMateriaComponent', () => {
     expect(campo(fixture).placeholder).toBe('No hay materias para elegir');
   });
 });
+
+describe('BuscadorMateriaComponent con "todas"', () => {
+  const PRIMERO = [unaMateria({ id: 1, nombre: 'Física I', anio: 1 })];
+  const TODAS = [
+    ...PRIMERO,
+    unaMateria({ id: 2, nombre: 'Física II', anio: 2 }),
+    unaMateria({ id: 3, nombre: 'Entornos Gráficos', anio: 2, electiva: true }),
+  ];
+
+  beforeEach(() => TestBed.configureTestingModule({ imports: [BuscadorMateriaComponent], providers: proveedoresDePrueba() }));
+
+  async function montar(valor: number | null = null): Promise<ComponentFixture<BuscadorMateriaComponent>> {
+    const fixture = TestBed.createComponent(BuscadorMateriaComponent);
+    fixture.componentRef.setInput('idCampo', 'materia');
+    fixture.componentRef.setInput('materias', PRIMERO);
+    fixture.componentRef.setInput('todas', TODAS);
+    fixture.componentRef.setInput('valor', valor);
+    await fixture.whenStable();
+    return fixture;
+  }
+
+  const campo = (f: ComponentFixture<unknown>) => (f.nativeElement as HTMLElement).querySelector<HTMLInputElement>('#materia')!;
+  const filas = (f: ComponentFixture<unknown>) =>
+    Array.from((f.nativeElement as HTMLElement).querySelectorAll('[role="option"]')).map((o) => o.textContent!.replace(/\s+/g, ' ').trim());
+
+  it('al abrir la lista ofrece solo `materias`', async () => {
+    const fixture = await montar();
+    campo(fixture).click();
+    await fixture.whenStable();
+
+    expect(filas(fixture)).toEqual(['Física I']);
+  });
+
+  it('lo que se escribe se busca en todas, mostrando el año de cada una', async () => {
+    const fixture = await montar();
+    campo(fixture).value = 'fisica';
+    campo(fixture).dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+
+    expect(filas(fixture)).toEqual(['Física I 1° año', 'Física II 2° año']);
+
+    campo(fixture).value = 'graf';
+    campo(fixture).dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    expect(filas(fixture)).toEqual(['Entornos Gráficos Electiva']);
+  });
+
+  it('una materia elegida de otro año se muestra aunque no esté en `materias`', async () => {
+    const fixture = await montar(3);
+
+    expect(campo(fixture).value).toBe('Entornos Gráficos');
+    expect(fixture.componentInstance.valor()).toBe(3);
+  });
+});

@@ -155,17 +155,14 @@
               </label>
               <app-buscador-materia idCampo="nueva-materia"
                                     [materias]="materiasDelAnio()"
+                                    [todas]="materias()"
                                     [valor]="materiaElegida()" (valorChange)="elegirMateria($event)"
-                                    [deshabilitado]="materiasDelAnio().length === 0"
+                                    [deshabilitado]="materias().length === 0"
                                     [invalido]="!!errorDe('materia')"
                                     [descripcionId]="errorDe('materia') ? 'error-materia' : 'ayuda-materia'" />
               @if (!errorDe('materia')) {
                 <p id="ayuda-materia" class="mt-1.5 text-xs text-slate-500">
-                  @if (materiasDelAnio().length === 0) {
-                    Todavía no hay materias cargadas para este año.
-                  } @else {
-                    {{ materiasDelAnio().length }} {{ anioElegido() === 'electivas' ? 'electivas' : 'materias' }}. Escribí parte del nombre para filtrar, o abrí la lista.
-                  }
+                  Escribí el nombre (se busca en todos los años) o abrí la lista para ver las de {{ anioElegido() === 'electivas' ? 'las electivas' : anioElegido() + '° año' }}.
                 </p>
               }
               <ng-container *ngTemplateOutlet="mensajeError; context: { $implicit: 'materia' }" />

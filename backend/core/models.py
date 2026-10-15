@@ -89,3 +89,58 @@ class Ponderacion(models.Model):
 
     def __str__(self):
         return f"{self.material} - {self.usuario}"
+
+class Suscripcion(models.Model):
+    """Un alumno que sigue una clase de apoyo para enterarse de sus cambios y mensajes.
+    En el patrón Observer es un observador registrado en esa clase (ver observador.py)."""
+    clase = models.ForeignKey(ClaseApoyo, on_delete=models.CASCADE, related_name='suscripciones')
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='suscripciones')
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['clase', 'usuario'], name='suscripcion_unica_por_usuario_y_clase'),
+        ]
+
+    def __str__(self):
+        return f"{self.usuario} sigue {self.clase}"
+
+
+class MensajeClase(models.Model):
+    """Mensaje que el tutor de una clase (o un administrador) les manda a sus suscritos."""
+    clase = models.ForeignKey(ClaseApoyo, on_delete=models.CASCADE, related_name='mensajes')
+    autor = models.ForeignKey(Usuario, on_delete=models.PROTECT, related_name='mensajes_de_clases')
+    texto = models.TextField()
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha', '-id']
+
+    def __str__(self):
+        return f"{self.clase}: {self.texto[:30]}"
+
+
+class Notificacion(models.Model):
+    """Aviso que recibe un usuario en la app (la campanita). Lo genera el patrón Observer."""
+    MODIFICACION = 'modificacion'
+    CANCELACION = 'cancelacion'
+    MENSAJE = 'mensaje'
+
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='notificaciones')
+    # Si la clase se cancela (se borra), el aviso queda igual: por eso SET_NULL y no CASCADE.
+    clase = models.ForeignKey(ClaseApoyo, on_delete=models.SET_NULL, null=True, blank=True, related_name='notificaciones')
+    tipo = models.CharField(max_length=20, choices=[
+        (MODIFICACION, 'Modificación'),
+        (CANCELACION, 'Cancelación'),
+        (MENSAJE, 'Mensaje'),
+    ])
+    titulo = models.CharField(max_length=150)
+    texto = models.TextField()
+    fecha = models.DateTimeField(auto_now_add=True)
+    leida = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-fecha', '-id']
+
+    def __str__(self):
+        return f"{self.usuario}: {self.titulo}"

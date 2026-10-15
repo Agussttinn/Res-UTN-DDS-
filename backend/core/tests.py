@@ -23,7 +23,8 @@ from . import sysacad_client
 from .admin import UsuarioAdmin
 from .archivos import TAMANO_MAXIMO_MB
 from .auth import crear_token
-from .models import ClaseApoyo, Especialidad, Materia, Material, Ponderacion, Usuario
+from .models import ClaseApoyo, Especialidad, Materia, Material, MensajeClase, Notificacion, Ponderacion, Suscripcion, Usuario
+from .observador import EventoClase, ObservadorClase, SujetoClase
 
 CONTRASENA = 'claveSegura123'
 # Los tests parchean la función de red que usa el cliente de SySACAD: nunca dependen del mock real.
@@ -603,6 +604,8 @@ class EspecialidadYMateriaApiTests(ApiTestCase):
         self.assertEqual(nombres('?anio=1'), ['Algoritmos', 'Física'])
         self.assertEqual(nombres('?anio=2&electiva=false'), ['Física II'])
         self.assertEqual(nombres('?electiva=true'), ['Entornos Gráficos'])
+        self.assertEqual(nombres('?buscar=gráf'), ['Entornos Gráficos'])  # busca en todos los años
+        self.assertEqual(nombres('?buscar=fís'), ['Física', 'Física II'])
         self.assertTrue(self.client.get('/api/materias/?electiva=true').data[0]['electiva'])
 
     def test_filtros_de_materias_invalidos_son_400(self):
@@ -1087,3 +1090,176 @@ class PonderacionTests(ApiTestCase):
 
         with self.assertRaises(IntegrityError), transaction.atomic():
             Ponderacion.objects.create(material=self.material, usuario=self.otro_alumno, valor=1)
+
+
+# ---------------------------------------------------------------- suscripciones y avisos (patrón Observer)
+
+class SuscripcionYAvisosTests(ApiTestCase):
+    def setUp(self):
+        super().setUp()
+        self.clase = ClaseApoyo.objects.create(materia=self.materia, tutor=self.tutor, horario='Lun 14hs', aula='L-203')
+        self.url_clase = f'/api/clases-apoyo/{self.clase.id}/'
+
+    def suscribir(self, usuario):
+        self.como(usuario)
+        return self.client.post(f'{self.url_clase}suscripcion/')
+
+    def notificaciones(self, usuario):
+        return list(Notificacion.objects.filter(usuario=usuario))
+
+    def test_un_alumno_se_suscribe_y_la_clase_lo_refleja(self):
+        response = self.suscribir(self.alumno)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data, {'suscrito': True, 'cantidad_suscritos': 1})
+        clase = self.client.get('/api/clases-apoyo/').data[0]
+        self.assertTrue(clase['suscrito'])
+        self.assertEqual(clase['cantidad_suscritos'], 1)
+
+        self.como(self.otro_alumno)
+        clase = self.client.get('/api/clases-apoyo/').data[0]
+        self.assertFalse(clase['suscrito'])  # cada uno ve si ÉL está suscrito
+        self.assertEqual(clase['cantidad_suscritos'], 1)
+
+    def test_suscribirse_dos_veces_no_duplica(self):
+        self.suscribir(self.alumno)
+        response = self.suscribir(self.alumno)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Suscripcion.objects.count(), 1)
+
+    def test_solo_los_alumnos_se_suscriben(self):
+        for usuario in (self.tutor, self.otro_tutor, self.admin):
+            self.assertEqual(self.suscribir(usuario).status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(Suscripcion.objects.count(), 0)
+
+    def test_dejar_de_seguir_una_clase(self):
+        self.suscribir(self.alumno)
+
+        response = self.client.delete(f'{self.url_clase}suscripcion/')
+
+        self.assertEqual(response.data, {'suscrito': False, 'cantidad_suscritos': 0})
+        self.assertEqual(Suscripcion.objects.count(), 0)
+
+    def test_suscribirse_a_una_clase_inexistente_es_404(self):
+        self.como(self.alumno)
+        self.assertEqual(self.client.post('/api/clases-apoyo/999/suscripcion/').status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_modificar_la_clase_avisa_solo_a_los_suscritos_con_lo_que_cambio(self):
+        self.suscribir(self.alumno)
+        self.como(self.tutor)
+
+        response = self.client.patch(self.url_clase, {'horario': 'Mar 16hs', 'aula': 'L-105'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        [aviso] = self.notificaciones(self.alumno)
+        self.assertEqual(aviso.tipo, Notificacion.MODIFICACION)
+        self.assertEqual(aviso.titulo, 'Cambió la clase de apoyo de Algoritmos')
+        self.assertEqual(aviso.texto, 'Horario: Lun 14hs → Mar 16hs. Aula: L-203 → L-105.')
+        self.assertEqual(self.notificaciones(self.otro_alumno), [])
+
+    def test_cambiar_de_materia_tambien_se_avisa(self):
+        self.suscribir(self.alumno)
+        self.como(self.tutor)
+
+        self.client.patch(self.url_clase, {'materia_id': self.otra_materia.id}, format='json')
+
+        self.assertEqual(self.notificaciones(self.alumno)[0].texto, 'Materia: Algoritmos → Física.')
+
+    def test_guardar_sin_cambios_no_avisa(self):
+        self.suscribir(self.alumno)
+        self.como(self.tutor)
+
+        self.client.patch(self.url_clase, {'horario': 'Lun 14hs'}, format='json')
+
+        self.assertEqual(self.notificaciones(self.alumno), [])
+
+    def test_cancelar_la_clase_avisa_y_el_aviso_queda_aunque_la_clase_se_borre(self):
+        self.suscribir(self.alumno)
+        self.como(self.tutor)
+
+        self.assertEqual(self.client.delete(self.url_clase).status_code, status.HTTP_204_NO_CONTENT)
+
+        [aviso] = self.notificaciones(self.alumno)
+        self.assertEqual(aviso.tipo, Notificacion.CANCELACION)
+        self.assertIsNone(aviso.clase)
+        self.assertIn('Lun 14hs', aviso.texto)
+        self.assertEqual(Suscripcion.objects.count(), 0)
+
+    def test_el_tutor_manda_un_mensaje_y_les_llega_a_los_suscritos(self):
+        self.suscribir(self.alumno)
+        self.suscribir(self.otro_alumno)
+        self.como(self.tutor)
+
+        response = self.client.post(f'{self.url_clase}mensajes/', {'texto': '  Traigan la guía 3  '}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['texto'], 'Traigan la guía 3')
+        self.assertEqual(response.data['autor']['legajo'], self.tutor.legajo)
+        for alumno in (self.alumno, self.otro_alumno):
+            [aviso] = self.notificaciones(alumno)
+            self.assertEqual(aviso.tipo, Notificacion.MENSAJE)
+            self.assertEqual(aviso.texto, 'Traigan la guía 3')
+
+    def test_solo_el_tutor_de_la_clase_o_un_administrador_mandan_mensajes(self):
+        self.suscribir(self.alumno)
+        for usuario in (self.alumno, self.otro_tutor):
+            self.como(usuario)
+            response = self.client.post(f'{self.url_clase}mensajes/', {'texto': 'Hola'}, format='json')
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.como(self.admin)
+        self.assertEqual(self.client.post(f'{self.url_clase}mensajes/', {'texto': 'Hola'}, format='json').status_code, 201)
+
+    def test_un_mensaje_vacio_es_400(self):
+        self.como(self.tutor)
+        self.assertEqual(self.client.post(f'{self.url_clase}mensajes/', {'texto': '   '}, format='json').status_code, 400)
+
+    def test_los_mensajes_los_ven_los_suscritos_y_el_tutor_pero_no_los_demas(self):
+        MensajeClase.objects.create(clase=self.clase, autor=self.tutor, texto='Primero')
+        MensajeClase.objects.create(clase=self.clase, autor=self.tutor, texto='Segundo')
+        url = f'{self.url_clase}mensajes/'
+
+        self.como(self.alumno)
+        self.assertEqual(self.client.get(url).status_code, status.HTTP_403_FORBIDDEN)
+
+        self.suscribir(self.alumno)
+        self.assertEqual([m['texto'] for m in self.client.get(url).data], ['Segundo', 'Primero'])
+
+        self.como(self.tutor)
+        self.assertEqual(self.client.get(url).status_code, status.HTTP_200_OK)
+
+    def test_cada_uno_ve_sus_notificaciones_y_las_marca_como_leidas(self):
+        self.suscribir(self.alumno)
+        self.como(self.tutor)
+        self.client.post(f'{self.url_clase}mensajes/', {'texto': 'Hola'}, format='json')
+
+        self.como(self.otro_alumno)
+        self.assertEqual(self.client.get('/api/notificaciones/').data, [])
+
+        self.como(self.alumno)
+        [aviso] = self.client.get('/api/notificaciones/').data
+        self.assertFalse(aviso['leida'])
+        self.assertEqual(aviso['clase'], self.clase.id)
+
+        self.assertEqual(self.client.post('/api/notificaciones/marcar-leidas/').data, {'marcadas': 1})
+        self.assertTrue(self.client.get('/api/notificaciones/').data[0]['leida'])
+
+    def test_el_sujeto_avisa_a_cada_observador(self):
+        """El patrón en sí, sin pasar por la API: el sujeto llama a actualizar() de cada observador."""
+        recibidos = []
+
+        class ObservadorDePrueba(ObservadorClase):
+            def __init__(self, nombre):
+                self.nombre = nombre
+
+            def actualizar(self, evento):
+                recibidos.append((self.nombre, evento.titulo))
+
+        sujeto = SujetoClase(self.clase)
+        sujeto.observadores = lambda: [ObservadorDePrueba('a'), ObservadorDePrueba('b')]
+
+        avisados = sujeto.notificar(EventoClase(Notificacion.MENSAJE, self.clase, 'Hola', 'texto'))
+
+        self.assertEqual(avisados, 2)
+        self.assertEqual(recibidos, [('a', 'Hola'), ('b', 'Hola')])

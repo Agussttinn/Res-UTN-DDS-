@@ -1,15 +1,19 @@
+import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { ClaseApoyo, Materia } from '../../models/api.models';
+import { BuscadorMateriaComponent } from '../../components/buscador-materia/buscador-materia.component';
+import { ClaseApoyo, EstadoSuscripcion, Materia, MensajeClase } from '../../models/api.models';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { mensajeDeError } from '../../utils/errores';
 
+const LARGO_MAXIMO_MENSAJE = 1000;
+
 @Component({
   selector: 'app-clases-apoyo',
   standalone: true,
-  imports: [FormsModule],
+  imports: [DatePipe, FormsModule, BuscadorMateriaComponent],
   templateUrl: './clases-apoyo.html',
   styleUrl: './clases-apoyo.css'
 })
@@ -32,6 +36,19 @@ export class ClasesApoyoComponent implements OnInit {
   /** Id de la clase que se está modificando, o null si se está publicando una nueva. */
   editandoId: number | null = null;
   form = this.formVacio();
+
+  /** Id de la clase cuya suscripción se está cambiando. */
+  readonly suscribiendo = signal<number | null>(null);
+
+  // Mensajes de una clase (los lee el que la sigue; los escribe su tutor)
+  readonly largoMaximoMensaje = LARGO_MAXIMO_MENSAJE;
+  readonly claseMensajes = signal<ClaseApoyo | null>(null);
+  readonly mensajes = signal<MensajeClase[]>([]);
+  readonly cargandoMensajes = signal(false);
+  readonly errorMensajes = signal('');
+  readonly enviandoMensaje = signal(false);
+  readonly errorEnvioMensaje = signal('');
+  readonly nuevoMensaje = signal('');
 
   ngOnInit(): void {
     this.cargarClases();
@@ -69,6 +86,104 @@ export class ClasesApoyoComponent implements OnInit {
     return this.auth.esAdministrador() || (this.auth.esTutor() && clase.tutor.legajo === this.auth.usuario()?.legajo);
   }
 
+  /** Los mensajes los ven sus suscritos, su tutor y los administradores. */
+  puedeVerMensajes(clase: ClaseApoyo): boolean {
+    return clase.suscrito || this.puedeGestionar(clase);
+  }
+
+  // ---- suscripción (el alumno pasa a ser observador de la clase) ----
+
+  alternarSuscripcion(clase: ClaseApoyo): void {
+    this.suscribiendo.set(clase.id);
+    this.errorAccion.set('');
+    const peticion = clase.suscrito ? this.api.desuscribirse(clase.id) : this.api.suscribirse(clase.id);
+    peticion.subscribe({
+      next: (estado) => {
+        this.actualizarSuscripcion(clase.id, estado);
+        this.aviso.set(
+          estado.suscrito
+            ? `Te suscribiste a ${clase.materia.nombre}: te vamos a avisar si cambia, se cancela o el tutor manda un mensaje.`
+            : `Dejaste de seguir la clase de ${clase.materia.nombre}.`
+        );
+        this.suscribiendo.set(null);
+      },
+      error: (err: unknown) => {
+        this.errorAccion.set(mensajeDeError(err, 'No se pudo cambiar la suscripción.'));
+        this.suscribiendo.set(null);
+      }
+    });
+  }
+
+  private actualizarSuscripcion(claseId: number, estado: EstadoSuscripcion): void {
+    this.clases.update((lista) => lista.map((c) => (c.id === claseId ? { ...c, ...estado } : c)));
+  }
+
+  // ---- mensajes ----
+
+  abrirMensajes(clase: ClaseApoyo): void {
+    this.claseMensajes.set(clase);
+    this.mensajes.set([]);
+    this.nuevoMensaje.set('');
+    this.errorEnvioMensaje.set('');
+    this.cargarMensajes();
+  }
+
+  cerrarMensajes(): void {
+    if (!this.enviandoMensaje()) {
+      this.claseMensajes.set(null);
+    }
+  }
+
+  cargarMensajes(): void {
+    const clase = this.claseMensajes();
+    if (!clase) {
+      return;
+    }
+    this.cargandoMensajes.set(true);
+    this.errorMensajes.set('');
+    this.api.getMensajes(clase.id).subscribe({
+      next: (lista) => {
+        this.mensajes.set(lista);
+        this.cargandoMensajes.set(false);
+      },
+      error: (err: unknown) => {
+        this.errorMensajes.set(mensajeDeError(err, 'No se pudieron cargar los mensajes.'));
+        this.cargandoMensajes.set(false);
+      }
+    });
+  }
+
+  enviarMensaje(): void {
+    const clase = this.claseMensajes();
+    const texto = this.nuevoMensaje().trim();
+    if (!clase || this.enviandoMensaje()) {
+      return;
+    }
+    if (!texto) {
+      this.errorEnvioMensaje.set('Escribí el mensaje.');
+      document.getElementById('nuevo-mensaje')?.focus();
+      return;
+    }
+
+    this.enviandoMensaje.set(true);
+    this.errorEnvioMensaje.set('');
+    this.api.enviarMensaje(clase.id, texto).subscribe({
+      next: (mensaje) => {
+        this.mensajes.update((lista) => [mensaje, ...lista]);
+        this.nuevoMensaje.set('');
+        this.enviandoMensaje.set(false);
+        const n = clase.cantidad_suscritos;
+        this.aviso.set(n === 1 ? 'Mensaje enviado al alumno suscrito.' : `Mensaje enviado a los ${n} alumnos suscritos.`);
+      },
+      error: (err: unknown) => {
+        this.errorEnvioMensaje.set(mensajeDeError(err, 'No se pudo enviar el mensaje.'));
+        this.enviandoMensaje.set(false);
+      }
+    });
+  }
+
+  // ---- publicar / modificar / cancelar ----
+
   abrirModal(clase?: ClaseApoyo): void {
     this.editandoId = clase?.id ?? null;
     this.form = clase
@@ -102,7 +217,7 @@ export class ClasesApoyoComponent implements OnInit {
       next: () => {
         this.guardando.set(false);
         this.mostrarModal.set(false);
-        this.aviso.set(this.editandoId === null ? 'Clase publicada.' : 'Clase actualizada.');
+        this.aviso.set(this.editandoId === null ? 'Clase publicada.' : 'Clase actualizada. Los alumnos suscritos reciben un aviso con los cambios.');
         this.cargarClases(false);
       },
       error: (err: unknown) => {
@@ -113,7 +228,8 @@ export class ClasesApoyoComponent implements OnInit {
   }
 
   cancelarClase(clase: ClaseApoyo): void {
-    if (!confirm(`¿Cancelar la clase de ${clase.materia.nombre} (${clase.horario})? Esta acción no se puede deshacer.`)) {
+    const aviso = clase.cantidad_suscritos > 0 ? ` Se les va a avisar a los ${clase.cantidad_suscritos} alumnos suscritos.` : '';
+    if (!confirm(`¿Cancelar la clase de ${clase.materia.nombre} (${clase.horario})? Esta acción no se puede deshacer.${aviso}`)) {
       return;
     }
     this.errorAccion.set('');

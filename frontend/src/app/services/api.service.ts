@@ -3,7 +3,9 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { API_URL } from '../api.config';
-import { AccionModeracion, ClaseApoyo, FiltroAnio, Materia, Material, Ponderacion } from '../models/api.models';
+import {
+  AccionModeracion, ClaseApoyo, EstadoSuscripcion, FiltroAnio, Materia, Material, MensajeClase, Notificacion, Ponderacion
+} from '../models/api.models';
 
 /** Datos que hay que mandar para crear o modificar una clase de apoyo. */
 export interface DatosClaseApoyo {
@@ -21,14 +23,19 @@ export class ApiService {
   private readonly http = inject(HttpClient);
 
   // ---- materias ----
-  /** Sin filtro, todas las materias. Con `filtro`, las de ese año (sin electivas) o solo las electivas.
-   *  El filtro lo resuelve el backend sobre la base local. */
-  getMaterias(filtro?: FiltroAnio): Observable<Materia[]> {
+  /**
+   * Sin filtros, todas las materias. `anio`: las de ese año (sin electivas) o solo las electivas.
+   * `buscar`: las que contienen ese texto en el nombre, de cualquier año. Lo resuelve el backend sobre la base local.
+   */
+  getMaterias(filtros: { anio?: FiltroAnio; buscar?: string } = {}): Observable<Materia[]> {
     let params = new HttpParams();
-    if (filtro === 'electivas') {
+    if (filtros.anio === 'electivas') {
       params = params.set('electiva', 'true');
-    } else if (filtro !== undefined) {
-      params = params.set('anio', String(filtro)).set('electiva', 'false');
+    } else if (filtros.anio !== undefined) {
+      params = params.set('anio', String(filtros.anio)).set('electiva', 'false');
+    }
+    if (filtros.buscar?.trim()) {
+      params = params.set('buscar', filtros.buscar.trim());
     }
     return this.http.get<Materia[]>(`${API_URL}/materias/`, { params });
   }
@@ -84,6 +91,35 @@ export class ApiService {
 
   eliminarClaseApoyo(id: number): Observable<void> {
     return this.http.delete<void>(`${API_URL}/clases-apoyo/${id}/`);
+  }
+
+  // ---- suscripciones y mensajes de una clase ----
+  /** Solo alumnos: empiezan a recibir avisos de los cambios y mensajes de la clase. */
+  suscribirse(claseId: number): Observable<EstadoSuscripcion> {
+    return this.http.post<EstadoSuscripcion>(`${API_URL}/clases-apoyo/${claseId}/suscripcion/`, {});
+  }
+
+  desuscribirse(claseId: number): Observable<EstadoSuscripcion> {
+    return this.http.delete<EstadoSuscripcion>(`${API_URL}/clases-apoyo/${claseId}/suscripcion/`);
+  }
+
+  /** Los más nuevos primero. Los ven sus suscritos, su tutor y los administradores. */
+  getMensajes(claseId: number): Observable<MensajeClase[]> {
+    return this.http.get<MensajeClase[]>(`${API_URL}/clases-apoyo/${claseId}/mensajes/`);
+  }
+
+  /** El tutor de la clase (o un administrador): el mensaje les llega a todos los suscritos. */
+  enviarMensaje(claseId: number, texto: string): Observable<MensajeClase> {
+    return this.http.post<MensajeClase>(`${API_URL}/clases-apoyo/${claseId}/mensajes/`, { texto });
+  }
+
+  // ---- notificaciones ----
+  getNotificaciones(): Observable<Notificacion[]> {
+    return this.http.get<Notificacion[]>(`${API_URL}/notificaciones/`);
+  }
+
+  marcarNotificacionesLeidas(): Observable<{ marcadas: number }> {
+    return this.http.post<{ marcadas: number }>(`${API_URL}/notificaciones/marcar-leidas/`, {});
   }
 
   private filtro(nombre: string, valor: number | undefined): HttpParams {

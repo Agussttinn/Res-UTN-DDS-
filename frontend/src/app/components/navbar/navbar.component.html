@@ -9,6 +9,7 @@
 
       <div class="flex items-center gap-2.5">
         @if (auth.usuario(); as usuario) {
+          <app-notificaciones />
           <div class="hidden sm:flex items-center gap-2 bg-white/10 rounded-full pl-3 pr-2.5 py-1.5">
             <span class="text-xs font-semibold">{{ usuario.nombre_y_apellido }}</span>
             <span class="text-[10px] font-bold uppercase bg-white/20 rounded-full px-2 py-0.5">

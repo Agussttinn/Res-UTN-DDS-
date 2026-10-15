@@ -34,7 +34,7 @@ describe('MateriasComponent', () => {
     expect(texto).not.toContain('Cargando asignaturas');
     expect(texto).toContain('Algoritmos y Estructuras de Datos');
     expect(texto).toContain('Álgebra y Geometría Analítica');
-    expect(texto).toContain('1° Año');
+    expect(texto).toContain('1° año');
     expect(texto).toContain('Ingeniería en Sistemas'); // sale de materia.especialidad.nombre
   });
 
@@ -99,22 +99,75 @@ describe('MateriasComponent', () => {
     expect(textoDe(fixture)).toContain('Electiva');
   });
 
-  it('la búsqueda filtra por nombre sin importar acentos', async () => {
-    const fixture = crearComponente(MateriasComponent);
-    pedidoDeMaterias().flush([unaMateria(), unaMateria({ id: 2, nombre: 'Álgebra y Geometría Analítica' })]);
-    await estabilizar(fixture);
+  describe('búsqueda por nombre', () => {
+    const esperar = () => new Promise((resolve) => setTimeout(resolve));
 
-    const buscador = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('input[type="search"]')!;
-    buscador.value = 'algebra';
-    buscador.dispatchEvent(new Event('input'));
-    await estabilizar(fixture);
+    async function buscar(fixture: ReturnType<typeof crearComponente<MateriasComponent>>, texto: string) {
+      const buscador = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('#buscar-materia')!;
+      buscador.value = texto;
+      buscador.dispatchEvent(new Event('input'));
+      await esperar(); // la demora entre teclas (en los tests es 0)
+    }
 
-    expect(textoDe(fixture)).toContain('Álgebra y Geometría Analítica');
-    expect(textoDe(fixture)).not.toContain('Algoritmos y Estructuras de Datos');
+    it('busca en todos los años: pide al backend por nombre, sin filtro de año', async () => {
+      const fixture = crearComponente(MateriasComponent);
+      fixture.componentInstance.demoraBusquedaMs = 0;
+      pedidoDeMaterias().flush([unaMateria()]);
+      await estabilizar(fixture);
 
-    buscador.value = 'zzz';
-    buscador.dispatchEvent(new Event('input'));
-    await estabilizar(fixture);
-    expect(textoDe(fixture)).toContain('Ninguna materia coincide con "zzz"');
+      await buscar(fixture, 'sistemas');
+      const pedido = pedidoDeMaterias();
+      expect(pedido.request.params.get('buscar')).toBe('sistemas');
+      expect(pedido.request.params.has('anio')).toBe(false);
+      expect(pedido.request.params.has('electiva')).toBe(false);
+      pedido.flush([
+        unaMateria({ id: 3, nombre: 'Sistemas Operativos', anio: 2 }),
+        unaMateria({ id: 9, nombre: 'Sistemas de Información Geográfica', anio: 2, electiva: true }),
+      ]);
+      await estabilizar(fixture);
+
+      const texto = textoDe(fixture);
+      expect(texto).toContain('Resultados de "sistemas" en todos los años');
+      expect(texto).toContain('Sistemas Operativos');
+      expect(texto).toContain('2° año');
+      expect(texto).toContain('Electiva');
+      expect(boton(fixture, '1° año').getAttribute('aria-pressed')).toBe('false');
+    });
+
+    it('sin resultados lo dice, y elegir un año sale de la búsqueda', async () => {
+      const fixture = crearComponente(MateriasComponent);
+      fixture.componentInstance.demoraBusquedaMs = 0;
+      pedidoDeMaterias().flush([unaMateria()]);
+      await estabilizar(fixture);
+
+      await buscar(fixture, 'zzz');
+      pedidoDeMaterias().flush([]);
+      await estabilizar(fixture);
+      expect(textoDe(fixture)).toContain('Ninguna materia coincide con "zzz"');
+
+      boton(fixture, '2° año').click();
+      expect(pedidoDeMaterias().request.params.get('anio')).toBe('2');
+      await estabilizar(fixture);
+      expect((fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('#buscar-materia')!.value).toBe('');
+    });
+
+    it('al seguir escribiendo espera y hace una sola consulta', async () => {
+      const fixture = crearComponente(MateriasComponent);
+      fixture.componentInstance.demoraBusquedaMs = 20;
+      pedidoDeMaterias().flush([]);
+      await estabilizar(fixture);
+
+      const buscador = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('#buscar-materia')!;
+      for (const texto of ['a', 'al', 'alg']) {
+        buscador.value = texto;
+        buscador.dispatchEvent(new Event('input'));
+      }
+      http.expectNone((r) => r.url === `${API_URL}/materias/`);
+      await new Promise((resolve) => setTimeout(resolve, 40));
+
+      const pedido = pedidoDeMaterias();
+      expect(pedido.request.params.get('buscar')).toBe('alg');
+      pedido.flush([]);
+    });
   });
 });

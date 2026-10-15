@@ -293,14 +293,37 @@ describe('MaterialesComponent', () => {
       expect(campoMateria(fixture).value).toBe('');
     });
 
-    it('un año sin materias cargadas deshabilita el buscador y lo explica', async () => {
+    it('escribiendo el nombre encuentra materias de cualquier año, y al elegirla se marca su año solo', async () => {
+      const fixture = await abrir({ materiaId: '', materias: VARIOS_ANIOS });
+      await abrirModal(fixture);
+      expect(anio(fixture, '1').checked).toBe(true);
+
+      escribir(fixture, '#nueva-materia', 'operativos');
+      await estabilizar(fixture);
+      (elemento(fixture).querySelector('[role="option"]') as HTMLElement).click();
+      await estabilizar(fixture);
+
+      expect(campoMateria(fixture).value).toBe('Sistemas Operativos');
+      expect(anio(fixture, '2').checked).toBe(true);
+    });
+
+    it('también encuentra electivas y marca la pestaña de electivas', async () => {
       const fixture = await abrir({ materiaId: '', materias: VARIOS_ANIOS });
       await abrirModal(fixture);
 
-      await elegirAnio(fixture, '5');
+      escribir(fixture, '#nueva-materia', 'entornos');
+      await estabilizar(fixture);
+      (elemento(fixture).querySelector('[role="option"]') as HTMLElement).click();
+      await estabilizar(fixture);
+
+      expect(anio(fixture, 'electivas').checked).toBe(true);
+    });
+
+    it('sin materias cargadas el buscador queda deshabilitado', async () => {
+      const fixture = await abrir({ materiaId: '', materias: [] });
+      await abrirModal(fixture);
 
       expect(campoMateria(fixture).disabled).toBe(true);
-      expect(textoDe(fixture)).toContain('Todavía no hay materias cargadas para este año.');
     });
 
     it('escribir filtra las materias (sin importar acentos) y se elige una con un click', async () => {

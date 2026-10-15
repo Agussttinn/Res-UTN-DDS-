@@ -65,18 +65,40 @@
             </div>
           </div>
 
-          @if (puedeGestionar(clase)) {
-            <div class="mt-4 flex justify-end gap-2">
-              <button type="button" (click)="abrirModal(clase)"
-                      class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">
-                Modificar
-              </button>
-              <button type="button" (click)="cancelarClase(clase)"
-                      class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600">
-                Cancelar clase
-              </button>
+          <div class="mt-4 flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs text-slate-500">
+              👥 {{ clase.cantidad_suscritos }} {{ clase.cantidad_suscritos === 1 ? 'alumno suscrito' : 'alumnos suscritos' }}
+            </span>
+
+            <div class="flex flex-wrap justify-end gap-2">
+              @if (puedeVerMensajes(clase)) {
+                <button type="button" (click)="abrirMensajes(clase)"
+                        class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">
+                  💬 Mensajes
+                </button>
+              }
+              @if (auth.rol() === 'alumno') {
+                <button type="button" (click)="alternarSuscripcion(clase)" [disabled]="suscribiendo() === clase.id"
+                        [attr.aria-pressed]="clase.suscrito"
+                        [class]="clase.suscrito
+                          ? 'bg-white border border-brand-600 text-brand-700 hover:bg-brand-50'
+                          : 'bg-brand-600 hover:bg-brand-700 text-white'"
+                        class="px-3 py-1.5 text-xs font-semibold rounded-lg disabled:opacity-60">
+                  {{ clase.suscrito ? '✓ Suscrito · Dejar de seguir' : '🔔 Suscribirme' }}
+                </button>
+              }
+              @if (puedeGestionar(clase)) {
+                <button type="button" (click)="abrirModal(clase)"
+                        class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">
+                  Modificar
+                </button>
+                <button type="button" (click)="cancelarClase(clase)"
+                        class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600">
+                  Cancelar clase
+                </button>
+              }
             </div>
-          }
+          </div>
         </div>
       }
     </div>
@@ -98,13 +120,10 @@
         <div class="space-y-3">
           <div>
             <label for="clase-materia" class="block text-xs font-semibold text-slate-600 mb-1">Materia</label>
-            <select id="clase-materia" [(ngModel)]="form.materia"
-                    class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-brand-500">
-              <option [ngValue]="null">Seleccionar materia...</option>
-              @for (m of materias(); track m.id) {
-                <option [ngValue]="m.id">{{ m.nombre }}</option>
-              }
-            </select>
+            <app-buscador-materia idCampo="clase-materia"
+                                  [materias]="materias()"
+                                  [valor]="form.materia" (valorChange)="form.materia = $event"
+                                  [deshabilitado]="materias().length === 0" />
           </div>
 
           <div>
@@ -129,6 +148,77 @@
                   class="px-4 py-2 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 disabled:bg-brand-300 rounded-lg shadow-sm">
             {{ guardando() ? 'Guardando...' : 'Guardar' }}
           </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal mensajes de una clase -->
+  @if (claseMensajes(); as clase) {
+    <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center sm:p-4">
+      <div role="dialog" aria-modal="true" aria-labelledby="titulo-mensajes" (keydown.escape)="cerrarMensajes()"
+           class="bg-white w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl shadow-xl flex flex-col max-h-[92vh]">
+        <header class="flex items-start justify-between gap-4 px-5 sm:px-6 pt-5 pb-4 border-b border-slate-100">
+          <div>
+            <h2 id="titulo-mensajes" class="text-lg font-bold text-slate-800">Mensajes · {{ clase.materia.nombre }}</h2>
+            <p class="text-sm text-slate-500 mt-0.5">{{ clase.horario }} · Aula {{ clase.aula }} · {{ clase.tutor.nombre_y_apellido }}</p>
+          </div>
+          <button type="button" (click)="cerrarMensajes()" [disabled]="enviandoMensaje()" aria-label="Cerrar"
+                  class="-mr-2 -mt-1 rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50">✕</button>
+        </header>
+
+        <div class="overflow-y-auto px-5 sm:px-6 py-5 space-y-5">
+          @if (puedeGestionar(clase)) {
+            <form (ngSubmit)="enviarMensaje()" novalidate class="space-y-2">
+              <label for="nuevo-mensaje" class="block text-sm font-medium text-slate-700">
+                Nuevo mensaje para los suscritos
+              </label>
+              <textarea id="nuevo-mensaje" name="mensaje" rows="3" [ngModel]="nuevoMensaje()" (ngModelChange)="nuevoMensaje.set($event); errorEnvioMensaje.set('')"
+                        [maxlength]="largoMaximoMensaje" placeholder="Ej: Esta semana repasamos el TP 2, traigan dudas."
+                        [attr.aria-invalid]="errorEnvioMensaje() ? true : null"
+                        [attr.aria-describedby]="errorEnvioMensaje() ? 'error-mensaje' : 'ayuda-mensaje'"
+                        [class]="errorEnvioMensaje() ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-300 focus:border-brand-500 focus:ring-brand-500/20'"
+                        class="w-full rounded-lg border bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 resize-y"></textarea>
+              @if (errorEnvioMensaje()) {
+                <p id="error-mensaje" class="text-xs font-medium text-red-600">{{ errorEnvioMensaje() }}</p>
+              } @else {
+                <p id="ayuda-mensaje" class="text-xs text-slate-500">
+                  {{ clase.cantidad_suscritos === 0
+                    ? 'Todavía no hay alumnos suscritos: el mensaje queda guardado para los que se sumen.'
+                    : 'Les llega un aviso a los ' + clase.cantidad_suscritos + ' alumnos suscritos.' }}
+                </p>
+              }
+              <div class="flex justify-end">
+                <button type="submit" [disabled]="enviandoMensaje()"
+                        class="px-4 py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 disabled:bg-brand-400 rounded-lg shadow-sm">
+                  {{ enviandoMensaje() ? 'Enviando...' : 'Enviar mensaje' }}
+                </button>
+              </div>
+            </form>
+          }
+
+          @if (cargandoMensajes()) {
+            <p class="text-center text-sm text-slate-400 py-4">Cargando mensajes...</p>
+          } @else if (errorMensajes()) {
+            <div role="alert" class="p-3 bg-red-50 text-red-700 rounded-lg text-sm flex items-center justify-between gap-3">
+              <span>{{ errorMensajes() }}</span>
+              <button type="button" (click)="cargarMensajes()" class="font-semibold underline shrink-0">Reintentar</button>
+            </div>
+          } @else {
+            <ul class="space-y-3" aria-label="Mensajes anteriores">
+              @for (mensaje of mensajes(); track mensaje.id) {
+                <li class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <div class="flex items-baseline justify-between gap-2">
+                    <span class="text-xs font-semibold text-slate-700">{{ mensaje.autor.nombre_y_apellido }}</span>
+                    <span class="text-[11px] text-slate-400">{{ mensaje.fecha | date: 'dd/MM HH:mm' }}</span>
+                  </div>
+                  <p class="mt-1 text-sm text-slate-800 whitespace-pre-line">{{ mensaje.texto }}</p>
+                </li>
+              } @empty {
+                <li class="text-center text-sm text-slate-500 py-4">Todavía no hay mensajes en esta clase.</li>
+              }
+            </ul>
+          }
         </div>
       </div>
     </div>

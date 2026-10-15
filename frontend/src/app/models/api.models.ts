@@ -48,6 +48,11 @@ export function esDelFiltro(materia: Materia, filtro: FiltroAnio): boolean {
   return filtroAnioDe(materia) === filtro;
 }
 
+/** "2° año" o "Electiva". */
+export function etiquetaAnio(materia: Materia): string {
+  return materia.electiva ? 'Electiva' : `${materia.anio}° año`;
+}
+
 export interface Material {
   id: number;
   materia: Materia;
@@ -71,6 +76,35 @@ export interface ClaseApoyo {
   tutor: UsuarioPublico;
   horario: string;
   aula: string;
+  /** Si el usuario logueado sigue esta clase (recibe avisos de cambios y mensajes). */
+  suscrito: boolean;
+  cantidad_suscritos: number;
+}
+
+export interface EstadoSuscripcion {
+  suscrito: boolean;
+  cantidad_suscritos: number;
+}
+
+/** Mensaje del tutor de una clase a sus suscritos. */
+export interface MensajeClase {
+  id: number;
+  autor: UsuarioPublico;
+  texto: string;
+  fecha: string;
+}
+
+export type TipoNotificacion = 'modificacion' | 'cancelacion' | 'mensaje';
+
+export interface Notificacion {
+  id: number;
+  tipo: TipoNotificacion;
+  titulo: string;
+  texto: string;
+  fecha: string;
+  leida: boolean;
+  /** Id de la clase, o null si la clase ya se canceló. */
+  clase: number | null;
 }
 
 export interface Ponderacion {

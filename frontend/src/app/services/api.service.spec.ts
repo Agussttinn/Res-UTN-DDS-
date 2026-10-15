@@ -28,13 +28,17 @@ describe('ApiService', () => {
     expect(todas.method).toBe('GET');
     expect(todas.params.keys()).toEqual([]);
 
-    const deSegundo = pedir(api.getMaterias(2), '/materias/');
+    const deSegundo = pedir(api.getMaterias({ anio: 2 }), '/materias/');
     expect(deSegundo.params.get('anio')).toBe('2');
     expect(deSegundo.params.get('electiva')).toBe('false');
 
-    const electivas = pedir(api.getMaterias('electivas'), '/materias/');
+    const electivas = pedir(api.getMaterias({ anio: 'electivas' }), '/materias/');
     expect(electivas.params.get('electiva')).toBe('true');
     expect(electivas.params.has('anio')).toBe(false);
+
+    const busqueda = pedir(api.getMaterias({ buscar: '  algebra ' }), '/materias/');
+    expect(busqueda.params.get('buscar')).toBe('algebra');
+    expect(busqueda.params.has('anio')).toBe(false);
 
     const todos = pedir(api.getMateriales(), '/materiales/');
     expect(todos.params.has('materia')).toBe(false);
@@ -82,5 +86,35 @@ describe('ApiService', () => {
     expect([cambio.method, cambio.body]).toEqual(['PATCH', datos]);
 
     expect(pedir(api.eliminarClaseApoyo(3), '/clases-apoyo/3/').method).toBe('DELETE');
+  });
+});
+
+describe('ApiService: suscripciones, mensajes y notificaciones', () => {
+  let api: ApiService;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.configureTestingModule({ providers: proveedoresDePrueba() });
+    api = TestBed.inject(ApiService);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  const peticion = (observable: { subscribe: () => unknown }, url: string) => {
+    observable.subscribe();
+    return http.expectOne(`${API_URL}${url}`).request;
+  };
+
+  it('usa las rutas y los métodos de la API', () => {
+    expect(peticion(api.suscribirse(3), '/clases-apoyo/3/suscripcion/').method).toBe('POST');
+    expect(peticion(api.desuscribirse(3), '/clases-apoyo/3/suscripcion/').method).toBe('DELETE');
+    expect(peticion(api.getMensajes(3), '/clases-apoyo/3/mensajes/').method).toBe('GET');
+    const mensaje = peticion(api.enviarMensaje(3, 'Hola'), '/clases-apoyo/3/mensajes/');
+    expect(mensaje.method).toBe('POST');
+    expect(mensaje.body).toEqual({ texto: 'Hola' });
+    expect(peticion(api.getNotificaciones(), '/notificaciones/').method).toBe('GET');
+    expect(peticion(api.marcarNotificacionesLeidas(), '/notificaciones/marcar-leidas/').method).toBe('POST');
   });
 });

@@ -3,7 +3,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.db.models import Avg
 from rest_framework import serializers
 
-from .models import Usuario,Especialidad,Materia,Material,ClaseApoyo,Ponderacion
+from .models import Usuario,Especialidad,Materia,Material,ClaseApoyo,Ponderacion,MensajeClase,Notificacion
 from .permissions import TUTOR
 
 
@@ -169,10 +169,19 @@ class ClaseApoyoSerializer(serializers.ModelSerializer):
     tutor_id = serializers.CharField(write_only=True, required=False)
     materia = serializers.SerializerMethodField()
     tutor = serializers.SerializerMethodField()
+    # Los calcula la vista en la misma consulta (ver _clases_apoyo_queryset); al crear una clase todavía son 0/False.
+    suscrito = serializers.SerializerMethodField()
+    cantidad_suscritos = serializers.SerializerMethodField()
 
     class Meta:
         model = ClaseApoyo
-        fields = ('id','materia','tutor','horario','aula','materia_id','tutor_id')
+        fields = ('id','materia','tutor','horario','aula','suscrito','cantidad_suscritos','materia_id','tutor_id')
+
+    def get_suscrito(self, obj):
+        return bool(getattr(obj, 'suscrito', False))
+
+    def get_cantidad_suscritos(self, obj):
+        return getattr(obj, 'cantidad_suscritos', 0)
 
     def validate_materia_id(self, value):
         if not Materia.objects.filter(pk=value).exists():
@@ -288,3 +297,23 @@ class PonderacionSerializer(serializers.ModelSerializer):
     def get_usuario(self, obj):
         usuario = obj.usuario
         return UsuarioPublicoSerializer(usuario).data
+
+
+class MensajeClaseSerializer(serializers.ModelSerializer):
+    autor = serializers.SerializerMethodField()
+    # El autor y la clase no se mandan: salen del token y de la URL.
+    texto = serializers.CharField(max_length=1000, trim_whitespace=True)
+
+    class Meta:
+        model = MensajeClase
+        fields = ('id', 'autor', 'texto', 'fecha')
+
+    def get_autor(self, obj):
+        return UsuarioPublicoSerializer(obj.autor).data
+
+
+class NotificacionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notificacion
+        fields = ('id', 'tipo', 'titulo', 'texto', 'fecha', 'leida', 'clase')
+        read_only_fields = fields

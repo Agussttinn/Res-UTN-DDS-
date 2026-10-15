@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.hashers import identify_hasher, make_password
 
 # Register your models here.
-from .models import Usuario, Especialidad, Materia, Material, ClaseApoyo, Ponderacion
+from .models import Usuario, Especialidad, Materia, Material, ClaseApoyo, Ponderacion, Suscripcion, MensajeClase, Notificacion
 
 
 @admin.register(Usuario)
@@ -25,3 +25,6 @@ admin.site.register(Materia)
 admin.site.register(Material)
 admin.site.register(ClaseApoyo)
 admin.site.register(Ponderacion)
+admin.site.register(Suscripcion)
+admin.site.register(MensajeClase)
+admin.site.register(Notificacion)

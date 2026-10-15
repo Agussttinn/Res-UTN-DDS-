@@ -239,12 +239,18 @@ export class MaterialesComponent implements OnInit {
 
   elegirAnio(anio: FiltroAnio): void {
     this.anioElegido.set(anio);
-    // Si la materia elegida no es de este año, el buscador de materias la borra solo.
+    const elegida = this.materias().find((m) => m.id === this.materiaElegida());
+    if (elegida && !esDelFiltro(elegida, anio)) {
+      this.materiaElegida.set(null);
+    }
   }
 
+  /** Elegir una materia (también buscándola por nombre, de cualquier año) marca solo su año. */
   elegirMateria(id: number | null): void {
     this.materiaElegida.set(id);
-    if (id !== null) {
+    const materia = this.materias().find((m) => m.id === id);
+    if (materia) {
+      this.anioElegido.set(filtroAnioDe(materia));
       this.limpiarError('materia');
     }
   }

@@ -5,7 +5,7 @@ from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError, transaction
-from django.db.models import Avg, Count, Q
+from django.db.models import Avg, Count, Exists, OuterRef, Q
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
@@ -17,9 +17,11 @@ from rest_framework.views import APIView
 
 from . import sysacad_client, sysacad_sync
 from .auth import crear_token
-from .models import Usuario, Especialidad, Materia, Material, ClaseApoyo, Ponderacion
+from .models import Usuario, Especialidad, Materia, Material, ClaseApoyo, Ponderacion, Suscripcion, Notificacion
+from .observador import EventoClase, SujetoClase
 from .permissions import (
     ADMINISTRADOR,
+    ALUMNO,
     TUTOR,
     EsAdministrador,
     EsDuenioOAdministrador,
@@ -35,6 +37,8 @@ from .serializer import (
     MaterialSerializer,
     ClaseApoyoSerializer,
     PonderacionSerializer,
+    MensajeClaseSerializer,
+    NotificacionSerializer,
 )
 
 # Cualquier usuario logueado LEE; solo el rol indicado ESCRIBE.
@@ -123,7 +127,8 @@ class EspecialidadDetail(ProtegidoAlBorrarMixin, generics.RetrieveUpdateDestroyA
 
 class MateriaListCreate(generics.ListCreateAPIView):
     """GET: materias de las carreras habilitadas (settings.CARRERAS_HABILITADAS), ordenadas por año y nombre.
-    Filtros opcionales: ?anio=<n> y ?electiva=true|false. Se resuelven en la base local, no en SySACAD."""
+    Filtros opcionales: ?anio=<n>, ?electiva=true|false y ?buscar=<parte del nombre>.
+    Se resuelven en la base local, no en SySACAD."""
     serializer_class = MateriaSerializer
     permission_classes = [SoloAdministradorEscribe]
 
@@ -134,6 +139,10 @@ class MateriaListCreate(generics.ListCreateAPIView):
         anio = _id_numerico(self.request, 'anio')
         if anio is not None:
             materias = materias.filter(anio=anio)
+        buscar = self.request.query_params.get('buscar', '').strip()
+        if buscar:
+            # Con la collation de MariaDB/MySQL (utf8mb4_general_ci) no distingue mayúsculas ni acentos.
+            materias = materias.filter(nombre__icontains=buscar)
         electiva = self.request.query_params.get('electiva')
         if electiva is not None:
             if electiva not in ('true', 'false'):
@@ -241,7 +250,11 @@ class MaterialModerar(APIView):
 # ---------- clases de apoyo ----------
 
 def _clases_apoyo_queryset(request):
-    clases = ClaseApoyo.objects.select_related('materia__especialidad', 'tutor')
+    """Las clases con, en la misma consulta, cuántos suscritos tienen y si quien consulta es uno de ellos."""
+    clases = ClaseApoyo.objects.select_related('materia__especialidad', 'tutor').annotate(
+        cantidad_suscritos=Count('suscripciones', distinct=True),
+        suscrito=Exists(Suscripcion.objects.filter(clase=OuterRef('pk'), usuario_id=request.user.pk)),
+    ).order_by('id')
     materia_id = _id_numerico(request, 'materia')
     if materia_id is not None:
         clases = clases.filter(materia_id=materia_id)
@@ -258,12 +271,123 @@ class ClaseApoyoListCreate(generics.ListCreateAPIView):
 
 
 class ClaseApoyoDetail(generics.RetrieveUpdateDestroyAPIView):
+    """Modificar o cancelar una clase avisa a sus suscritos (patrón Observer, ver observador.py)."""
     serializer_class = ClaseApoyoSerializer
     permission_classes = [IsAuthenticated, TutorOAdministradorEscriben, EsDuenioOAdministrador]
     campo_duenio = 'tutor'  # solo el tutor a cargo de la clase (o un administrador) la modifica
 
     def get_queryset(self):
         return _clases_apoyo_queryset(self.request)
+
+    @transaction.atomic
+    def perform_update(self, serializer):
+        antes = serializer.instance
+        valores_antes = {'Materia': antes.materia.nombre, 'Horario': antes.horario, 'Aula': antes.aula}
+        clase = serializer.save()
+        clase.refresh_from_db(fields=['materia'])
+        valores_despues = {'Materia': clase.materia.nombre, 'Horario': clase.horario, 'Aula': clase.aula}
+        cambios = [
+            f'{campo}: {valor} → {valores_despues[campo]}'
+            for campo, valor in valores_antes.items() if valor != valores_despues[campo]
+        ]
+        if cambios:
+            SujetoClase(clase).notificar(EventoClase(
+                tipo=Notificacion.MODIFICACION,
+                clase=clase,
+                titulo=f'Cambió la clase de apoyo de {clase.materia.nombre}',
+                texto='. '.join(cambios) + '.',
+            ))
+
+    @transaction.atomic
+    def perform_destroy(self, instance):
+        # Primero se avisa (la notificación queda aunque la clase ya no exista) y después se borra.
+        SujetoClase(instance).notificar(EventoClase(
+            tipo=Notificacion.CANCELACION,
+            clase=instance,
+            titulo=f'Se canceló la clase de apoyo de {instance.materia.nombre}',
+            texto=f'La clase del {instance.horario} en el aula {instance.aula} ya no se dicta.',
+        ))
+        instance.delete()
+
+
+def _clase_de_la_url(request, pk):
+    return get_object_or_404(_clases_apoyo_queryset(request), pk=pk)
+
+
+def _puede_gestionar(request, clase):
+    """El tutor a cargo de la clase o un administrador."""
+    return es_administrador(request) or clase.tutor_id == request.user.pk
+
+
+class ClaseApoyoSuscripcion(APIView):
+    """POST: el alumno logueado se suscribe a la clase (recibe avisos de cambios y mensajes).
+    DELETE: deja de seguirla. Solo los alumnos se suscriben."""
+
+    def post(self, request, pk):
+        clase = _clase_de_la_url(request, pk)
+        if request.user.rol != ALUMNO:
+            return Response({"error": "Solo los alumnos pueden suscribirse a una clase."}, status=status.HTTP_403_FORBIDDEN)
+        nueva = SujetoClase(clase).suscribir(request.user)
+        return self._estado(clase, status.HTTP_201_CREATED if nueva else status.HTTP_200_OK)
+
+    def delete(self, request, pk):
+        clase = _clase_de_la_url(request, pk)
+        SujetoClase(clase).desuscribir(request.user)
+        return self._estado(clase, status.HTTP_200_OK)
+
+    def _estado(self, clase, codigo):
+        return Response({
+            "suscrito": clase.suscripciones.filter(usuario=self.request.user).exists(),
+            "cantidad_suscritos": clase.suscripciones.count(),
+        }, status=codigo)
+
+
+class ClaseApoyoMensajes(generics.ListCreateAPIView):
+    """GET: mensajes de la clase, los más nuevos primero (sus suscritos, su tutor o un administrador).
+    POST: el tutor de la clase (o un administrador) manda un mensaje, que les llega a todos los suscritos."""
+    serializer_class = MensajeClaseSerializer
+
+    def get_clase(self):
+        if not hasattr(self, '_clase'):
+            self._clase = _clase_de_la_url(self.request, self.kwargs['pk'])
+        return self._clase
+
+    def get_queryset(self):
+        clase = self.get_clase()
+        if not (_puede_gestionar(self.request, clase) or clase.suscrito):
+            self.permission_denied(self.request, message='Para ver los mensajes tenés que estar suscrito a la clase.')
+        return clase.mensajes.select_related('autor')
+
+    @transaction.atomic
+    def perform_create(self, serializer):
+        clase = self.get_clase()
+        if not _puede_gestionar(self.request, clase):
+            self.permission_denied(self.request, message='Solo el tutor de la clase o un administrador pueden enviar mensajes.')
+        mensaje = serializer.save(clase=clase, autor=self.request.user)
+        SujetoClase(clase).notificar(EventoClase(
+            tipo=Notificacion.MENSAJE,
+            clase=clase,
+            titulo=f'Mensaje de {mensaje.autor.nombre_y_apellido} ({clase.materia.nombre})',
+            texto=mensaje.texto,
+        ))
+
+
+# ---------- notificaciones ----------
+
+class NotificacionList(generics.ListAPIView):
+    """Las últimas 50 notificaciones del usuario logueado, las más nuevas primero."""
+    serializer_class = NotificacionSerializer
+
+    def get_queryset(self):
+        return Notificacion.objects.filter(usuario=self.request.user)[:50]
+
+
+class NotificacionesMarcarLeidas(APIView):
+    """Marca como leídas todas las notificaciones del usuario logueado."""
+
+    def post(self, request):
+        marcadas = Notificacion.objects.filter(usuario=request.user, leida=False).update(leida=True)
+        return Response({"marcadas": marcadas})
 
 
 # ---------- ponderaciones (estrellas) ----------

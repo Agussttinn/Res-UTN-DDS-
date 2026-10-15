@@ -1,19 +1,26 @@
 import { Component, Injector, afterNextRender, computed, effect, inject, input, model, signal, untracked } from '@angular/core';
 
-import { Materia } from '../../models/api.models';
+import { Materia, etiquetaAnio } from '../../models/api.models';
 
 /** Minúsculas y sin acentos: así buscar "algebra" encuentra "Álgebra". */
 function normalizar(texto: string): string {
-  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+function ordenar(materias: Materia[]): Materia[] {
+  return [...materias].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
 }
 
 /**
  * Campo para elegir una materia: se puede escribir para filtrar, o hacer click (o flecha abajo) para ver
  * todas las opciones. Sigue el patrón "combobox" de accesibilidad (se maneja entero con el teclado).
  *
+ * `materias` son las que se ofrecen al abrir la lista. Si además se pasa `todas`, lo que se escribe se
+ * busca en todas ellas (por ejemplo, en cualquier año aunque la lista muestre solo uno).
+ *
  * `valor` es el id de la materia elegida, o null si no hay ninguna (texto a medio escribir que no
- * coincide con una materia de la lista también es null). Si la materia elegida deja de estar en
- * `materias` (por ejemplo, porque cambió la carrera), se borra sola.
+ * coincide con una materia también es null). Si la materia elegida deja de estar entre las opciones,
+ * se borra sola.
  */
 @Component({
   selector: 'app-buscador-materia',
@@ -61,9 +68,14 @@ function normalizar(texto: string): string {
               [class]="i === activo() ? 'bg-brand-50 text-brand-900' : 'text-slate-700'"
               class="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-sm">
             <span [class.font-semibold]="m.id === valor()">{{ m.nombre }}</span>
-            @if (m.id === valor()) {
-              <span class="shrink-0 text-brand-600" aria-hidden="true">✓</span>
-            }
+            <span class="flex shrink-0 items-center gap-2 text-xs text-slate-400">
+              @if (buscando()) {
+                {{ etiquetaAnio(m) }}
+              }
+              @if (m.id === valor()) {
+                <span class="text-brand-600" aria-hidden="true">✓</span>
+              }
+            </span>
           </li>
         } @empty {
           <li class="px-3 py-2 text-sm text-slate-500">No hay materias que coincidan con "{{ texto() }}".</li>
@@ -76,6 +88,8 @@ export class BuscadorMateriaComponent {
   private readonly injector = inject(Injector);
 
   readonly materias = input<Materia[]>([]);
+  /** Dónde se busca lo que se escribe. Si no se pasa, en `materias`. */
+  readonly todas = input<Materia[] | null>(null);
   readonly valor = model<number | null>(null);
   /** id del input, para asociarle su <label for="...">. */
   readonly idCampo = input.required<string>();
@@ -93,17 +107,19 @@ export class BuscadorMateriaComponent {
 
   protected readonly idLista = computed(() => `${this.idCampo()}-opciones`);
 
-  private readonly ordenadas = computed(() =>
-    [...this.materias()].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
-  );
+  protected readonly etiquetaAnio = etiquetaAnio;
+
+  private readonly universo = computed(() => this.todas() ?? this.materias());
+
+  /** Hay texto escrito que no es la materia ya elegida (con una elegida, abrir la lista muestra todas, para cambiarla). */
+  protected readonly buscando = computed(() => !!normalizar(this.texto()) && this.texto() !== this.textoElegido());
 
   protected readonly opciones = computed(() => {
-    const buscado = normalizar(this.texto());
-    // Con una materia ya elegida se muestran todas, para poder cambiarla abriendo el menú.
-    if (!buscado || this.texto() === this.textoElegido()) {
-      return this.ordenadas();
+    if (!this.buscando()) {
+      return ordenar(this.materias());
     }
-    return this.ordenadas().filter((m) => normalizar(m.nombre).includes(buscado));
+    const buscado = normalizar(this.texto());
+    return ordenar(this.universo().filter((m) => normalizar(m.nombre).includes(buscado)));
   });
 
   protected readonly idActivo = computed(() => {
@@ -113,10 +129,10 @@ export class BuscadorMateriaComponent {
 
   constructor() {
     // Mantiene el texto del campo al día cuando el valor cambia desde afuera (materia preseleccionada,
-    // formulario que se reinicia, carrera que cambia).
+    // formulario que se reinicia, filtro que cambia).
     effect(() => {
       const id = this.valor();
-      const materia = this.materias().find((m) => m.id === id);
+      const materia = this.universo().find((m) => m.id === id);
       untracked(() => {
         if (materia) {
           this.mostrar(materia.nombre);
@@ -211,7 +227,7 @@ export class BuscadorMateriaComponent {
     this.cerrar();
     if (this.valor() === null && this.texto().trim()) {
       const buscado = normalizar(this.texto());
-      const exacta = this.materias().find((m) => normalizar(m.nombre) === buscado);
+      const exacta = this.universo().find((m) => normalizar(m.nombre) === buscado);
       if (exacta) {
         this.elegir(exacta);
       }

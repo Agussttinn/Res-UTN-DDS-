@@ -338,6 +338,8 @@ Abrí `http://localhost:4200`. El navegador comparte la sesión entre pestañas:
 | 5 | un alumno nuevo | `/registro` con un legajo del mock | crea la cuenta y entra solo, con su nombre de SySACAD |
 | 6 | el alumno nuevo | tocar las estrellas de un apunte | "Tu voto" y el promedio; el autor no puede puntuar el suyo |
 | 7 | un tutor | Clases de Apoyo → **Publicar clase** | aparece la clase; solo su tutor la puede modificar o cancelar |
+| 8 | un alumno | Clases de Apoyo → **Suscribirme** en esa clase | "1 alumno suscrito" y aparece el botón **Mensajes** |
+| 9 | el tutor | **Mensajes** → escribir y enviar; después **Modificar** el horario | al alumno le aparece la campanita con 2 avisos sin leer (puede tardar hasta 1 minuto, o al abrirla) |
 
 ---
 
@@ -366,7 +368,7 @@ curl http://127.0.0.1:8000/api/materias/ -H "Authorization: Bearer <token>"
 | Materias y especialidades | leer | leer | leer y escribir |
 | Usuarios | ver el propio | ver el propio | todo (así se dan de alta tutores y administradores) |
 | Materiales | ver los validados y los propios; subir; editar sus pendientes; borrar los propios | igual que el alumno | todo, y modera |
-| Clases de apoyo | leer | leer; publicar; modificar o cancelar las propias | todo (para crear una necesita indicar el tutor) |
+| Clases de apoyo | leer; suscribirse y leer los mensajes de las que sigue | leer; publicar; modificar, cancelar y mandar mensajes en las propias | todo (para crear una necesita indicar el tutor) |
 | Ponderaciones (estrellas) | puntuar; ver las propias | igual | puntuar; ver todas |
 
 ### Endpoints
@@ -379,7 +381,7 @@ curl http://127.0.0.1:8000/api/materias/ -H "Authorization: Bearer <token>"
 | `GET` `PUT` `PATCH` `DELETE /usuarios/{legajo}/` | `GET`: uno mismo o administrador; el resto, administrador | Ver / modificar / borrar |
 | `GET` `POST /especialidades/` | `GET`: logueado; `POST`: administrador | Listar / crear |
 | `GET` `PUT` `PATCH` `DELETE /especialidades/{id}/` | `GET`: logueado; resto: administrador | Detalle / modificar / borrar |
-| `GET /materias/?anio={n}&electiva={true\|false}` | logueado | Materias de las carreras habilitadas, por año y nombre; los filtros son opcionales |
+| `GET /materias/?anio={n}&electiva={true\|false}&buscar={texto}` | logueado | Materias de las carreras habilitadas, por año y nombre. Filtros opcionales; `buscar` busca por nombre en todos los años |
 | `POST /materias/` | administrador | Crear una materia a mano |
 | `GET` `PUT` `PATCH` `DELETE /materias/{id}/` | `GET`: logueado; resto: administrador | Detalle / modificar / borrar |
 | `POST /materias/sincronizar/{carrera}/` | administrador | Importa el plan de estudio de SySACAD a la base local. Por ahora solo `ISI` (las demás responden `400`) |
@@ -390,7 +392,12 @@ curl http://127.0.0.1:8000/api/materias/ -H "Authorization: Bearer <token>"
 | `POST /materiales/{id}/moderar/` | administrador | Aprueba o rechaza un material |
 | `GET /clases-apoyo/?materia={id}` | logueado | Listar clases; el filtro es opcional |
 | `POST /clases-apoyo/` | tutor o administrador | Publicar una clase |
-| `GET` `PUT` `PATCH` `DELETE /clases-apoyo/{id}/` | ver: logueado; resto: su tutor o administrador | Detalle / modificar / cancelar |
+| `GET` `PUT` `PATCH` `DELETE /clases-apoyo/{id}/` | su tutor o administrador | Detalle / modificar / cancelar. Modificar y cancelar avisan a los suscritos |
+| `POST` `DELETE /clases-apoyo/{id}/suscripcion/` | alumno | Suscribirse / dejar de seguir la clase. Responde `{suscrito, cantidad_suscritos}` |
+| `GET /clases-apoyo/{id}/mensajes/` | sus suscritos, su tutor o administrador | Mensajes de la clase, los más nuevos primero |
+| `POST /clases-apoyo/{id}/mensajes/` | su tutor o administrador | `{"texto": "..."}` (hasta 1000 caracteres). Les llega un aviso a todos los suscritos |
+| `GET /notificaciones/` | logueado | Los últimos 50 avisos propios, los más nuevos primero |
+| `POST /notificaciones/marcar-leidas/` | logueado | Marca como leídos todos los avisos propios |
 | `GET /ponderaciones/?material={id}` | logueado | Las estrellas propias (el administrador ve todas) |
 | `POST /ponderaciones/` | logueado | Puntuar un material |
 | `GET` `PUT` `PATCH` `DELETE /ponderaciones/{id}/` | su dueño o administrador | Detalle / cambiar las estrellas / borrar |
@@ -422,7 +429,8 @@ Al **leer**, las relaciones vienen anidadas (por ejemplo `material.materia.nombr
 - **Archivos:** `pdf`, `doc`, `docx`, `ppt`, `pptx`, `xls`, `xlsx`, `txt`, `png`, `jpg` y `jpeg`, de hasta **10 MB**. Se guardan en `backend/media/` (no se sube a git) con un nombre aleatorio.
 - **Estrellas:** de 1 a 5, un voto por usuario y por material (votar de nuevo cambia el voto). No se puede puntuar el **propio** material ni uno **pendiente**. Cada material trae `promedio_ponderacion` (con un decimal, o `null` si nadie votó) y `cantidad_ponderaciones`.
 - **Registro:** el legajo se valida contra SySACAD (de ahí salen el nombre y el correo) y la cuenta siempre queda con rol `alumno`. La contraseña debe tener al menos 8 caracteres, no ser una clave común ni solo números.
-- **Clases de apoyo:** las publica un tutor y quedan a su nombre. Un administrador puede modificar o cancelar cualquiera.
+- **Clases de apoyo:** las publica un tutor y quedan a su nombre. Un administrador puede modificar o cancelar cualquiera. Cada clase trae `suscrito` (si quien consulta la sigue) y `cantidad_suscritos`.
+- **Suscripciones y avisos (patrón Observer, `backend/core/observador.py`):** la clase es el sujeto y los alumnos suscritos son sus observadores. Cuando el tutor la modifica (materia, horario o aula), la cancela o manda un mensaje, cada suscrito recibe una notificación en la app (la campanita, que se consulta cada minuto). Guardar sin cambios no avisa. El aviso de una cancelación queda aunque la clase ya no exista. Para sumar otro canal (por ejemplo, correo) alcanza con otro observador.
 - **Borrados protegidos:** si algo tiene otros registros que dependen de él (un usuario con material, una especialidad con materias) el borrado responde `409` en vez de romper.
 
 ### Errores

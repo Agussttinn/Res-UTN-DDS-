@@ -19,6 +19,11 @@ urlpatterns = [
 
     path('clases-apoyo/', views.ClaseApoyoListCreate.as_view()),
     path('clases-apoyo/<int:pk>/', views.ClaseApoyoDetail.as_view()),
+    path('clases-apoyo/<int:pk>/suscripcion/', views.ClaseApoyoSuscripcion.as_view()),
+    path('clases-apoyo/<int:pk>/mensajes/', views.ClaseApoyoMensajes.as_view()),
+
+    path('notificaciones/', views.NotificacionList.as_view()),
+    path('notificaciones/marcar-leidas/', views.NotificacionesMarcarLeidas.as_view()),
 
     path('ponderaciones/', views.PonderacionListCreate.as_view()),
     path('ponderaciones/<int:pk>/', views.PonderacionDetail.as_view()),
