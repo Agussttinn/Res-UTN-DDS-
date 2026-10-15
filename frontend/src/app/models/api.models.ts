@@ -21,8 +21,31 @@ export interface Especialidad {
 export interface Materia {
   id: number;
   nombre: string;
+  /** Año (nivel) del plan de estudio. En las electivas, el nivel desde el que se pueden cursar. */
   anio: number;
+  electiva: boolean;
   especialidad: Especialidad;
+}
+
+/** Cómo se agrupan las materias para elegirlas: por año (1 a 5) o las electivas, aparte. */
+export type FiltroAnio = number | 'electivas';
+
+export const FILTROS_ANIO: { valor: FiltroAnio; etiqueta: string; corta: string }[] = [
+  { valor: 1, etiqueta: '1° año', corta: '1°' },
+  { valor: 2, etiqueta: '2° año', corta: '2°' },
+  { valor: 3, etiqueta: '3° año', corta: '3°' },
+  { valor: 4, etiqueta: '4° año', corta: '4°' },
+  { valor: 5, etiqueta: '5° año', corta: '5°' },
+  { valor: 'electivas', etiqueta: 'Electivas', corta: 'Electivas' },
+];
+
+/** El grupo al que pertenece una materia. */
+export function filtroAnioDe(materia: Materia): FiltroAnio {
+  return materia.electiva ? 'electivas' : materia.anio;
+}
+
+export function esDelFiltro(materia: Materia, filtro: FiltroAnio): boolean {
+  return filtroAnioDe(materia) === filtro;
 }
 
 export interface Material {

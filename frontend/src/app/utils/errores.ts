@@ -62,3 +62,29 @@ export function mensajeDeError(err: unknown, porDefecto: string = POR_DEFECTO): 
   }
   return mensajes.length > 0 ? mensajes.join(' ') : porDefecto;
 }
+
+/**
+ * Errores de validación de un formulario (400 con {"campo": ["..."]}), con el primer mensaje de cada campo,
+ * para marcarlos debajo de cada campo. Vacío si el error no es de validación por campo.
+ */
+export function erroresPorCampo(err: unknown): Record<string, string> {
+  if (!(err instanceof HttpErrorResponse) || err.status !== 400) {
+    return {};
+  }
+  const cuerpo: unknown = err.error;
+  if (cuerpo === null || typeof cuerpo !== 'object' || Array.isArray(cuerpo)) {
+    return {};
+  }
+
+  const errores: Record<string, string> = {};
+  for (const [campo, detalle] of Object.entries(cuerpo as Record<string, unknown>)) {
+    if (campo === 'error' || campo === 'detail') {
+      continue;
+    }
+    const texto = (Array.isArray(detalle) ? detalle : [detalle]).find((t): t is string => typeof t === 'string');
+    if (texto) {
+      errores[campo] = texto;
+    }
+  }
+  return errores;
+}

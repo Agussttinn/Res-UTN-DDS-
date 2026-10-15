@@ -106,74 +106,203 @@
     </div>
   }
 
-  <!-- Modal Cargar Recurso -->
+  <!-- Modal Compartir Apunte -->
   @if (mostrarModal()) {
-    <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div role="dialog" aria-modal="true" aria-labelledby="titulo-modal"
-           class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
-        <h2 id="titulo-modal" class="text-lg font-bold text-slate-800">Compartir Documento</h2>
-
-        @if (errorModal()) {
-          <div role="alert" class="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg">
-            {{ errorModal() }}
-          </div>
-        }
-
-        <div class="space-y-3">
+    <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center sm:p-4">
+      <div role="dialog" aria-modal="true" aria-labelledby="titulo-modal" aria-describedby="descripcion-modal"
+           (keydown.escape)="cerrarModal()"
+           class="bg-white w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl shadow-xl flex flex-col max-h-[92vh]">
+        <header class="flex items-start justify-between gap-4 px-5 sm:px-6 pt-5 pb-4 border-b border-slate-100">
           <div>
-            <label for="nuevo-titulo" class="block text-xs font-semibold text-slate-600 mb-1">Título</label>
-            <input id="nuevo-titulo" type="text" [(ngModel)]="nuevoMaterial.titulo" maxlength="100"
-                   placeholder="Ej: Resumen U1 y U2 - Parcial"
-                   class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-brand-500" />
+            <h2 id="titulo-modal" class="text-lg font-bold text-slate-800">Compartir apunte</h2>
+            <p id="descripcion-modal" class="text-sm text-slate-500 mt-0.5">
+              Un administrador lo revisa antes de que lo vean los demás.
+            </p>
           </div>
+          <button type="button" (click)="cerrarModal()" [disabled]="subiendo()" aria-label="Cerrar"
+                  class="-mr-2 -mt-1 rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50">
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="h-5 w-5">
+              <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+            </svg>
+          </button>
+        </header>
 
-          <div>
-            <label for="nueva-materia" class="block text-xs font-semibold text-slate-600 mb-1">Materia</label>
-            <select id="nueva-materia" [(ngModel)]="nuevoMaterial.materia"
-                    class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-brand-500">
-              <option [ngValue]="null">Seleccionar materia...</option>
-              @for (m of materias(); track m.id) {
-                <option [ngValue]="m.id">{{ m.nombre }}</option>
+        <form (ngSubmit)="subirRecurso()" novalidate class="flex flex-col min-h-0">
+          <div class="overflow-y-auto px-5 sm:px-6 py-5 space-y-5">
+            <p class="text-xs text-slate-500">Los campos marcados con <span class="text-red-600">*</span> son obligatorios.</p>
+
+            <!-- Año: filtra las materias que ofrece el buscador (no se envía) -->
+            <fieldset>
+              <legend class="block text-sm font-medium text-slate-700 mb-1.5">Año de la materia</legend>
+              <div class="grid grid-cols-5 sm:grid-cols-6 gap-1.5">
+                @for (filtro of filtrosAnio; track filtro.valor) {
+                  <label [for]="'nuevo-anio-' + filtro.valor"
+                         [class.col-span-5]="filtro.valor === 'electivas'"
+                         class="sm:col-span-1 flex cursor-pointer items-center justify-center rounded-lg border border-slate-300 px-2 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 has-checked:border-brand-600 has-checked:bg-brand-50 has-checked:text-brand-800 has-focus-visible:ring-2 has-focus-visible:ring-brand-500/30">
+                    <input type="radio" class="sr-only" name="anio" [id]="'nuevo-anio-' + filtro.valor"
+                           [checked]="anioElegido() === filtro.valor" (change)="elegirAnio(filtro.valor)"
+                           [attr.aria-label]="filtro.etiqueta" />
+                    {{ filtro.corta }}
+                  </label>
+                }
+              </div>
+            </fieldset>
+
+            <!-- Materia -->
+            <div>
+              <label for="nueva-materia" class="block text-sm font-medium text-slate-700 mb-1.5">
+                Materia <span class="text-red-600" aria-hidden="true">*</span>
+              </label>
+              <app-buscador-materia idCampo="nueva-materia"
+                                    [materias]="materiasDelAnio()"
+                                    [valor]="materiaElegida()" (valorChange)="elegirMateria($event)"
+                                    [deshabilitado]="materiasDelAnio().length === 0"
+                                    [invalido]="!!errorDe('materia')"
+                                    [descripcionId]="errorDe('materia') ? 'error-materia' : 'ayuda-materia'" />
+              @if (!errorDe('materia')) {
+                <p id="ayuda-materia" class="mt-1.5 text-xs text-slate-500">
+                  @if (materiasDelAnio().length === 0) {
+                    Todavía no hay materias cargadas para este año.
+                  } @else {
+                    {{ materiasDelAnio().length }} {{ anioElegido() === 'electivas' ? 'electivas' : 'materias' }}. Escribí parte del nombre para filtrar, o abrí la lista.
+                  }
+                </p>
               }
-            </select>
+              <ng-container *ngTemplateOutlet="mensajeError; context: { $implicit: 'materia' }" />
+            </div>
+
+            <!-- Tipo -->
+            <fieldset [attr.aria-describedby]="errorDe('tipo') ? 'error-tipo' : null">
+              <legend class="block text-sm font-medium text-slate-700 mb-1.5">
+                Tipo de apunte <span class="text-red-600" aria-hidden="true">*</span>
+              </legend>
+              <div class="grid grid-cols-3 gap-2">
+                @for (tipo of tipos; track tipo) {
+                  <label [for]="'nuevo-tipo-' + tipo"
+                         class="flex cursor-pointer items-center justify-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 has-checked:border-brand-600 has-checked:bg-brand-50 has-checked:text-brand-800 has-focus-visible:ring-2 has-focus-visible:ring-brand-500/30">
+                    <input type="radio" class="sr-only" name="tipo" [id]="'nuevo-tipo-' + tipo" [value]="tipo"
+                           [(ngModel)]="nuevoMaterial.tipo" (ngModelChange)="limpiarError('tipo')" />
+                    {{ etiquetaTipo[tipo] }}
+                  </label>
+                }
+              </div>
+              <ng-container *ngTemplateOutlet="mensajeError; context: { $implicit: 'tipo' }" />
+            </fieldset>
+
+            <!-- Título -->
+            <div>
+              <div class="flex items-baseline justify-between gap-2 mb-1.5">
+                <label for="nuevo-titulo" class="text-sm font-medium text-slate-700">
+                  Título <span class="text-red-600" aria-hidden="true">*</span>
+                </label>
+                <span class="text-xs text-slate-400" aria-hidden="true">{{ nuevoMaterial.titulo.length }}/{{ largoMaximoTitulo }}</span>
+              </div>
+              <input id="nuevo-titulo" name="titulo" type="text" aria-required="true" autocomplete="off"
+                     [(ngModel)]="nuevoMaterial.titulo" (ngModelChange)="limpiarError('titulo')"
+                     [maxlength]="largoMaximoTitulo"
+                     placeholder="Ej: Resumen de las unidades 1 y 2"
+                     [attr.aria-invalid]="errorDe('titulo') ? true : null"
+                     [attr.aria-describedby]="errorDe('titulo') ? 'error-titulo' : null"
+                     [class]="claseCampo('titulo')" />
+              <ng-container *ngTemplateOutlet="mensajeError; context: { $implicit: 'titulo' }" />
+            </div>
+
+            <!-- Archivo -->
+            <div (dragover)="$event.preventDefault(); arrastrando.set(true)"
+                 (dragleave)="arrastrando.set(false)"
+                 (drop)="soltarArchivo($event)">
+              <span id="etiqueta-archivo" class="block text-sm font-medium text-slate-700 mb-1.5">
+                Archivo <span class="text-red-600" aria-hidden="true">*</span>
+              </span>
+              <!-- El input real queda oculto: la zona de abajo es su etiqueta (click para elegir, o arrastrar). -->
+              <input id="nuevo-archivo" name="archivo" type="file" class="peer sr-only"
+                     aria-labelledby="etiqueta-archivo" aria-required="true"
+                     [accept]="extensionesAceptadas" (change)="onFileSelected($event)"
+                     [attr.aria-invalid]="errorDe('archivo') ? true : null"
+                     [attr.aria-describedby]="errorDe('archivo') ? 'error-archivo' : 'ayuda-archivo'" />
+              @if (archivoElegido(); as archivo) {
+                <div class="flex items-center gap-3 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500/30">
+                  <span class="text-xl" aria-hidden="true">📄</span>
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-medium text-slate-800">{{ archivo.name }}</p>
+                    <p class="text-xs text-slate-500">{{ tamanoLegible(archivo.size) }}</p>
+                  </div>
+                  <label for="nuevo-archivo" class="cursor-pointer text-xs font-semibold text-brand-700 hover:underline">Cambiar</label>
+                  <button type="button" (click)="quitarArchivo()" class="text-xs font-semibold text-slate-500 hover:text-red-600">Quitar</button>
+                </div>
+              } @else {
+                <label for="nuevo-archivo"
+                       [class]="errorDe('archivo')
+                         ? 'border-red-500 bg-red-50/40'
+                         : arrastrando() ? 'border-brand-500 bg-brand-50' : 'border-slate-300 hover:border-brand-400 hover:bg-slate-50'"
+                       class="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500/30">
+                  <span class="text-2xl" aria-hidden="true">📤</span>
+                  <span class="text-sm text-slate-700">
+                    <span class="font-semibold text-brand-700">Elegí un archivo</span> o arrastralo acá
+                  </span>
+                </label>
+              }
+              @if (!errorDe('archivo')) {
+                <p id="ayuda-archivo" class="mt-1.5 text-xs text-slate-500">PDF, Word, PowerPoint, Excel, texto o imagen. Hasta {{ tamanoMaximoMb }} MB.</p>
+              }
+              <ng-container *ngTemplateOutlet="mensajeError; context: { $implicit: 'archivo' }" />
+            </div>
+
+            <!-- Comentario -->
+            <div>
+              <label for="nuevo-comentario" class="block text-sm font-medium text-slate-700 mb-1.5">
+                Comentario <span class="font-normal text-slate-400">(opcional)</span>
+              </label>
+              <textarea id="nuevo-comentario" name="comentario" rows="3"
+                        [(ngModel)]="nuevoMaterial.comentario" (ngModelChange)="limpiarError('comentario')"
+                        placeholder="Ej: Incluye los ejercicios resueltos de la guía 3"
+                        [attr.aria-invalid]="errorDe('comentario') ? true : null"
+                        [attr.aria-describedby]="errorDe('comentario') ? 'error-comentario' : null"
+                        [class]="claseCampo('comentario') + ' resize-y'"></textarea>
+              <ng-container *ngTemplateOutlet="mensajeError; context: { $implicit: 'comentario' }" />
+            </div>
+
+            @if (errorEnvio()) {
+              <p role="alert" class="flex items-start gap-1.5 text-sm text-red-600">
+                <ng-container *ngTemplateOutlet="iconoError" />
+                {{ errorEnvio() }}
+              </p>
+            }
           </div>
 
-          <div>
-            <label for="nuevo-tipo" class="block text-xs font-semibold text-slate-600 mb-1">Tipo de Recurso</label>
-            <select id="nuevo-tipo" [(ngModel)]="nuevoMaterial.tipo"
-                    class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-brand-500">
-              <option value="resumen">Resumen</option>
-              <option value="parcial">Modelo de Parcial</option>
-              <option value="final">Modelo de Final</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="nuevo-comentario" class="block text-xs font-semibold text-slate-600 mb-1">Comentario (opcional)</label>
-            <textarea id="nuevo-comentario" [(ngModel)]="nuevoMaterial.comentario" rows="2"
-                      placeholder="Ej: Incluye los ejercicios resueltos de la guía 3"
-                      class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:border-brand-500"></textarea>
-          </div>
-
-          <div>
-            <label for="nuevo-archivo" class="block text-xs font-semibold text-slate-600 mb-1">Archivo (hasta {{ tamanoMaximoMb }} MB)</label>
-            <input id="nuevo-archivo" type="file" (change)="onFileSelected($event)" [accept]="extensionesAceptadas"
-                   class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100" />
-            <p class="text-[10px] text-slate-400 mt-1">PDF, Word, PowerPoint, Excel, texto o imagen.</p>
-          </div>
-        </div>
-
-        <div class="flex justify-end gap-2 pt-3 border-t">
-          <button type="button" (click)="cerrarModal()" [disabled]="subiendo()"
-                  class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg disabled:opacity-50">
-            Cancelar
-          </button>
-          <button type="button" (click)="subirRecurso()" [disabled]="subiendo()"
-                  class="px-4 py-2 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 disabled:bg-brand-300 rounded-lg shadow-sm">
-            {{ subiendo() ? 'Enviando...' : 'Enviar a Revisión' }}
-          </button>
-        </div>
+          <footer class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 px-5 sm:px-6 py-4 border-t border-slate-100">
+            <button type="button" (click)="cerrarModal()" [disabled]="subiendo()"
+                    class="px-4 py-2.5 sm:py-2 text-sm font-medium text-slate-700 border border-slate-300 hover:bg-slate-50 rounded-lg disabled:opacity-50">
+              Cancelar
+            </button>
+            <button type="submit" [disabled]="subiendo()"
+                    class="inline-flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 disabled:bg-brand-400 disabled:cursor-wait rounded-lg shadow-sm">
+              @if (subiendo()) {
+                <span class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true"></span>
+                Enviando...
+              } @else {
+                Enviar a revisión
+              }
+            </button>
+          </footer>
+        </form>
       </div>
     </div>
   }
+
+  <!-- Mensaje de error debajo de un campo (el id lo usa el aria-describedby del campo). -->
+  <ng-template #mensajeError let-campo>
+    @if (errorDe(campo); as mensaje) {
+      <p [id]="'error-' + campo" class="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-red-600">
+        <ng-container *ngTemplateOutlet="iconoError" />
+        {{ mensaje }}
+      </p>
+    }
+  </ng-template>
+
+  <ng-template #iconoError>
+    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="mt-px h-4 w-4 shrink-0">
+      <path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" />
+    </svg>
+  </ng-template>
 </section>

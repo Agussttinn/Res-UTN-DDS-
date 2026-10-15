@@ -96,6 +96,55 @@ const esWindows = process.platform === 'win32';
 const conColor = process.stdout.isTTY && !process.env.NO_COLOR;
 const pintar = (color, texto) => (conColor ? `\x1b[${color}m${texto}\x1b[0m` : texto);
 
+const imprimirLinea = (servicio, linea) => console.log(`${pintar(servicio.color, `[${servicio.nombre}]`)} ${linea}`);
+
+/** Muestra lo que imprime un proceso línea por línea, con su prefijo (un dato puede llegar cortado a la mitad). */
+const prefijar = (servicio, flujo) => {
+  let resto = '';
+  flujo.setEncoding('utf8');
+  flujo.on('data', (fragmento) => {
+    const lineas = (resto + fragmento).split(/\r?\n/);
+    resto = lineas.pop() ?? '';
+    lineas.forEach((linea) => imprimirLinea(servicio, linea));
+  });
+  flujo.on('end', () => { if (resto) imprimirLinea(servicio, resto); });
+};
+
+/** Espera hasta que algo escuche en el puerto. Devuelve false si no pasa en `segundos`. */
+export async function esperarPuerto(puerto, segundos = 30) {
+  for (let i = 0; i < segundos * 2; i++) {
+    if (await puertoOcupado(puerto)) return true;
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  return false;
+}
+
+/**
+ * La primera vez (base sin materias) importa el plan de estudio desde el mock de SySACAD a la base local.
+ * Las veces siguientes no hace nada: la aplicación trabaja con las materias guardadas en la base.
+ */
+export async function importarMateriasSiFaltan(raiz, puertoMock) {
+  const tarea = { nombre: 'MATERIAS', color: 35 };
+  if (!(await esperarPuerto(puertoMock))) {
+    imprimirLinea(tarea, pintar(31, 'El mock de SySACAD no arrancó: no se pudo revisar si faltan importar las materias.'));
+    return;
+  }
+  const hijo = spawn(rutaPython(raiz), ['manage.py', 'sincronizar_materias', '--si-falta'], {
+    cwd: path.join(raiz, 'backend'),
+    env: { ...process.env, PYTHONUNBUFFERED: '1', PYTHONUTF8: '1' },
+    stdio: ['ignore', 'pipe', 'pipe'],
+    windowsHide: true,
+  });
+  prefijar(tarea, hijo.stdout);
+  prefijar(tarea, hijo.stderr);
+  hijo.on('error', (error) => imprimirLinea(tarea, pintar(31, `No se pudo iniciar: ${error.message}`)));
+  hijo.on('exit', (codigo) => {
+    if (codigo !== 0) {
+      imprimirLinea(tarea, pintar(31, '¿Corriste las migraciones? Para reintentar a mano: cd backend && python manage.py sincronizar_materias'));
+    }
+  });
+}
+
 /**
  * Lanza los servicios, muestra lo que imprime cada uno con su prefijo y se encarga de cerrarlos a todos
  * (con todo lo que hayan lanzado) al hacer Ctrl+C. Termina el proceso cuando ya no queda ninguno.
@@ -107,20 +156,6 @@ export function lanzar(servicios) {
 
   const hijos = [];
   let deteniendo = false;
-
-  const imprimirLinea = (servicio, linea) => console.log(`${pintar(servicio.color, `[${servicio.nombre}]`)} ${linea}`);
-
-  /** Muestra lo que imprime un servicio línea por línea, con su prefijo (un dato puede llegar cortado a la mitad). */
-  const prefijar = (servicio, flujo) => {
-    let resto = '';
-    flujo.setEncoding('utf8');
-    flujo.on('data', (fragmento) => {
-      const lineas = (resto + fragmento).split(/\r?\n/);
-      resto = lineas.pop() ?? '';
-      lineas.forEach((linea) => imprimirLinea(servicio, linea));
-    });
-    flujo.on('end', () => { if (resto) imprimirLinea(servicio, resto); });
-  };
 
   /** Detiene un servicio con todo lo que lanzó (el runserver de Django y ng serve crean procesos hijos). */
   const matar = (hijo, senal = 'SIGTERM') => {
@@ -193,6 +228,7 @@ async function principal() {
     process.exit(1);
   }
   lanzar(servicios);
+  importarMateriasSiFaltan(raiz, servicios.find((s) => s.nombre === 'MOCK').puerto);
 }
 
 // Solo arranca cuando se lo ejecuta directamente (así las funciones de arriba se pueden importar para probarlas).

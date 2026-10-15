@@ -1,4 +1,5 @@
 import datetime
+import io
 import os
 import shutil
 import tempfile
@@ -11,6 +12,7 @@ from django.contrib import admin
 from django.contrib.auth.hashers import check_password, make_password
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import CommandError, call_command
 from django.db import connection
 from django.test import override_settings
 from django.test.utils import CaptureQueriesContext
@@ -549,7 +551,96 @@ class EspecialidadYMateriaApiTests(ApiTestCase):
 
         mock_get.side_effect = None
         mock_get.return_value = Mock(status_code=404)
-        self.assertEqual(self.client.post('/api/materias/sincronizar/XXX/').status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(self.client.post('/api/materias/sincronizar/ISI/').status_code, status.HTTP_404_NOT_FOUND)
+
+    @patch(PARCHE_SYSACAD)
+    def test_solo_se_sincronizan_las_carreras_habilitadas(self, mock_get):
+        self.como(self.admin)
+
+        response = self.client.post('/api/materias/sincronizar/QUI/')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('ISI', response.data['error'])
+        mock_get.assert_not_called()
+
+    @patch(PARCHE_SYSACAD)
+    def test_sincronizar_separa_las_electivas_y_no_duplica(self, mock_get):
+        plan = {"nombre": "Ingeniería en Sistemas de Información", "materias": [
+            {"idMateria": "5-2023-101", "nombre": "Análisis Matemático I", "nivel": 1},
+            {"idMateria": "5-2023-212", "nombre": "Entornos Gráficos (Elec.)", "nivel": 2},
+        ]}
+        mock_get.return_value = Mock(status_code=200, json=lambda: plan)
+        self.como(self.admin)
+
+        self.client.post('/api/materias/sincronizar/ISI/')
+        self.client.post('/api/materias/sincronizar/ISI/')
+
+        electiva = Materia.objects.get(id_sysacad='5-2023-212')
+        self.assertEqual((electiva.nombre, electiva.anio, electiva.electiva), ('Entornos Gráficos', 2, True))
+        self.assertFalse(Materia.objects.get(id_sysacad='5-2023-101').electiva)
+        self.assertEqual(Materia.objects.filter(id_sysacad__startswith='5-2023').count(), 2)
+
+    def test_la_lista_de_materias_es_solo_de_las_carreras_habilitadas(self):
+        quimica = Especialidad.objects.create(nombre='Química', codigo_sysacad='QUI')
+        Materia.objects.create(nombre='Química General', anio=1, especialidad=quimica)
+        self.como(self.alumno)
+
+        nombres = [m['nombre'] for m in self.client.get('/api/materias/').data]
+
+        self.assertNotIn('Química General', nombres)
+        self.assertIn('Algoritmos', nombres)
+
+    def test_filtrar_materias_por_anio_y_electiva(self):
+        Materia.objects.create(nombre='Entornos Gráficos', anio=2, electiva=True, especialidad=self.especialidad)
+        Materia.objects.create(nombre='Física II', anio=2, especialidad=self.especialidad)
+        self.como(self.alumno)
+
+        def nombres(query):
+            response = self.client.get(f'/api/materias/{query}')
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            return [m['nombre'] for m in response.data]
+
+        self.assertEqual(nombres('?anio=1'), ['Algoritmos', 'Física'])
+        self.assertEqual(nombres('?anio=2&electiva=false'), ['Física II'])
+        self.assertEqual(nombres('?electiva=true'), ['Entornos Gráficos'])
+        self.assertTrue(self.client.get('/api/materias/?electiva=true').data[0]['electiva'])
+
+    def test_filtros_de_materias_invalidos_son_400(self):
+        self.como(self.alumno)
+
+        self.assertEqual(self.client.get('/api/materias/?anio=uno').status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(self.client.get('/api/materias/?electiva=si').status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class SincronizarMateriasComandoTests(ApiTestCase):
+    PLAN = {"nombre": "Ingeniería en Sistemas de Información", "materias": [
+        {"idMateria": "5-2023-101", "nombre": "Análisis Matemático I", "nivel": 1},
+        {"idMateria": "5-2023-212", "nombre": "Entornos Gráficos (Elec.)", "nivel": 2},
+    ]}
+
+    @patch(PARCHE_SYSACAD)
+    def test_importa_el_plan_y_cuenta_las_electivas(self, mock_get):
+        mock_get.return_value = Mock(status_code=200, json=lambda: self.PLAN)
+        salida = io.StringIO()
+
+        call_command('sincronizar_materias', stdout=salida)
+
+        self.assertIn('2 materias importadas (1 del plan y 1 electivas)', salida.getvalue())
+        self.assertTrue(Materia.objects.filter(id_sysacad='5-2023-212', electiva=True).exists())
+
+    @patch(PARCHE_SYSACAD)
+    def test_si_falta_no_consulta_sysacad_si_ya_hay_materias(self, mock_get):
+        # El setUp ya creó materias de la especialidad ISI.
+        call_command('sincronizar_materias', '--si-falta', stdout=io.StringIO())
+
+        mock_get.assert_not_called()
+
+    @patch(PARCHE_SYSACAD)
+    def test_sysacad_caido_es_un_error_del_comando(self, mock_get):
+        mock_get.side_effect = requests.ConnectionError('caído')
+
+        with self.assertRaises(CommandError):
+            call_command('sincronizar_materias', stdout=io.StringIO())
 
 
 # ---------------------------------------------------------------- materiales

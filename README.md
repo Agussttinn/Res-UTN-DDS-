@@ -289,6 +289,8 @@ Cada servicio muestra su salida con un prefijo de color, y al arrancar te avisa 
 
 Esperá unos 15 segundos y abrí **http://localhost:4200**. Para detener los tres juntos: `Ctrl+C` en esa misma terminal.
 
+La primera vez, además, importa las materias de Sistemas desde el mock de SySACAD (ver [paso 8](#8-cargar-los-primeros-datos)).
+
 Antes de arrancar, el script revisa que exista el entorno virtual, el `backend/.env`, las carpetas `node_modules` y que los puertos 8000, 4000 y 4200 estén libres. Si falta algo, te lo lista completo junto con el comando para resolverlo.
 
 <details>
@@ -316,9 +318,11 @@ La base arranca vacía. Para poder probar la aplicación hace falta cargar:
 - Los **alumnos** normalmente no se cargan a mano: se registran solos en `http://localhost:4200/registro` con su legajo, que se valida contra el mock de SySACAD (de ahí salen su nombre y su correo).
 - Los **tutores y administradores** los da de alta un administrador. Cargá al menos **un administrador**: es quien modera los apuntes.
 
-**Materias.** Dos caminos:
-- **A mano (recomendado para probar):** en `/admin/` creá una **Especialidad** y unas pocas **Materias** de año 1. Los campos *Codigo sysacad* e *Id sysacad* son opcionales. Si querés que la importación de más abajo las reconozca en vez de duplicarlas, completalos con los valores reales: `ISI` para la especialidad y, por ejemplo, `5-2023-101` (Análisis Matemático I), `5-2023-102` (Álgebra y Geometría Analítica) o `5-2023-103` (Física I) para las materias.
-- **Importar desde SySACAD:** `POST /api/materias/sincronizar/ISI/` con el token de un administrador (ver [Autenticación](#autenticación)). Las carreras disponibles en el mock son `ISI`, `QUI`, `ELE` y `MEC`. Ojo: el plan de ISI tiene **344 materias** y solo 8 son de primer año.
+**Materias.** Se importan solas desde SySACAD: la primera vez que corrés `node dev.mjs` (con la base todavía sin materias), apenas arranca el mock aparece `[MATERIAS] ISI: 344 materias importadas (38 del plan y 306 electivas).` Las veces siguientes no se vuelve a consultar SySACAD: la aplicación lista y filtra las materias (por año o electivas) desde la base local.
+- Por ahora RES-UTN trabaja solo con **Ingeniería en Sistemas de Información** (`CARRERAS_HABILITADAS` en `settings.py`).
+- Las electivas se reconocen por el sufijo `(Elec.)` que les pone SySACAD: se guardan sin el sufijo y con `electiva = true`. Su `anio` es el nivel desde el que se pueden cursar.
+- Para importarlas a mano o actualizarlas (por ejemplo, si cambió el plan), con el mock corriendo: `python manage.py sincronizar_materias`. Se puede correr las veces que haga falta: actualiza las existentes sin duplicarlas.
+- También un administrador puede hacerlo desde la API: `POST /api/materias/sincronizar/ISI/` (ver [Autenticación](#autenticación)).
 
 **Alumnos del mock para registrar:** el listado completo está en `backend/core/mock-sysacad/data/alumnos.json` (11 alumnos). Algunos: `48293` Sofía Martínez, `47110` Nicolás Fernández, `45820` Camila Rodríguez, `44005` Tomás López.
 
@@ -375,9 +379,10 @@ curl http://127.0.0.1:8000/api/materias/ -H "Authorization: Bearer <token>"
 | `GET` `PUT` `PATCH` `DELETE /usuarios/{legajo}/` | `GET`: uno mismo o administrador; el resto, administrador | Ver / modificar / borrar |
 | `GET` `POST /especialidades/` | `GET`: logueado; `POST`: administrador | Listar / crear |
 | `GET` `PUT` `PATCH` `DELETE /especialidades/{id}/` | `GET`: logueado; resto: administrador | Detalle / modificar / borrar |
-| `GET` `POST /materias/` | `GET`: logueado; `POST`: administrador | Listar / crear |
+| `GET /materias/?anio={n}&electiva={true\|false}` | logueado | Materias de las carreras habilitadas, por año y nombre; los filtros son opcionales |
+| `POST /materias/` | administrador | Crear una materia a mano |
 | `GET` `PUT` `PATCH` `DELETE /materias/{id}/` | `GET`: logueado; resto: administrador | Detalle / modificar / borrar |
-| `POST /materias/sincronizar/{carrera}/` | administrador | Importa el plan de estudio de SySACAD (`ISI`, `QUI`, `ELE`, `MEC`) |
+| `POST /materias/sincronizar/{carrera}/` | administrador | Importa el plan de estudio de SySACAD a la base local. Por ahora solo `ISI` (las demás responden `400`) |
 | `GET /materiales/?materia={id}` | logueado | Materiales visibles para quien consulta; el filtro es opcional |
 | `POST /materiales/` | logueado | Sube un material (`multipart/form-data`); queda **pendiente** |
 | `GET` `PUT` `PATCH` `DELETE /materiales/{id}/` | ver: logueado; modificar: autor (si sigue pendiente) o administrador; borrar: autor o administrador | Detalle / modificar / borrar |
@@ -459,7 +464,7 @@ Los tests del backend crean y borran una base temporal (`test_resutn_db`), por e
 | "Hiciste demasiados intentos seguidos" | Esperá un minuto: el límite es de 10 intentos por minuto |
 | Error de CORS en la consola del navegador | Abriste el front por otra dirección: usá exactamente `http://localhost:4200` |
 | Todo devuelve `401` después de un rato | El token venció (dura 8 horas): iniciá sesión de nuevo |
-| La pantalla de Materias está vacía | Faltan cargar las materias (paso 8) |
+| La pantalla de Materias está vacía | No se importaron las materias: con el mock corriendo, `python manage.py sincronizar_materias` (paso 8) |
 | Los tests del backend fallan con `Access denied ... test_resutn_db` | Falta el `GRANT` sobre `test_resutn_db` del paso 2 |
 | Windows: falla `pip install` con `mysqlclient` | Actualizá pip (`python -m pip install --upgrade pip`) y reintentá: las versiones recientes traen instalador precompilado |
 | Windows: PowerShell no deja activar el entorno virtual | Ejecutá una vez `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` |

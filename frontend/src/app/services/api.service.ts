@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { API_URL } from '../api.config';
-import { AccionModeracion, ClaseApoyo, Materia, Material, Ponderacion } from '../models/api.models';
+import { AccionModeracion, ClaseApoyo, FiltroAnio, Materia, Material, Ponderacion } from '../models/api.models';
 
 /** Datos que hay que mandar para crear o modificar una clase de apoyo. */
 export interface DatosClaseApoyo {
@@ -21,8 +21,16 @@ export class ApiService {
   private readonly http = inject(HttpClient);
 
   // ---- materias ----
-  getMaterias(): Observable<Materia[]> {
-    return this.http.get<Materia[]>(`${API_URL}/materias/`);
+  /** Sin filtro, todas las materias. Con `filtro`, las de ese año (sin electivas) o solo las electivas.
+   *  El filtro lo resuelve el backend sobre la base local. */
+  getMaterias(filtro?: FiltroAnio): Observable<Materia[]> {
+    let params = new HttpParams();
+    if (filtro === 'electivas') {
+      params = params.set('electiva', 'true');
+    } else if (filtro !== undefined) {
+      params = params.set('anio', String(filtro)).set('electiva', 'false');
+    }
+    return this.http.get<Materia[]>(`${API_URL}/materias/`, { params });
   }
 
   // ---- materiales (apuntes) ----

@@ -1,23 +1,48 @@
-import { DatePipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { Component, Injector, OnInit, afterNextRender, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { switchMap } from 'rxjs';
 
+import { BuscadorMateriaComponent } from '../../components/buscador-materia/buscador-materia.component';
 import { EstrellasComponent } from '../../components/estrellas/estrellas.component';
-import { ETIQUETA_TIPO, ETIQUETA_TIPO_PLURAL, Materia, Material, TipoMaterial } from '../../models/api.models';
+import {
+  ETIQUETA_TIPO, ETIQUETA_TIPO_PLURAL, FILTROS_ANIO, FiltroAnio, Materia, Material, TipoMaterial, esDelFiltro, filtroAnioDe
+} from '../../models/api.models';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
-import { mensajeDeError } from '../../utils/errores';
+import { erroresPorCampo, mensajeDeError } from '../../utils/errores';
 
-// Mismas reglas que valida el backend (backend/core/archivos.py); se chequean acá para avisar antes de subir.
+// Mismas reglas que valida el backend (backend/core/archivos.py y models.py); se chequean acá para avisar antes de subir.
 const EXTENSIONES_PERMITIDAS = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'png', 'jpg', 'jpeg'];
 const TAMANO_MAXIMO_MB = 10;
+const LARGO_MAXIMO_TITULO = 100;
+
+type CampoFormulario = 'materia' | 'tipo' | 'titulo' | 'archivo' | 'comentario';
+type ErroresFormulario = Partial<Record<CampoFormulario, string>>;
+
+/** id del control de cada campo, en el orden en que aparecen (se enfoca el primero con error). */
+const ID_CAMPO: Record<CampoFormulario, string> = {
+  materia: 'nueva-materia',
+  tipo: 'nuevo-tipo-resumen',
+  titulo: 'nuevo-titulo',
+  archivo: 'nuevo-archivo',
+  comentario: 'nuevo-comentario'
+};
+
+/** Campo del formulario al que corresponde cada campo que valida la API, para marcar ahí su error. */
+const CAMPO_DE_LA_API: Record<string, CampoFormulario> = {
+  materia_id: 'materia',
+  tipo: 'tipo',
+  titulo: 'titulo',
+  archivo: 'archivo',
+  comentario: 'comentario'
+};
 
 @Component({
   selector: 'app-materiales',
   standalone: true,
-  imports: [DatePipe, FormsModule, RouterLink, EstrellasComponent],
+  imports: [DatePipe, NgTemplateOutlet, FormsModule, RouterLink, BuscadorMateriaComponent, EstrellasComponent],
   templateUrl: './materiales.html',
   styleUrl: './materiales.css'
 })
@@ -25,6 +50,7 @@ export class MaterialesComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
+  private readonly injector = inject(Injector);
 
   readonly tipos: TipoMaterial[] = ['resumen', 'parcial', 'final'];
   readonly etiquetaTipo = ETIQUETA_TIPO;
@@ -36,6 +62,7 @@ export class MaterialesComponent implements OnInit {
   };
   readonly extensionesAceptadas = EXTENSIONES_PERMITIDAS.map((e) => `.${e}`).join(',');
   readonly tamanoMaximoMb = TAMANO_MAXIMO_MB;
+  readonly largoMaximoTitulo = LARGO_MAXIMO_TITULO;
 
   readonly materiales = signal<Material[]>([]);
   readonly materias = signal<Materia[]>([]);
@@ -62,8 +89,24 @@ export class MaterialesComponent implements OnInit {
   // Formulario de carga
   readonly mostrarModal = signal(false);
   readonly subiendo = signal(false);
-  readonly errorModal = signal('');
+  /** Error de cada campo: se muestra debajo de ese campo, que queda marcado en rojo. */
+  readonly errores = signal<ErroresFormulario>({});
+  /** Error del envío que no es de ningún campo (sin conexión, error del servidor...). */
+  readonly errorEnvio = signal('');
+  /** Hay un archivo arrastrado encima de la zona de carga. */
+  readonly arrastrando = signal(false);
+  /** Año de las materias que ofrece el buscador (las electivas van aparte). */
+  readonly anioElegido = signal<FiltroAnio>(1);
+  readonly materiaElegida = signal<number | null>(null);
+  readonly archivoElegido = signal<File | null>(null);
   nuevoMaterial = this.materialVacio();
+
+  readonly filtrosAnio = FILTROS_ANIO;
+  /** Las materias del año elegido, que salen de la base local (GET /materias/). */
+  readonly materiasDelAnio = computed(() => {
+    const anio = this.anioElegido();
+    return this.materias().filter((m) => esDelFiltro(m, anio));
+  });
 
   ngOnInit(): void {
     this.cargarMaterias();
@@ -151,61 +194,170 @@ export class MaterialesComponent implements OnInit {
   // ---- carga de apuntes ----
 
   abrirModal(): void {
+    const materia = this.materiaSeleccionada();
     this.nuevoMaterial = this.materialVacio();
-    this.nuevoMaterial.materia = this.materiaSeleccionadaId();
-    this.errorModal.set('');
+    this.anioElegido.set(materia ? filtroAnioDe(materia) : 1);
+    this.materiaElegida.set(materia?.id ?? null);
+    this.archivoElegido.set(null);
+    this.errores.set({});
+    this.errorEnvio.set('');
     this.mostrarModal.set(true);
+
+    // Arranca en el primer campo que falta completar.
+    const primero: CampoFormulario = this.materiaElegida() === null ? 'materia' : 'titulo';
+    afterNextRender(() => this.enfocar(primero), { injector: this.injector });
   }
 
   cerrarModal(): void {
-    this.mostrarModal.set(false);
+    if (!this.subiendo()) {
+      this.mostrarModal.set(false);
+    }
+  }
+
+  errorDe(campo: CampoFormulario): string {
+    return this.errores()[campo] ?? '';
+  }
+
+  /** Clases de un campo de texto o select: borde rojo si tiene error. */
+  claseCampo(campo: CampoFormulario): string {
+    const base =
+      'w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2';
+    return this.errorDe(campo)
+      ? `${base} border-red-500 focus:border-red-500 focus:ring-red-500/20`
+      : `${base} border-slate-300 focus:border-brand-500 focus:ring-brand-500/20`;
+  }
+
+  limpiarError(campo: CampoFormulario): void {
+    if (this.errores()[campo]) {
+      this.errores.update((errores) => {
+        const resto = { ...errores };
+        delete resto[campo];
+        return resto;
+      });
+    }
+  }
+
+  elegirAnio(anio: FiltroAnio): void {
+    this.anioElegido.set(anio);
+    // Si la materia elegida no es de este año, el buscador de materias la borra solo.
+  }
+
+  elegirMateria(id: number | null): void {
+    this.materiaElegida.set(id);
+    if (id !== null) {
+      this.limpiarError('materia');
+    }
   }
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const archivo = input.files?.[0] ?? null;
-    this.errorModal.set('');
-    this.nuevoMaterial.archivo = null;
+    this.procesarArchivo(input.files?.[0] ?? null);
+  }
+
+  soltarArchivo(event: DragEvent): void {
+    event.preventDefault();
+    this.arrastrando.set(false);
+    const archivo = event.dataTransfer?.files?.[0];
+    if (archivo) {
+      this.procesarArchivo(archivo);
+    }
+  }
+
+  quitarArchivo(): void {
+    this.procesarArchivo(null);
+  }
+
+  /** "850 KB", "2.4 MB". */
+  tamanoLegible(bytes: number): string {
+    return bytes < 1024 * 1024
+      ? `${Math.max(1, Math.round(bytes / 1024))} KB`
+      : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  private procesarArchivo(archivo: File | null): void {
+    this.archivoElegido.set(null);
+    this.limpiarError('archivo');
     if (!archivo) {
+      this.vaciarInputArchivo();
       return;
     }
 
     const extension = archivo.name.split('.').pop()?.toLowerCase() ?? '';
     if (!EXTENSIONES_PERMITIDAS.includes(extension)) {
-      this.rechazarArchivo(input, `Formato no permitido. Podés subir: ${EXTENSIONES_PERMITIDAS.join(', ')}.`);
+      this.rechazarArchivo(`Formato no permitido. Podés subir: ${EXTENSIONES_PERMITIDAS.join(', ')}.`);
       return;
     }
     if (archivo.size > TAMANO_MAXIMO_MB * 1024 * 1024) {
-      this.rechazarArchivo(input, `El archivo no puede pesar más de ${TAMANO_MAXIMO_MB} MB.`);
+      this.rechazarArchivo(`El archivo no puede pesar más de ${TAMANO_MAXIMO_MB} MB.`);
       return;
     }
-    this.nuevoMaterial.archivo = archivo;
+    this.archivoElegido.set(archivo);
   }
 
-  private rechazarArchivo(input: HTMLInputElement, mensaje: string): void {
-    input.value = '';
-    this.errorModal.set(mensaje);
+  private rechazarArchivo(mensaje: string): void {
+    this.vaciarInputArchivo();
+    this.errores.update((errores) => ({ ...errores, archivo: mensaje }));
+  }
+
+  private vaciarInputArchivo(): void {
+    const input = document.getElementById(ID_CAMPO.archivo) as HTMLInputElement | null;
+    if (input) {
+      input.value = '';
+    }
+  }
+
+  /** Lo que se puede revisar antes de enviar (el backend lo vuelve a validar). */
+  private validar(): ErroresFormulario {
+    const errores: ErroresFormulario = {};
+    if (this.materiaElegida() === null) {
+      errores.materia = 'Elegí una materia de la lista.';
+    }
+    if (!this.nuevoMaterial.titulo.trim()) {
+      errores.titulo = 'Escribí un título para el apunte.';
+    }
+    if (!this.archivoElegido()) {
+      // Si se rechazó el archivo elegido, se mantiene el motivo.
+      errores.archivo = this.errorDe('archivo') || 'Adjuntá el archivo del apunte.';
+    }
+    return errores;
+  }
+
+  /** Marca los errores en sus campos y lleva el foco al primero. */
+  private marcarErrores(errores: ErroresFormulario): void {
+    this.errores.set(errores);
+    const primero = (Object.keys(ID_CAMPO) as CampoFormulario[]).find((campo) => errores[campo]);
+    if (primero) {
+      this.enfocar(primero);
+    }
+  }
+
+  private enfocar(campo: CampoFormulario): void {
+    document.getElementById(ID_CAMPO[campo])?.focus();
   }
 
   subirRecurso(): void {
-    const { titulo, tipo, materia, comentario, archivo } = this.nuevoMaterial;
-    if (!titulo.trim() || materia === null || !archivo) {
-      this.errorModal.set('Completá el título, seleccioná la materia y adjuntá el archivo.');
+    if (this.subiendo()) {
+      return;
+    }
+    this.errorEnvio.set('');
+    const errores = this.validar();
+    if (Object.keys(errores).length > 0) {
+      this.marcarErrores(errores);
       return;
     }
 
     this.subiendo.set(true);
-    this.errorModal.set('');
+    const { titulo, tipo, comentario } = this.nuevoMaterial;
 
     // El autor no se manda: el backend lo toma del token de quien está logueado.
     const datos = new FormData();
     datos.append('titulo', titulo.trim());
     datos.append('tipo', tipo);
-    datos.append('materia_id', String(materia));
+    datos.append('materia_id', String(this.materiaElegida()));
     if (comentario.trim()) {
       datos.append('comentario', comentario.trim());
     }
-    datos.append('archivo', archivo);
+    datos.append('archivo', this.archivoElegido()!);
 
     this.api.subirMaterial(datos).subscribe({
       next: () => {
@@ -216,7 +368,18 @@ export class MaterialesComponent implements OnInit {
       },
       error: (err: unknown) => {
         this.subiendo.set(false);
-        this.errorModal.set(mensajeDeError(err, 'No se pudo subir el archivo.'));
+        const porCampo: ErroresFormulario = {};
+        for (const [campoApi, mensaje] of Object.entries(erroresPorCampo(err))) {
+          const campo = CAMPO_DE_LA_API[campoApi];
+          if (campo) {
+            porCampo[campo] = mensaje;
+          }
+        }
+        if (Object.keys(porCampo).length > 0) {
+          this.marcarErrores(porCampo);
+        } else {
+          this.errorEnvio.set(mensajeDeError(err, 'No se pudo subir el archivo.'));
+        }
       }
     });
   }
@@ -225,9 +388,7 @@ export class MaterialesComponent implements OnInit {
     return {
       titulo: '',
       tipo: 'resumen' as TipoMaterial,
-      materia: null as number | null,
-      comentario: '',
-      archivo: null as File | null
+      comentario: ''
     };
   }
 }

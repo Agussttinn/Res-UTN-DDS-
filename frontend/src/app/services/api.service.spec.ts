@@ -24,7 +24,17 @@ describe('ApiService', () => {
   };
 
   it('materias y materiales', () => {
-    expect(pedir(api.getMaterias(), '/materias/').method).toBe('GET');
+    const todas = pedir(api.getMaterias(), '/materias/');
+    expect(todas.method).toBe('GET');
+    expect(todas.params.keys()).toEqual([]);
+
+    const deSegundo = pedir(api.getMaterias(2), '/materias/');
+    expect(deSegundo.params.get('anio')).toBe('2');
+    expect(deSegundo.params.get('electiva')).toBe('false');
+
+    const electivas = pedir(api.getMaterias('electivas'), '/materias/');
+    expect(electivas.params.get('electiva')).toBe('true');
+    expect(electivas.params.has('anio')).toBe(false);
 
     const todos = pedir(api.getMateriales(), '/materiales/');
     expect(todos.params.has('materia')).toBe(false);

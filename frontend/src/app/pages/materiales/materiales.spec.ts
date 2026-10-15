@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 
-import { Ponderacion, Usuario } from '../../models/api.models';
+import { Materia, Ponderacion, Usuario } from '../../models/api.models';
 import {
   ALUMNA, API_URL, crearComponente, estabilizar, iniciarSesionComo, proveedoresDePrueba, textoDe, unMaterial, unaMateria,
 } from '../../testing/pruebas';
@@ -25,9 +25,12 @@ describe('MaterialesComponent', () => {
     materiaId?: string;
     materiales?: ReturnType<typeof unMaterial>[];
     votos?: Ponderacion[];
+    materias?: Materia[];
   }
 
-  async function abrir({ usuario = ALUMNA, materiaId = '1', materiales = [], votos = [] }: Opciones = {}): Promise<ComponentFixture<MaterialesComponent>> {
+  const MATERIAS = [unaMateria(), unaMateria({ id: 2, nombre: 'Álgebra y Geometría Analítica' })];
+
+  async function abrir({ usuario = ALUMNA, materiaId = '1', materiales = [], votos = [], materias = MATERIAS }: Opciones = {}): Promise<ComponentFixture<MaterialesComponent>> {
     localStorage.clear();
     iniciarSesionComo(usuario);
     TestBed.configureTestingModule({
@@ -40,7 +43,7 @@ describe('MaterialesComponent', () => {
     http = TestBed.inject(HttpTestingController);
 
     const fixture = crearComponente(MaterialesComponent);
-    http.expectOne(`${API_URL}/materias/`).flush([unaMateria(), unaMateria({ id: 2, nombre: 'Álgebra y Geometría Analítica' })]);
+    http.expectOne(`${API_URL}/materias/`).flush(materias);
     http.expectOne(`${API_URL}/ponderaciones/`).flush(votos);
     http.expectOne((r) => r.url === `${API_URL}/materiales/`).flush(materiales);
     await estabilizar(fixture);
@@ -212,28 +215,148 @@ describe('MaterialesComponent', () => {
   });
 
   describe('subir un apunte', () => {
+    const VARIOS_ANIOS = [
+      ...MATERIAS,
+      unaMateria({ id: 3, nombre: 'Sistemas Operativos', anio: 2 }),
+      unaMateria({ id: 4, nombre: 'Paradigmas de Programación', anio: 2 }),
+      unaMateria({ id: 5, nombre: 'Entornos Gráficos', anio: 2, electiva: true }),
+    ];
+
     const abrirModal = async (fixture: ComponentFixture<MaterialesComponent>) => {
       boton(fixture, 'Compartir Apunte')!.click();
       await estabilizar(fixture);
     };
+    const enviar = async (fixture: ComponentFixture<MaterialesComponent>) => {
+      boton(fixture, 'Enviar a revisión')!.click();
+      await estabilizar(fixture);
+    };
+    const anio = (fixture: ComponentFixture<unknown>, valor: string) =>
+      elemento(fixture).querySelector<HTMLInputElement>(`#nuevo-anio-${valor}`)!;
+    const elegirAnio = async (fixture: ComponentFixture<unknown>, valor: string) => {
+      anio(fixture, valor).click();
+      await estabilizar(fixture);
+    };
+    const campoMateria = (fixture: ComponentFixture<unknown>) => elemento(fixture).querySelector<HTMLInputElement>('#nueva-materia')!;
+    const opcionesMateria = async (fixture: ComponentFixture<unknown>) => {
+      campoMateria(fixture).click();
+      await estabilizar(fixture);
+      return Array.from(elemento(fixture).querySelectorAll('[role="option"]')).map((o) => o.querySelector('span')!.textContent!.trim());
+    };
+    const errorDe = (fixture: ComponentFixture<unknown>, campo: string) =>
+      elemento(fixture).querySelector(`#error-${campo}`)?.textContent?.trim() ?? '';
 
-    it('el formulario viene con la materia de la página preseleccionada', async () => {
-      const fixture = await abrir({ materiaId: '2' });
+    it('no pregunta la carrera: el año arranca en 1° y el buscador ofrece las materias de ese año', async () => {
+      const fixture = await abrir({ materiaId: '', materias: VARIOS_ANIOS });
+      await abrirModal(fixture);
+
+      expect(elemento(fixture).querySelector('#nueva-carrera')).toBeNull();
+      expect(anio(fixture, '1').checked).toBe(true);
+      expect(await opcionesMateria(fixture)).toEqual(['Álgebra y Geometría Analítica', 'Algoritmos y Estructuras de Datos']);
+    });
+
+    it('elegir otro año cambia las opciones; las electivas van aparte', async () => {
+      const fixture = await abrir({ materiaId: '', materias: VARIOS_ANIOS });
+      await abrirModal(fixture);
+
+      await elegirAnio(fixture, '2');
+      expect(await opcionesMateria(fixture)).toEqual(['Paradigmas de Programación', 'Sistemas Operativos']);
+
+      await elegirAnio(fixture, 'electivas');
+      expect(await opcionesMateria(fixture)).toEqual(['Entornos Gráficos']);
+    });
+
+    it('el formulario viene con el año y la materia de la página preseleccionados', async () => {
+      const fixture = await abrir({ materiaId: '3', materias: VARIOS_ANIOS });
 
       await abrirModal(fixture);
 
-      const select = elemento(fixture).querySelector<HTMLSelectElement>('#nueva-materia')!;
-      expect(select.options[select.selectedIndex].text).toBe('Álgebra y Geometría Analítica');
+      expect(anio(fixture, '2').checked).toBe(true);
+      expect(campoMateria(fixture).value).toBe('Sistemas Operativos');
     });
 
-    it('rechaza en el navegador un formato no permitido, sin subir nada', async () => {
+    it('desde una electiva viene marcada la pestaña de electivas', async () => {
+      const fixture = await abrir({ materiaId: '5', materias: VARIOS_ANIOS });
+
+      await abrirModal(fixture);
+
+      expect(anio(fixture, 'electivas').checked).toBe(true);
+      expect(campoMateria(fixture).value).toBe('Entornos Gráficos');
+    });
+
+    it('al cambiar de año se borra la materia elegida si no es de ese año', async () => {
+      const fixture = await abrir({ materiaId: '1', materias: VARIOS_ANIOS });
+      await abrirModal(fixture);
+      expect(campoMateria(fixture).value).toBe('Algoritmos y Estructuras de Datos');
+
+      await elegirAnio(fixture, '2');
+
+      expect(campoMateria(fixture).value).toBe('');
+    });
+
+    it('un año sin materias cargadas deshabilita el buscador y lo explica', async () => {
+      const fixture = await abrir({ materiaId: '', materias: VARIOS_ANIOS });
+      await abrirModal(fixture);
+
+      await elegirAnio(fixture, '5');
+
+      expect(campoMateria(fixture).disabled).toBe(true);
+      expect(textoDe(fixture)).toContain('Todavía no hay materias cargadas para este año.');
+    });
+
+    it('escribir filtra las materias (sin importar acentos) y se elige una con un click', async () => {
+      const fixture = await abrir({ materiaId: '' });
+      await abrirModal(fixture);
+
+      escribir(fixture, '#nueva-materia', 'algebra');
+      await estabilizar(fixture);
+      expect(await opcionesMateria(fixture)).toEqual(['Álgebra y Geometría Analítica']);
+
+      (elemento(fixture).querySelector('[role="option"]') as HTMLElement).click();
+      await estabilizar(fixture);
+      expect(campoMateria(fixture).value).toBe('Álgebra y Geometría Analítica');
+      expect(elemento(fixture).querySelector('[role="listbox"]')).toBeNull();
+    });
+
+    it('sin completar marca en rojo cada campo obligatorio con su motivo, sin cartel y sin llamar a la API', async () => {
+      const fixture = await abrir({ materiaId: '' });
+      await abrirModal(fixture);
+
+      await enviar(fixture);
+
+      expect(errorDe(fixture, 'materia')).toBe('Elegí una materia de la lista.');
+      expect(errorDe(fixture, 'titulo')).toBe('Escribí un título para el apunte.');
+      expect(errorDe(fixture, 'archivo')).toBe('Adjuntá el archivo del apunte.');
+      const titulo = elemento(fixture).querySelector<HTMLInputElement>('#nuevo-titulo')!;
+      expect(titulo.getAttribute('aria-invalid')).toBe('true');
+      expect(titulo.getAttribute('aria-describedby')).toBe('error-titulo');
+      expect(titulo.className).toContain('border-red-500');
+      expect(campoMateria(fixture).getAttribute('aria-invalid')).toBe('true');
+      expect(document.activeElement).toBe(campoMateria(fixture)); // el foco va al primer campo con error
+      expect(elemento(fixture).querySelector('[role="alert"]')).toBeNull();
+      http.expectNone((r) => r.method === 'POST');
+    });
+
+    it('el error de un campo se borra al corregirlo', async () => {
+      const fixture = await abrir();
+      await abrirModal(fixture);
+      await enviar(fixture);
+      expect(errorDe(fixture, 'titulo')).not.toBe('');
+
+      escribir(fixture, '#nuevo-titulo', 'Resumen U1');
+      await estabilizar(fixture);
+
+      expect(errorDe(fixture, 'titulo')).toBe('');
+      expect(errorDe(fixture, 'archivo')).not.toBe(''); // los demás siguen marcados
+    });
+
+    it('rechaza en el navegador un formato no permitido y lo marca en el campo del archivo', async () => {
       const fixture = await abrir();
       await abrirModal(fixture);
 
       elegirArchivo(fixture, new File(['x'], 'virus.exe'));
       await estabilizar(fixture);
 
-      expect(textoDe(fixture)).toContain('Formato no permitido');
+      expect(errorDe(fixture, 'archivo')).toContain('Formato no permitido');
     });
 
     it('rechaza un archivo de más de 10 MB', async () => {
@@ -245,18 +368,21 @@ describe('MaterialesComponent', () => {
       elegirArchivo(fixture, enorme);
       await estabilizar(fixture);
 
-      expect(textoDe(fixture)).toContain('no puede pesar más de 10 MB');
+      expect(errorDe(fixture, 'archivo')).toContain('no puede pesar más de 10 MB');
     });
 
-    it('sin título o sin archivo avisa y no llama a la API', async () => {
+    it('muestra el nombre del archivo elegido y permite quitarlo', async () => {
       const fixture = await abrir();
       await abrirModal(fixture);
 
-      boton(fixture, 'Enviar a Revisión')!.click();
+      elegirArchivo(fixture, new File(['%PDF-1.4'], 'apunte.pdf'));
       await estabilizar(fixture);
+      expect(textoDe(fixture)).toContain('apunte.pdf');
 
-      expect(textoDe(fixture)).toContain('Completá el título, seleccioná la materia y adjuntá el archivo.');
-      http.expectNone((r) => r.method === 'POST');
+      boton(fixture, 'Quitar')!.click();
+      await estabilizar(fixture);
+      expect(textoDe(fixture)).not.toContain('apunte.pdf');
+      expect(textoDe(fixture)).toContain('Elegí un archivo');
     });
 
     it('envía multipart con materia_id, tipo en minúscula y el archivo (sin usuario) y recarga la lista sin parpadear', async () => {
@@ -267,7 +393,7 @@ describe('MaterialesComponent', () => {
       const pdf = new File(['%PDF-1.4'], 'apunte.pdf', { type: 'application/pdf' });
       elegirArchivo(fixture, pdf);
 
-      boton(fixture, 'Enviar a Revisión')!.click();
+      boton(fixture, 'Enviar a revisión')!.click();
       const peticion = http.expectOne((r) => r.method === 'POST' && r.url === `${API_URL}/materiales/`);
       const datos = peticion.request.body as FormData;
       expect(datos.get('titulo')).toBe('Resumen U1');
@@ -290,18 +416,41 @@ describe('MaterialesComponent', () => {
       expect(elemento(fixture).querySelector('#nuevo-titulo')).toBeNull(); // el formulario se cerró
     });
 
-    it('si el backend rechaza el archivo muestra el motivo dentro del formulario', async () => {
+    it('si el backend rechaza un campo, lo marca en ese campo y el formulario sigue abierto', async () => {
       const fixture = await abrir();
       await abrirModal(fixture);
       escribir(fixture, '#nuevo-titulo', 'Resumen U1');
       elegirArchivo(fixture, new File(['x'], 'apunte.pdf'));
 
-      boton(fixture, 'Enviar a Revisión')!.click();
+      boton(fixture, 'Enviar a revisión')!.click();
       http.expectOne((r) => r.method === 'POST').flush({ archivo: ['El archivo no puede pesar más de 10 MB.'] }, { status: 400, statusText: 'Bad Request' });
       await estabilizar(fixture);
 
-      expect(textoDe(fixture)).toContain('Archivo: El archivo no puede pesar más de 10 MB.');
-      expect(elemento(fixture).querySelector('#nuevo-titulo')).toBeTruthy(); // sigue abierto para reintentar
+      expect(errorDe(fixture, 'archivo')).toBe('El archivo no puede pesar más de 10 MB.');
+      expect(elemento(fixture).querySelector('#nuevo-titulo')).toBeTruthy();
+    });
+
+    it('si falla algo que no es de un campo (por ejemplo el servidor) lo explica al pie del formulario', async () => {
+      const fixture = await abrir();
+      await abrirModal(fixture);
+      escribir(fixture, '#nuevo-titulo', 'Resumen U1');
+      elegirArchivo(fixture, new File(['x'], 'apunte.pdf'));
+
+      boton(fixture, 'Enviar a revisión')!.click();
+      http.expectOne((r) => r.method === 'POST').flush({}, { status: 500, statusText: 'Error' });
+      await estabilizar(fixture);
+
+      expect(elemento(fixture).querySelector('[role="alert"]')?.textContent).toContain('No se pudo subir el archivo.');
+    });
+
+    it('Escape cierra el formulario', async () => {
+      const fixture = await abrir();
+      await abrirModal(fixture);
+
+      elemento(fixture).querySelector('[role="dialog"]')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      await estabilizar(fixture);
+
+      expect(elemento(fixture).querySelector('[role="dialog"]')).toBeNull();
     });
   });
 });

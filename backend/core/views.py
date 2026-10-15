@@ -1,5 +1,6 @@
 import re
 
+from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -121,9 +122,24 @@ class EspecialidadDetail(ProtegidoAlBorrarMixin, generics.RetrieveUpdateDestroyA
 
 
 class MateriaListCreate(generics.ListCreateAPIView):
-    queryset = Materia.objects.select_related('especialidad')
+    """GET: materias de las carreras habilitadas (settings.CARRERAS_HABILITADAS), ordenadas por año y nombre.
+    Filtros opcionales: ?anio=<n> y ?electiva=true|false. Se resuelven en la base local, no en SySACAD."""
     serializer_class = MateriaSerializer
     permission_classes = [SoloAdministradorEscribe]
+
+    def get_queryset(self):
+        materias = Materia.objects.select_related('especialidad').filter(
+            especialidad__codigo_sysacad__in=settings.CARRERAS_HABILITADAS,
+        ).order_by('anio', 'nombre')
+        anio = _id_numerico(self.request, 'anio')
+        if anio is not None:
+            materias = materias.filter(anio=anio)
+        electiva = self.request.query_params.get('electiva')
+        if electiva is not None:
+            if electiva not in ('true', 'false'):
+                raise ValidationError({'electiva': 'Tiene que ser true o false.'})
+            materias = materias.filter(electiva=electiva == 'true')
+        return materias
 
 
 class MateriaDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -141,6 +157,11 @@ class MateriaSincronizar(APIView):
     def post(self, request, carrera):
         try:
             materias = sysacad_sync.sync_materias(carrera.upper())
+        except sysacad_sync.CarreraNoHabilitada:
+            return Response(
+                {"error": f'Por ahora RES-UTN solo trabaja con: {", ".join(settings.CARRERAS_HABILITADAS)}.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         except sysacad_client.PlanNoEncontrado:
             return Response(
                 {"error": f'No existe un plan de estudio para la carrera "{carrera}" en SySACAD'},

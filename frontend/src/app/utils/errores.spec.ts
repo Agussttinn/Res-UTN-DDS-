@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { mensajeDeError } from './errores';
+import { erroresPorCampo, mensajeDeError } from './errores';
 
 const error = (status: number, cuerpo: unknown) => new HttpErrorResponse({ status, error: cuerpo });
 
@@ -45,5 +45,23 @@ describe('mensajeDeError', () => {
   it('cualquier cosa que no sea un error HTTP usa el mensaje por defecto', () => {
     expect(mensajeDeError(new Error('boom'), 'Por defecto')).toBe('Por defecto');
     expect(mensajeDeError(undefined)).toContain('error inesperado');
+  });
+});
+
+describe('erroresPorCampo', () => {
+  it('devuelve el primer mensaje de cada campo', () => {
+    const err = error(400, { archivo: ['Muy pesado.', 'Otro motivo.'], materia_id: 'No existe.' });
+    expect(erroresPorCampo(err)).toEqual({ archivo: 'Muy pesado.', materia_id: 'No existe.' });
+  });
+
+  it('ignora "error" y "detail", que no son de un campo', () => {
+    expect(erroresPorCampo(error(400, { detail: 'Algo general.' }))).toEqual({});
+  });
+
+  it('vacío si no es un error de validación (otro código, sin conexión o cuerpo raro)', () => {
+    expect(erroresPorCampo(error(403, { archivo: ['x'] }))).toEqual({});
+    expect(erroresPorCampo(error(0, null))).toEqual({});
+    expect(erroresPorCampo(error(400, ['x']))).toEqual({});
+    expect(erroresPorCampo(new Error('x'))).toEqual({});
   });
 });

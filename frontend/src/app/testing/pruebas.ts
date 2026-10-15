@@ -66,6 +66,7 @@ export function unaMateria(cambios: Partial<Materia> = {}): Materia {
     id: 1,
     nombre: 'Algoritmos y Estructuras de Datos',
     anio: 1,
+    electiva: false,
     especialidad: { id: 1, nombre: 'Ingeniería en Sistemas' },
     ...cambios,
   };

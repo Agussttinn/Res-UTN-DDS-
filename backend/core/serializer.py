@@ -55,7 +55,7 @@ class MateriaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Materia
-        fields = ('id','nombre','anio','especialidad','especialidad_id')
+        fields = ('id','nombre','anio','electiva','especialidad','especialidad_id')
 
     def validate_especialidad_id(self, value):
         if not Especialidad.objects.filter(pk=value).exists():

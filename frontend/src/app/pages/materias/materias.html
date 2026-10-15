@@ -4,6 +4,25 @@
     <p class="text-sm text-slate-600">Seleccioná una asignatura para ver apuntes, finales y material compartido.</p>
   </div>
 
+  <!-- Año y búsqueda -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div class="flex flex-wrap gap-2" role="group" aria-label="Año de las materias">
+      @for (filtro of filtrosAnio; track filtro.valor) {
+        <button type="button" (click)="elegirAnio(filtro.valor)" [attr.aria-pressed]="anio() === filtro.valor"
+                [class]="anio() === filtro.valor ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'"
+                class="px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors">
+          {{ filtro.etiqueta }}
+        </button>
+      }
+    </div>
+    <label class="relative sm:w-64">
+      <span class="sr-only">Buscar materia</span>
+      <input type="search" [value]="busqueda()" (input)="busqueda.set($any($event.target).value)"
+             placeholder="Buscar materia..."
+             class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm placeholder:text-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20" />
+    </label>
+  </div>
+
   @if (cargando()) {
     <div class="text-center py-10 text-slate-500">Cargando asignaturas...</div>
   } @else if (error()) {
@@ -13,15 +32,20 @@
     </div>
   } @else if (materias().length === 0) {
     <div class="text-center py-10 text-slate-500 bg-white rounded-lg shadow-sm">
-      No hay materias registradas todavía. Un administrador puede importarlas desde SySACAD.
+      No hay materias registradas para este año. Se importan desde SySACAD con
+      <code class="text-xs">python manage.py sincronizar_materias</code>.
+    </div>
+  } @else if (materiasVisibles().length === 0) {
+    <div class="text-center py-10 text-slate-500 bg-white rounded-lg shadow-sm">
+      Ninguna materia coincide con "{{ busqueda() }}".
     </div>
   } @else {
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      @for (materia of materias(); track materia.id) {
+      @for (materia of materiasVisibles(); track materia.id) {
         <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow flex flex-col justify-between">
           <div>
             <span class="text-xs font-semibold px-2 py-1 bg-brand-100 text-brand-800 rounded-full">
-              {{ materia.anio }}° Año
+              {{ materia.electiva ? 'Electiva' : materia.anio + '° Año' }}
             </span>
             <h2 class="text-lg font-bold text-slate-800 mt-2">{{ materia.nombre }}</h2>
             <p class="text-xs text-slate-500 mt-1">{{ materia.especialidad.nombre }}</p>

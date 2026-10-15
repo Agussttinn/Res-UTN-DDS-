@@ -42,6 +42,9 @@ if not SECRET_KEY:
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get('ALLOWED_HOSTS', '').split(',') if host.strip()]
 
 # URL base de la API de SySACAD (hoy, el mock de backend/core/mock-sysacad).
+# Carreras de SySACAD con las que trabaja RES-UTN (por ahora solo Ingeniería en Sistemas de Información).
+# Solo se importan sus planes de estudio y la API solo lista sus materias.
+CARRERAS_HABILITADAS = ['ISI']
 SYSACAD_API_URL = os.environ.get('SYSACAD_API_URL', 'http://localhost:4000').rstrip('/')
 
 
