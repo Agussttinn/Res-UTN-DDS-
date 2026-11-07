@@ -68,10 +68,35 @@ class Material(models.Model):
         return self.titulo
 
 class ClaseApoyo(models.Model):
+    # Día de la semana con la numeración ISO (1 = lunes), así el cronograma se ordena solo por día y hora.
+    DIAS = [
+        (1, 'Lunes'),
+        (2, 'Martes'),
+        (3, 'Miércoles'),
+        (4, 'Jueves'),
+        (5, 'Viernes'),
+        (6, 'Sábado'),
+    ]
+
     materia = models.ForeignKey(Materia, on_delete=models.CASCADE, related_name='clases_apoyo')
     tutor = models.ForeignKey(Usuario, on_delete=models.PROTECT, related_name='clases_apoyo')
-    horario = models.CharField(max_length=20)
+    # Día y horas pueden ser null solo en clases viejas cuyo horario (antes texto libre) no se pudo interpretar
+    # al migrar: quedan "a confirmar" hasta que el tutor las complete. La API exige los tres.
+    dia = models.PositiveSmallIntegerField(choices=DIAS, null=True, blank=True)
+    hora_inicio = models.TimeField(null=True, blank=True)
+    hora_fin = models.TimeField(null=True, blank=True)
     aula = models.CharField(max_length=20)
+
+    class Meta:
+        ordering = ['dia', 'hora_inicio', 'id']
+
+    @property
+    def horario(self):
+        """Ej: "lunes de 14:00 a 16:00", o "a confirmar" si falta algún dato."""
+        if self.dia is None or self.hora_inicio is None or self.hora_fin is None:
+            return 'a confirmar'
+        return f"{self.get_dia_display().lower()} de {self.hora_inicio:%H:%M} a {self.hora_fin:%H:%M}"
+
     def __str__(self):
         return f"{self.materia} - {self.horario}"
 

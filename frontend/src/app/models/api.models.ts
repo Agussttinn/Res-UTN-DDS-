@@ -48,6 +48,35 @@ export function esDelFiltro(materia: Materia, filtro: FiltroAnio): boolean {
   return filtroAnioDe(materia) === filtro;
 }
 
+/** Días en los que se dan clases de apoyo (mismo número que usa el backend: 1 = lunes). */
+export const DIAS_SEMANA: { valor: number; nombre: string }[] = [
+  { valor: 1, nombre: 'Lunes' },
+  { valor: 2, nombre: 'Martes' },
+  { valor: 3, nombre: 'Miércoles' },
+  { valor: 4, nombre: 'Jueves' },
+  { valor: 5, nombre: 'Viernes' },
+  { valor: 6, nombre: 'Sábado' },
+];
+
+/** Franja horaria permitida para una clase de apoyo y su duración mínima (las mismas reglas valida el backend). */
+export const HORA_MINIMA_CLASE = '09:00';
+export const HORA_MAXIMA_CLASE = '23:30';
+export const DURACION_MINIMA_CLASE_MIN = 30;
+
+export function nombreDia(dia: number | null): string {
+  return DIAS_SEMANA.find((d) => d.valor === dia)?.nombre ?? '';
+}
+
+/** Si a la clase le falta el día o las horas (clases viejas, de antes de que el horario fuera obligatorio). */
+export function horarioAConfirmar(clase: ClaseApoyo): boolean {
+  return clase.dia === null || !clase.hora_inicio || !clase.hora_fin;
+}
+
+/** "Lunes 14:00 a 16:00", o "Horario a confirmar". */
+export function textoHorario(clase: ClaseApoyo): string {
+  return horarioAConfirmar(clase) ? 'Horario a confirmar' : `${nombreDia(clase.dia)} ${clase.hora_inicio} a ${clase.hora_fin}`;
+}
+
 /** "2° año" o "Electiva". */
 export function etiquetaAnio(materia: Materia): string {
   return materia.electiva ? 'Electiva' : `${materia.anio}° año`;
@@ -74,6 +103,12 @@ export interface ClaseApoyo {
   id: number;
   materia: Materia;
   tutor: UsuarioPublico;
+  /** 1 = lunes ... 6 = sábado. Null (igual que las horas) solo en clases viejas con el horario "a confirmar". */
+  dia: number | null;
+  /** "HH:MM" */
+  hora_inicio: string | null;
+  hora_fin: string | null;
+  /** Texto armado por el backend: "lunes de 14:00 a 16:00" o "a confirmar". */
   horario: string;
   aula: string;
   /** Si el usuario logueado sigue esta clase (recibe avisos de cambios y mensajes). */

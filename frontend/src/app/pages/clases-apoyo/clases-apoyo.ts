@@ -3,12 +3,41 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { BuscadorMateriaComponent } from '../../components/buscador-materia/buscador-materia.component';
-import { ClaseApoyo, EstadoSuscripcion, Materia, MensajeClase } from '../../models/api.models';
+import {
+  ClaseApoyo, DIAS_SEMANA, DURACION_MINIMA_CLASE_MIN, EstadoSuscripcion, HORA_MAXIMA_CLASE, HORA_MINIMA_CLASE, Materia,
+  MensajeClase, horarioAConfirmar, nombreDia, textoHorario
+} from '../../models/api.models';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
-import { mensajeDeError } from '../../utils/errores';
+import { erroresPorCampo, mensajeDeError } from '../../utils/errores';
 
 const LARGO_MAXIMO_MENSAJE = 1000;
+
+type CampoClase = 'materia' | 'dia' | 'horaInicio' | 'horaFin' | 'aula';
+type ErroresClase = Partial<Record<CampoClase, string>>;
+
+/** id del control de cada campo del formulario, en orden (se enfoca el primero con error). */
+const ID_CAMPO_CLASE: Record<CampoClase, string> = {
+  materia: 'clase-materia',
+  dia: 'clase-dia',
+  horaInicio: 'clase-hora-inicio',
+  horaFin: 'clase-hora-fin',
+  aula: 'clase-aula'
+};
+
+/** Campo del formulario al que corresponde cada campo que valida la API. */
+const CAMPO_CLASE_DE_LA_API: Record<string, CampoClase> = {
+  materia_id: 'materia',
+  dia: 'dia',
+  hora_inicio: 'horaInicio',
+  hora_fin: 'horaFin',
+  aula: 'aula'
+};
+
+function minutos(hora: string): number {
+  const [h, m] = hora.split(':').map(Number);
+  return h * 60 + m;
+}
 
 @Component({
   selector: 'app-clases-apoyo',
@@ -30,8 +59,18 @@ export class ClasesApoyoComponent implements OnInit {
   readonly filtroMateria = signal<number | null>(null);
 
   // Formulario para publicar / modificar una clase (solo tutores)
+  readonly dias = DIAS_SEMANA;
+  readonly horaMinima = HORA_MINIMA_CLASE;
+  readonly horaMaxima = HORA_MAXIMA_CLASE;
+  readonly duracionMinima = DURACION_MINIMA_CLASE_MIN;
+  readonly nombreDia = nombreDia;
+  readonly textoHorario = textoHorario;
+  readonly horarioAConfirmar = horarioAConfirmar;
   readonly mostrarModal = signal(false);
   readonly guardando = signal(false);
+  /** Error de cada campo, que se marca en rojo debajo del campo. */
+  readonly erroresForm = signal<ErroresClase>({});
+  /** Error del guardado que no es de ningún campo (sin conexión, error del servidor...). */
   readonly errorModal = signal('');
   /** Id de la clase que se está modificando, o null si se está publicando una nueva. */
   editandoId: number | null = null;
@@ -187,10 +226,82 @@ export class ClasesApoyoComponent implements OnInit {
   abrirModal(clase?: ClaseApoyo): void {
     this.editandoId = clase?.id ?? null;
     this.form = clase
-      ? { materia: clase.materia.id, horario: clase.horario, aula: clase.aula }
+      ? {
+          materia: clase.materia.id,
+          dia: clase.dia,
+          horaInicio: clase.hora_inicio ?? '',
+          horaFin: clase.hora_fin ?? '',
+          aula: clase.aula
+        }
       : { ...this.formVacio(), materia: this.filtroMateria() };
+    this.erroresForm.set({});
     this.errorModal.set('');
     this.mostrarModal.set(true);
+  }
+
+  errorDe(campo: CampoClase): string {
+    return this.erroresForm()[campo] ?? '';
+  }
+
+  limpiarError(campo: CampoClase): void {
+    if (this.erroresForm()[campo]) {
+      this.erroresForm.update((errores) => {
+        const resto = { ...errores };
+        delete resto[campo];
+        return resto;
+      });
+    }
+  }
+
+  /** Clases de un campo: borde rojo si tiene error. */
+  claseCampo(campo: CampoClase): string {
+    const base = 'w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2';
+    return this.errorDe(campo)
+      ? `${base} border-red-500 focus:border-red-500 focus:ring-red-500/20`
+      : `${base} border-slate-300 focus:border-brand-500 focus:ring-brand-500/20`;
+  }
+
+  /** Las mismas reglas que valida el backend, para marcar los errores antes de enviar. */
+  private validar(): ErroresClase {
+    const { materia, dia, horaInicio, horaFin, aula } = this.form;
+    const rango = `${HORA_MINIMA_CLASE} y ${HORA_MAXIMA_CLASE}`;
+    const enRango = (hora: string) => hora >= HORA_MINIMA_CLASE && hora <= HORA_MAXIMA_CLASE;
+    const errores: ErroresClase = {};
+    if (materia === null) {
+      errores.materia = 'Elegí una materia de la lista.';
+    }
+    if (dia === null) {
+      errores.dia = 'Elegí el día.';
+    }
+    if (!horaInicio) {
+      errores.horaInicio = 'Indicá la hora de inicio.';
+    } else if (!enRango(horaInicio)) {
+      errores.horaInicio = `Tiene que estar entre las ${rango}.`;
+    }
+    if (!horaFin) {
+      errores.horaFin = 'Indicá la hora de fin.';
+    } else if (!enRango(horaFin)) {
+      errores.horaFin = `Tiene que estar entre las ${rango}.`;
+    } else if (horaInicio && !errores.horaInicio) {
+      if (horaFin <= horaInicio) {
+        errores.horaFin = 'Tiene que ser posterior a la hora de inicio.';
+      } else if (minutos(horaFin) - minutos(horaInicio) < DURACION_MINIMA_CLASE_MIN) {
+        errores.horaFin = `La clase tiene que durar al menos ${DURACION_MINIMA_CLASE_MIN} minutos.`;
+      }
+    }
+    if (!aula.trim()) {
+      errores.aula = 'Indicá el aula.';
+    }
+    return errores;
+  }
+
+  /** Marca los errores en sus campos y lleva el foco al primero. */
+  private marcarErrores(errores: ErroresClase): void {
+    this.erroresForm.set(errores);
+    const primero = (Object.keys(ID_CAMPO_CLASE) as CampoClase[]).find((campo) => errores[campo]);
+    if (primero) {
+      document.getElementById(ID_CAMPO_CLASE[primero])?.focus();
+    }
   }
 
   cerrarModal(): void {
@@ -198,17 +309,21 @@ export class ClasesApoyoComponent implements OnInit {
   }
 
   guardar(): void {
-    const { materia, horario, aula } = this.form;
-    if (materia === null || !horario.trim() || !aula.trim()) {
-      this.errorModal.set('Completá la materia, el horario y el aula.');
+    if (this.guardando()) {
+      return;
+    }
+    this.errorModal.set('');
+    const errores = this.validar();
+    if (Object.keys(errores).length > 0) {
+      this.marcarErrores(errores);
       return;
     }
 
     this.guardando.set(true);
-    this.errorModal.set('');
+    const { materia, dia, horaInicio, horaFin, aula } = this.form;
 
     // El tutor no se manda: la clase queda a nombre de quien está logueado.
-    const datos = { materia_id: materia, horario: horario.trim(), aula: aula.trim() };
+    const datos = { materia_id: materia!, dia: dia!, hora_inicio: horaInicio, hora_fin: horaFin, aula: aula.trim() };
     const peticion = this.editandoId === null
       ? this.api.crearClaseApoyo(datos)
       : this.api.actualizarClaseApoyo(this.editandoId, datos);
@@ -222,14 +337,25 @@ export class ClasesApoyoComponent implements OnInit {
       },
       error: (err: unknown) => {
         this.guardando.set(false);
-        this.errorModal.set(mensajeDeError(err, 'No se pudo guardar la clase.'));
+        const porCampo: ErroresClase = {};
+        for (const [campoApi, mensaje] of Object.entries(erroresPorCampo(err))) {
+          const campo = CAMPO_CLASE_DE_LA_API[campoApi];
+          if (campo) {
+            porCampo[campo] = mensaje;
+          }
+        }
+        if (Object.keys(porCampo).length > 0) {
+          this.marcarErrores(porCampo);
+        } else {
+          this.errorModal.set(mensajeDeError(err, 'No se pudo guardar la clase.'));
+        }
       }
     });
   }
 
   cancelarClase(clase: ClaseApoyo): void {
     const aviso = clase.cantidad_suscritos > 0 ? ` Se les va a avisar a los ${clase.cantidad_suscritos} alumnos suscritos.` : '';
-    if (!confirm(`¿Cancelar la clase de ${clase.materia.nombre} (${clase.horario})? Esta acción no se puede deshacer.${aviso}`)) {
+    if (!confirm(`¿Cancelar la clase de ${clase.materia.nombre} (${textoHorario(clase)})? Esta acción no se puede deshacer.${aviso}`)) {
       return;
     }
     this.errorAccion.set('');
@@ -243,6 +369,6 @@ export class ClasesApoyoComponent implements OnInit {
   }
 
   private formVacio() {
-    return { materia: null as number | null, horario: '', aula: '' };
+    return { materia: null as number | null, dia: null as number | null, horaInicio: '', horaFin: '', aula: '' };
   }
 }

@@ -130,7 +130,7 @@ Representa las entidades del negocio:
 - **`ESPECIALIDAD`**: `(PK: idEspecialidad, nombre)`
 - **`MATERIA`**: `(PK: idMateria, FK: idEspecialidad, nombre, año)`
 - **`MATERIAL`**: `(PK: idMaterial, FK: idMateria, FK: legajoUsuario, titulo, fechaCarga, tipo, validacion, comentario)`
-- **`CLASE_APOYO`**: `(PK: idClase, FK: idMateria, FK: legajoTutor, horario, aula)`
+- **`CLASE_APOYO`**: `(PK: idClase, FK: idMateria, FK: legajoTutor, dia, horaInicio, horaFin, aula)`
 - **`PONDERACION`**: `(PK: idPonderacion, FK: idMaterial, FK: legajoUsuario, valor, fecha)`
 
 ### 3. Diagrama de Estados (Entidad: Material)
@@ -417,7 +417,7 @@ curl http://127.0.0.1:8000/api/materias/ -H "Authorization: Bearer <token>"
 { "accion": "aprobar" }        // o "rechazar"
 
 // POST /clases-apoyo/  (tutor; un administrador debe agregar además "tutor_id": "<legajo del tutor>")
-{ "materia_id": 1, "horario": "Lun 14:00-16:00", "aula": "L-203" }
+{ "materia_id": 1, "dia": 1, "hora_inicio": "14:00", "hora_fin": "16:00", "aula": "L-203" }   // dia: 1 = lunes ... 6 = sábado
 
 // POST /ponderaciones/  (estrellas de 1 a 5; el usuario sale del token)
 { "material_id": 7, "valor": 4 }
@@ -430,6 +430,7 @@ Al **leer**, las relaciones vienen anidadas (por ejemplo `material.materia.nombr
 - **Estrellas:** de 1 a 5, un voto por usuario y por material (votar de nuevo cambia el voto). No se puede puntuar el **propio** material ni uno **pendiente**. Cada material trae `promedio_ponderacion` (con un decimal, o `null` si nadie votó) y `cantidad_ponderaciones`.
 - **Registro:** el legajo se valida contra SySACAD (de ahí salen el nombre y el correo) y la cuenta siempre queda con rol `alumno`. La contraseña debe tener al menos 8 caracteres, no ser una clave común ni solo números.
 - **Clases de apoyo:** las publica un tutor y quedan a su nombre. Un administrador puede modificar o cancelar cualquiera. Cada clase trae `suscrito` (si quien consulta la sigue) y `cantidad_suscritos`.
+- **Día y horario de una clase:** se guardan por separado: `dia` (1 = lunes ... 6 = sábado), `hora_inicio` y `hora_fin` (`"HH:MM"`). Las horas tienen que estar entre las 07:00 y las 23:30, el fin después del inicio, con al menos 30 minutos de clase, y un tutor no puede tener dos clases que se superpongan. Al leer, cada clase trae también `horario` ya armado para mostrar ("lunes de 14:00 a 16:00"), y la lista viene ordenada por día y hora. Las clases creadas antes de este cambio (horario en texto libre) se convirtieron solas al migrar. Las que no se pudieron interpretar quedan "a confirmar" hasta que su tutor las modifique.
 - **Suscripciones y avisos (patrón Observer, `backend/core/observador.py`):** la clase es el sujeto y los alumnos suscritos son sus observadores. Cuando el tutor la modifica (materia, horario o aula), la cancela o manda un mensaje, cada suscrito recibe una notificación en la app (la campanita, que se consulta cada minuto). Guardar sin cambios no avisa. El aviso de una cancelación queda aunque la clase ya no exista. Para sumar otro canal (por ejemplo, correo) alcanza con otro observador.
 - **Borrados protegidos:** si algo tiene otros registros que dependen de él (un usuario con material, una especialidad con materias) el borrado responde `409` en vez de romper.
 

@@ -1,5 +1,6 @@
 import datetime
 import io
+from importlib import import_module
 import os
 import shutil
 import tempfile
@@ -14,7 +15,7 @@ from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import CommandError, call_command
 from django.db import connection
-from django.test import override_settings
+from django.test import TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -874,12 +875,15 @@ class ClaseApoyoApiTests(ApiTestCase):
     url = '/api/clases-apoyo/'
 
     def datos(self, **cambios):
-        datos = {'materia_id': self.materia.id, 'horario': 'Lunes 14hs', 'aula': 'L-203'}
+        datos = {'materia_id': self.materia.id, 'dia': 1, 'hora_inicio': '14:00', 'hora_fin': '16:00', 'aula': 'L-203'}
         datos.update(cambios)
         return datos
 
     def crear_clase(self, tutor=None, materia=None):
-        return ClaseApoyo.objects.create(materia=materia or self.materia, tutor=tutor or self.tutor, horario='Lunes 14hs', aula='L-203')
+        return ClaseApoyo.objects.create(
+            materia=materia or self.materia, tutor=tutor or self.tutor,
+            dia=1, hora_inicio=datetime.time(14), hora_fin=datetime.time(16), aula='L-203',
+        )
 
     def test_un_tutor_crea_una_clase_siempre_a_su_nombre(self):
         self.como(self.tutor)
@@ -1097,7 +1101,9 @@ class PonderacionTests(ApiTestCase):
 class SuscripcionYAvisosTests(ApiTestCase):
     def setUp(self):
         super().setUp()
-        self.clase = ClaseApoyo.objects.create(materia=self.materia, tutor=self.tutor, horario='Lun 14hs', aula='L-203')
+        self.clase = ClaseApoyo.objects.create(
+            materia=self.materia, tutor=self.tutor, dia=1, hora_inicio=datetime.time(14), hora_fin=datetime.time(16), aula='L-203',
+        )
         self.url_clase = f'/api/clases-apoyo/{self.clase.id}/'
 
     def suscribir(self, usuario):
@@ -1149,13 +1155,15 @@ class SuscripcionYAvisosTests(ApiTestCase):
         self.suscribir(self.alumno)
         self.como(self.tutor)
 
-        response = self.client.patch(self.url_clase, {'horario': 'Mar 16hs', 'aula': 'L-105'}, format='json')
+        response = self.client.patch(
+            self.url_clase, {'dia': 2, 'hora_inicio': '16:00', 'hora_fin': '18:00', 'aula': 'L-105'}, format='json',
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         [aviso] = self.notificaciones(self.alumno)
         self.assertEqual(aviso.tipo, Notificacion.MODIFICACION)
         self.assertEqual(aviso.titulo, 'Cambió la clase de apoyo de Algoritmos')
-        self.assertEqual(aviso.texto, 'Horario: Lun 14hs → Mar 16hs. Aula: L-203 → L-105.')
+        self.assertEqual(aviso.texto, 'Día y horario: lunes de 14:00 a 16:00 → martes de 16:00 a 18:00. Aula: L-203 → L-105.')
         self.assertEqual(self.notificaciones(self.otro_alumno), [])
 
     def test_cambiar_de_materia_tambien_se_avisa(self):
@@ -1170,7 +1178,7 @@ class SuscripcionYAvisosTests(ApiTestCase):
         self.suscribir(self.alumno)
         self.como(self.tutor)
 
-        self.client.patch(self.url_clase, {'horario': 'Lun 14hs'}, format='json')
+        self.client.patch(self.url_clase, {'hora_inicio': '14:00'}, format='json')
 
         self.assertEqual(self.notificaciones(self.alumno), [])
 
@@ -1183,7 +1191,7 @@ class SuscripcionYAvisosTests(ApiTestCase):
         [aviso] = self.notificaciones(self.alumno)
         self.assertEqual(aviso.tipo, Notificacion.CANCELACION)
         self.assertIsNone(aviso.clase)
-        self.assertIn('Lun 14hs', aviso.texto)
+        self.assertEqual(aviso.texto, 'La clase del lunes de 14:00 a 16:00 en el aula L-203 ya no se dicta.')
         self.assertEqual(Suscripcion.objects.count(), 0)
 
     def test_el_tutor_manda_un_mensaje_y_les_llega_a_los_suscritos(self):
@@ -1263,3 +1271,124 @@ class SuscripcionYAvisosTests(ApiTestCase):
 
         self.assertEqual(avisados, 2)
         self.assertEqual(recibidos, [('a', 'Hola'), ('b', 'Hola')])
+
+
+# ---------------------------------------------------------------- día y horario de las clases de apoyo
+
+class HorarioClaseApoyoTests(ApiTestCase):
+    url = '/api/clases-apoyo/'
+
+    def datos(self, **cambios):
+        datos = {'materia_id': self.materia.id, 'dia': 1, 'hora_inicio': '14:00', 'hora_fin': '16:00', 'aula': 'L-203'}
+        datos.update(cambios)
+        return {clave: valor for clave, valor in datos.items() if valor is not None}
+
+    def publicar(self, usuario=None, **cambios):
+        self.como(usuario or self.tutor)
+        return self.client.post(self.url, self.datos(**cambios), format='json')
+
+    def test_se_guarda_dia_y_horas_y_se_devuelve_tambien_el_texto(self):
+        response = self.publicar()
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            {campo: response.data[campo] for campo in ('dia', 'hora_inicio', 'hora_fin', 'horario')},
+            {'dia': 1, 'hora_inicio': '14:00', 'hora_fin': '16:00', 'horario': 'lunes de 14:00 a 16:00'},
+        )
+        clase = ClaseApoyo.objects.get()
+        self.assertEqual((clase.dia, clase.hora_inicio, clase.hora_fin), (1, datetime.time(14), datetime.time(16)))
+
+    def test_dia_y_horas_son_obligatorios(self):
+        response = self.publicar(dia=None, hora_inicio=None, hora_fin=None)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(set(response.data), {'dia', 'hora_inicio', 'hora_fin'})
+
+    def test_formatos_invalidos(self):
+        casos = [
+            ({'hora_inicio': '2pm'}, 'hora_inicio', 'Usá el formato HH:MM (por ejemplo 14:00).'),
+            ({'hora_fin': 'por la tarde'}, 'hora_fin', 'Usá el formato HH:MM (por ejemplo 16:00).'),
+            ({'dia': 7}, 'dia', 'Elegí un día de lunes a sábado.'),
+            ({'dia': 'lunes'}, 'dia', 'Elegí un día de lunes a sábado.'),
+        ]
+        for cambios, campo, mensaje in casos:
+            with self.subTest(cambios=cambios):
+                response = self.publicar(**cambios)
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+                self.assertEqual(str(response.data[campo][0]), mensaje)
+        self.assertEqual(ClaseApoyo.objects.count(), 0)
+
+    def test_el_fin_tiene_que_ser_despues_del_inicio_y_durar_al_menos_media_hora(self):
+        antes = self.publicar(hora_inicio='16:00', hora_fin='14:00')
+        corta = self.publicar(hora_inicio='14:00', hora_fin='14:15')
+
+        self.assertEqual(str(antes.data['hora_fin'][0]), 'Tiene que ser posterior a la hora de inicio.')
+        self.assertEqual(str(corta.data['hora_fin'][0]), 'La clase tiene que durar al menos 30 minutos.')
+
+    def test_tiene_que_estar_en_el_horario_de_la_facultad(self):
+        response = self.publicar(hora_inicio='06:00', hora_fin='08:00')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(str(response.data['hora_inicio'][0]), 'Tiene que estar entre las 07:00 y 23:30.')
+
+    def test_un_tutor_no_puede_tener_dos_clases_superpuestas(self):
+        self.publicar()
+
+        superpuesta = self.publicar(hora_inicio='15:00', hora_fin='17:00')
+        a_continuacion = self.publicar(hora_inicio='16:00', hora_fin='18:00')
+        otro_dia = self.publicar(dia=2)
+        otro_tutor = self.publicar(self.otro_tutor)
+
+        self.assertEqual(superpuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('Se superpone con otra clase del mismo tutor: Algoritmos, lunes de 14:00 a 16:00.', str(superpuesta.data['hora_inicio'][0]))
+        for response in (a_continuacion, otro_dia, otro_tutor):
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_modificar_una_clase_no_choca_consigo_misma(self):
+        clase_id = self.publicar().data['id']
+
+        response = self.client.patch(f'{self.url}{clase_id}/', {'hora_fin': '17:00'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['horario'], 'lunes de 14:00 a 17:00')
+
+    def test_una_clase_vieja_sin_horario_queda_a_confirmar_y_hay_que_completarlo_al_modificarla(self):
+        clase = ClaseApoyo.objects.create(materia=self.materia, tutor=self.tutor, aula='L-203')
+        self.como(self.tutor)
+
+        self.assertEqual(self.client.get(self.url).data[0]['horario'], 'a confirmar')
+        solo_aula = self.client.patch(f'{self.url}{clase.id}/', {'aula': 'L-105'}, format='json')
+        completa = self.client.patch(f'{self.url}{clase.id}/', {'dia': 3, 'hora_inicio': '18:00', 'hora_fin': '20:00'}, format='json')
+
+        self.assertEqual(solo_aula.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(set(solo_aula.data), {'dia', 'hora_inicio', 'hora_fin'})
+        self.assertEqual(completa.data['horario'], 'miércoles de 18:00 a 20:00')
+
+    def test_el_cronograma_viene_ordenado_por_dia_y_hora(self):
+        self.publicar(dia=3, hora_inicio='10:00', hora_fin='12:00')
+        self.publicar(dia=1, hora_inicio='18:00', hora_fin='20:00')
+        self.publicar(dia=1, hora_inicio='09:00', hora_fin='11:00')
+
+        horarios = [c['horario'] for c in self.client.get(self.url).data]
+
+        self.assertEqual(horarios, ['lunes de 09:00 a 11:00', 'lunes de 18:00 a 20:00', 'miércoles de 10:00 a 12:00'])
+
+
+class MigracionHorarioTests(TestCase):
+    """La conversión de los horarios viejos (texto libre) que hace la migración 0008."""
+
+    def test_interpreta_los_formatos_habituales_y_deja_a_confirmar_el_resto(self):
+        interpretar = import_module('core.migrations.0008_clase_apoyo_dia_y_horas').interpretar
+        t = datetime.time
+        casos = {
+            'Lun 14:00-16:00': (1, t(14), t(16)),
+            'Miércoles 18 a 20hs': (3, t(18), t(20)),
+            'mie 9.30-11': (3, t(9, 30), t(11)),
+            'SÁB 10hs - 12hs': (6, t(10), t(12)),
+            'Lunes 14hs': (1, t(14), None),
+            'por la tarde': (None, None, None),
+            'Vie 16-14': (5, t(16), None),
+        }
+        for texto, esperado in casos.items():
+            with self.subTest(texto=texto):
+                self.assertEqual(interpretar(texto), esperado)

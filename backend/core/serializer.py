@@ -1,3 +1,5 @@
+import datetime
+
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 from django.db.models import Avg
@@ -162,8 +164,33 @@ class MaterialSerializer(serializers.ModelSerializer):
             return obj.cantidad_anotada
         return obj.ponderaciones.count()
 
+# Franja en la que se pueden dar clases de apoyo (horario de la facultad) y duración mínima de una clase.
+HORA_MINIMA_CLASE = datetime.time(9, 0)
+HORA_MAXIMA_CLASE = datetime.time(23, 30)
+DURACION_MINIMA_CLASE = datetime.timedelta(minutes=30)
+
+
+def _minutos(hora):
+    return hora.hour * 60 + hora.minute
+
+
 class ClaseApoyoSerializer(serializers.ModelSerializer):
     materia_id = serializers.IntegerField(write_only=True)
+    # Día (1 = lunes ... 6 = sábado) y horas "HH:MM". Se guardan por separado para poder validarlos y ordenar el cronograma.
+    dia = serializers.ChoiceField(
+        choices=ClaseApoyo.DIAS,
+        error_messages={'invalid_choice': 'Elegí un día de lunes a sábado.', 'null': 'Elegí el día.'},
+    )
+    hora_inicio = serializers.TimeField(
+        format='%H:%M', input_formats=['%H:%M', '%H:%M:%S'],
+        error_messages={'invalid': 'Usá el formato HH:MM (por ejemplo 14:00).', 'null': 'Indicá la hora de inicio.'},
+    )
+    hora_fin = serializers.TimeField(
+        format='%H:%M', input_formats=['%H:%M', '%H:%M:%S'],
+        error_messages={'invalid': 'Usá el formato HH:MM (por ejemplo 16:00).', 'null': 'Indicá la hora de fin.'},
+    )
+    # Solo lectura, para mostrar: "lunes de 14:00 a 16:00" (o "a confirmar" en clases viejas sin datos).
+    horario = serializers.CharField(read_only=True)
     # Opcional: si quien crea la clase es un tutor, el tutor es él mismo (sale del token).
     # Solo un administrador necesita indicar de qué tutor es la clase.
     tutor_id = serializers.CharField(write_only=True, required=False)
@@ -175,7 +202,7 @@ class ClaseApoyoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ClaseApoyo
-        fields = ('id','materia','tutor','horario','aula','suscrito','cantidad_suscritos','materia_id','tutor_id')
+        fields = ('id','materia','tutor','dia','hora_inicio','hora_fin','horario','aula','suscrito','cantidad_suscritos','materia_id','tutor_id')
 
     def get_suscrito(self, obj):
         return bool(getattr(obj, 'suscrito', False))
@@ -192,6 +219,61 @@ class ClaseApoyoSerializer(serializers.ModelSerializer):
         if not Usuario.objects.filter(pk=value, rol=TUTOR).exists():
             raise serializers.ValidationError("No existe un tutor con ese legajo.")
         return value
+
+    def validate(self, attrs):
+        """Día y horario completos, en la franja de la facultad, con el fin después del inicio y sin superponerse
+        con otra clase del mismo tutor. Al modificar, se combinan los datos nuevos con los que ya tenía la clase."""
+        clase = self.instance
+
+        def valor(campo):
+            return attrs[campo] if campo in attrs else getattr(clase, campo, None)
+
+        dia, inicio, fin = valor('dia'), valor('hora_inicio'), valor('hora_fin')
+        faltan = {
+            campo: mensaje for campo, mensaje, dato in (
+                ('dia', 'Elegí el día.', dia),
+                ('hora_inicio', 'Indicá la hora de inicio.', inicio),
+                ('hora_fin', 'Indicá la hora de fin.', fin),
+            ) if dato is None
+        }
+        if faltan:
+            raise serializers.ValidationError(faltan)
+
+        rango = f'{HORA_MINIMA_CLASE:%H:%M} y {HORA_MAXIMA_CLASE:%H:%M}'
+        errores = {}
+        if not HORA_MINIMA_CLASE <= inicio <= HORA_MAXIMA_CLASE:
+            errores['hora_inicio'] = f'Tiene que estar entre las {rango}.'
+        if not HORA_MINIMA_CLASE <= fin <= HORA_MAXIMA_CLASE:
+            errores['hora_fin'] = f'Tiene que estar entre las {rango}.'
+        if not errores and _minutos(fin) - _minutos(inicio) < DURACION_MINIMA_CLASE.total_seconds() / 60:
+            errores['hora_fin'] = (
+                'Tiene que ser posterior a la hora de inicio.' if fin <= inicio
+                else f'La clase tiene que durar al menos {int(DURACION_MINIMA_CLASE.total_seconds() // 60)} minutos.'
+            )
+        if errores:
+            raise serializers.ValidationError(errores)
+
+        # Un tutor no puede estar en dos clases a la vez.
+        tutor_id = self._tutor_de_la_clase(attrs)
+        if tutor_id is not None:
+            superpuesta = ClaseApoyo.objects.filter(
+                tutor_id=tutor_id, dia=dia, hora_inicio__lt=fin, hora_fin__gt=inicio,
+            ).exclude(pk=getattr(clase, 'pk', None)).select_related('materia').first()
+            if superpuesta:
+                raise serializers.ValidationError({'hora_inicio': (
+                    f'Se superpone con otra clase del mismo tutor: {superpuesta.materia.nombre}, '
+                    f'{superpuesta.horario}.'
+                )})
+        return attrs
+
+    def _tutor_de_la_clase(self, attrs):
+        """El tutor que va a tener la clase: quien la crea si es tutor; si no, el indicado o el que ya tenía."""
+        usuario = self.context['request'].user
+        if usuario.rol == TUTOR and self.instance is None:
+            return usuario.pk
+        if attrs.get('tutor_id') and usuario.rol != TUTOR:
+            return attrs['tutor_id']
+        return getattr(self.instance, 'tutor_id', None)
 
     #Para el POST
     def create(self, validated_data):

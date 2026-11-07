@@ -43,6 +43,21 @@ describe('ClasesApoyoComponent', () => {
     ((fixture.nativeElement as HTMLElement).querySelector('[role="option"]') as HTMLElement).click();
     await estabilizar(fixture);
   };
+  const elegirDia = (fixture: ComponentFixture<unknown>, nombre: string) => {
+    const select = (fixture.nativeElement as HTMLElement).querySelector<HTMLSelectElement>('#clase-dia')!;
+    select.selectedIndex = Array.from(select.options).findIndex((o) => o.text.trim() === nombre);
+    select.dispatchEvent(new Event('change'));
+  };
+  /** Completa materia, día, horas y aula del formulario de publicar. */
+  const completarFormulario = async (fixture: ComponentFixture<unknown>, desde = '14:00', hasta = '16:00') => {
+    await elegirMateria(fixture, 'algoritmos');
+    elegirDia(fixture, 'Lunes');
+    escribir(fixture, '#clase-hora-inicio', desde);
+    escribir(fixture, '#clase-hora-fin', hasta);
+    escribir(fixture, '#clase-aula', ' L-203 ');
+  };
+  const errorDe = (fixture: ComponentFixture<unknown>, id: string) =>
+    (fixture.nativeElement as HTMLElement).querySelector(`#error-clase-${id}`)?.textContent?.trim() ?? '';
 
   it('muestra materia, tutor, horario y aula cuando llegan los datos', async () => {
     const fixture = await abrir(ALUMNA);
@@ -50,8 +65,24 @@ describe('ClasesApoyoComponent', () => {
     const texto = textoDe(fixture);
     expect(texto).toContain('Algoritmos y Estructuras de Datos');
     expect(texto).toContain('Dictada por: Tomás Tutor');
-    expect(texto).toContain('Lun 14:00-16:00');
+    expect(texto).toContain('Lunes');
+    expect(texto).toContain('14:00 a 16:00');
     expect(texto).toContain('L-203');
+  });
+
+  describe('clase vieja sin día ni horario', () => {
+    const vieja = () => unaClase({ dia: null, hora_inicio: null, hora_fin: null, horario: 'a confirmar' });
+
+    it('se muestra "A confirmar"', async () => {
+      const texto = textoDe(await abrir(ALUMNA, [vieja()]));
+
+      expect(texto).toContain('A confirmar');
+      expect(texto).not.toContain('Completalo con "Modificar".');
+    });
+
+    it('a su tutor le pide completarlo', async () => {
+      expect(textoDe(await abrir(TUTOR, [vieja()]))).toContain('Completalo con "Modificar".');
+    });
   });
 
   it('sin clases lo dice', async () => {
@@ -80,19 +111,17 @@ describe('ClasesApoyoComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('button.bg-rose-50')).toHaveLength(2);
   });
 
-  it('publicar: manda materia, horario y aula (sin tutor, lo pone el backend) y vuelve a cargar sin parpadear', async () => {
+  it('publicar: manda materia, día, horas y aula (sin tutor, lo pone el backend) y vuelve a cargar sin parpadear', async () => {
     const fixture = await abrir(TUTOR, []);
 
     boton(fixture, 'Publicar clase')!.click();
     await estabilizar(fixture);
-    await elegirMateria(fixture, 'algoritmos');
-    escribir(fixture, '#clase-horario', ' Lun 14:00-16:00 ');
-    escribir(fixture, '#clase-aula', 'L-203');
+    await completarFormulario(fixture);
     boton(fixture, 'Guardar')!.click();
 
     const peticion = http.expectOne(`${API_URL}/clases-apoyo/`);
     expect(peticion.request.method).toBe('POST');
-    expect(peticion.request.body).toEqual({ materia_id: 1, horario: 'Lun 14:00-16:00', aula: 'L-203' });
+    expect(peticion.request.body).toEqual({ materia_id: 1, dia: 1, hora_inicio: '14:00', hora_fin: '16:00', aula: 'L-203' });
     peticion.flush(unaClase(), { status: 201, statusText: 'Created' });
 
     const recarga = http.expectOne(`${API_URL}/clases-apoyo/`); // recarga la lista
@@ -101,18 +130,57 @@ describe('ClasesApoyoComponent', () => {
     await estabilizar(fixture);
 
     expect(textoDe(fixture)).toContain('Clase publicada.');
-    expect(textoDe(fixture)).toContain('Lun 14:00-16:00');
+    expect(textoDe(fixture)).toContain('14:00 a 16:00');
   });
 
-  it('publicar con campos vacíos avisa y no llama a la API', async () => {
+  it('el formulario pide el día con una lista y las horas con campos de hora', async () => {
+    const fixture = await abrir(TUTOR, []);
+    boton(fixture, 'Publicar clase')!.click();
+    await estabilizar(fixture);
+
+    const elemento = fixture.nativeElement as HTMLElement;
+    const dias = Array.from(elemento.querySelectorAll<HTMLOptionElement>('#clase-dia option')).map((o) => o.text.trim());
+    expect(dias).toEqual(['Elegí el día', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']);
+    expect(elemento.querySelector<HTMLInputElement>('#clase-hora-inicio')!.type).toBe('time');
+    expect(elemento.querySelector<HTMLInputElement>('#clase-hora-fin')!.type).toBe('time');
+    expect(textoDe(fixture)).toContain('De lunes a sábado, entre las 07:00 y las 23:30. Mínimo 30 minutos.');
+  });
+
+  it('publicar con campos vacíos marca cada campo en rojo y no llama a la API', async () => {
     const fixture = await abrir(TUTOR, []);
 
     boton(fixture, 'Publicar clase')!.click();
-    fixture.detectChanges();
+    await estabilizar(fixture);
     boton(fixture, 'Guardar')!.click();
     await estabilizar(fixture);
 
-    expect(textoDe(fixture)).toContain('Completá la materia, el horario y el aula.');
+    expect(errorDe(fixture, 'materia')).toBe('Elegí una materia de la lista.');
+    expect(errorDe(fixture, 'dia')).toBe('Elegí el día.');
+    expect(errorDe(fixture, 'hora-inicio')).toBe('Indicá la hora de inicio.');
+    expect(errorDe(fixture, 'hora-fin')).toBe('Indicá la hora de fin.');
+    expect(errorDe(fixture, 'aula')).toBe('Indicá el aula.');
+    expect((fixture.nativeElement as HTMLElement).querySelector('#clase-dia')!.getAttribute('aria-invalid')).toBe('true');
+    http.expectNone(`${API_URL}/clases-apoyo/`);
+  });
+
+  it('valida el horario antes de enviar: fin posterior al inicio, duración mínima y franja de la facultad', async () => {
+    const fixture = await abrir(TUTOR, []);
+    boton(fixture, 'Publicar clase')!.click();
+    await estabilizar(fixture);
+
+    const casos: [string, string, string, string][] = [
+      ['16:00', '14:00', 'hora-fin', 'Tiene que ser posterior a la hora de inicio.'],
+      ['14:00', '14:15', 'hora-fin', 'La clase tiene que durar al menos 30 minutos.'],
+      ['06:00', '08:00', 'hora-inicio', 'Tiene que estar entre las 07:00 y 23:30.'],
+    ];
+    await completarFormulario(fixture);
+    for (const [desde, hasta, campo, mensaje] of casos) {
+      escribir(fixture, '#clase-hora-inicio', desde);
+      escribir(fixture, '#clase-hora-fin', hasta);
+      boton(fixture, 'Guardar')!.click();
+      await estabilizar(fixture);
+      expect(errorDe(fixture, campo)).toBe(mensaje);
+    }
     http.expectNone(`${API_URL}/clases-apoyo/`);
   });
 
@@ -121,34 +189,39 @@ describe('ClasesApoyoComponent', () => {
 
     boton(fixture, 'Modificar')!.click();
     await estabilizar(fixture); // ngModel escribe el valor en el campo un instante después de dibujarlo
-    expect((fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('#clase-aula')!.value).toBe('L-203');
+    const elemento = fixture.nativeElement as HTMLElement;
+    expect(elemento.querySelector<HTMLInputElement>('#clase-aula')!.value).toBe('L-203');
+    expect(elemento.querySelector<HTMLInputElement>('#clase-hora-inicio')!.value).toBe('14:00');
+    const dia = elemento.querySelector<HTMLSelectElement>('#clase-dia')!;
+    expect(dia.options[dia.selectedIndex].text.trim()).toBe('Lunes');
+    elegirDia(fixture, 'Martes');
     escribir(fixture, '#clase-aula', 'B-101');
     boton(fixture, 'Guardar')!.click();
 
     const peticion = http.expectOne(`${API_URL}/clases-apoyo/3/`);
     expect(peticion.request.method).toBe('PATCH');
-    expect(peticion.request.body).toEqual({ materia_id: 1, horario: 'Lun 14:00-16:00', aula: 'B-101' });
-    peticion.flush(unaClase({ id: 3, aula: 'B-101' }));
-    http.expectOne(`${API_URL}/clases-apoyo/`).flush([unaClase({ id: 3, aula: 'B-101' })]);
+    expect(peticion.request.body).toEqual({ materia_id: 1, dia: 2, hora_inicio: '14:00', hora_fin: '16:00', aula: 'B-101' });
+    peticion.flush(unaClase({ id: 3, dia: 2, aula: 'B-101' }));
+    http.expectOne(`${API_URL}/clases-apoyo/`).flush([unaClase({ id: 3, dia: 2, aula: 'B-101' })]);
     await estabilizar(fixture);
 
     expect(textoDe(fixture)).toContain('Clase actualizada.');
+    expect(textoDe(fixture)).toContain('Martes');
     expect(textoDe(fixture)).toContain('B-101');
   });
 
-  it('el backend puede rechazar el formulario y se muestra el motivo dentro del formulario', async () => {
+  it('si el backend rechaza el horario (por ejemplo, se superpone) lo marca en el campo y el formulario sigue abierto', async () => {
     const fixture = await abrir(TUTOR, []);
     boton(fixture, 'Publicar clase')!.click();
     await estabilizar(fixture);
-    await elegirMateria(fixture, 'algoritmos');
-    escribir(fixture, '#clase-horario', 'Lunes por la tarde muy tarde');
-    escribir(fixture, '#clase-aula', 'L-203');
+    await completarFormulario(fixture);
     boton(fixture, 'Guardar')!.click();
 
-    http.expectOne(`${API_URL}/clases-apoyo/`).flush({ horario: ['Asegúrese de que este valor tenga como máximo 20 caracteres.'] }, { status: 400, statusText: 'Bad Request' });
+    const motivo = 'Se superpone con otra clase del mismo tutor: Física, lunes de 15:00 a 17:00.';
+    http.expectOne(`${API_URL}/clases-apoyo/`).flush({ hora_inicio: [motivo] }, { status: 400, statusText: 'Bad Request' });
     await estabilizar(fixture);
 
-    expect(textoDe(fixture)).toContain('Horario: Asegúrese de que este valor tenga como máximo 20 caracteres.');
+    expect(errorDe(fixture, 'hora-inicio')).toBe(motivo);
     expect(boton(fixture, 'Guardar')).toBeTruthy(); // el formulario sigue abierto para corregir
   });
 

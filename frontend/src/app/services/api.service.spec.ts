@@ -78,7 +78,7 @@ describe('ApiService', () => {
   it('clases de apoyo: listar (con filtro), crear, modificar y eliminar', () => {
     expect(pedir(api.getClasesApoyo(2), '/clases-apoyo/').params.get('materia')).toBe('2');
 
-    const datos = { materia_id: 1, horario: 'Lun 14hs', aula: 'L-1' };
+    const datos = { materia_id: 1, dia: 1, hora_inicio: '14:00', hora_fin: '16:00', aula: 'L-1' };
     const alta = pedir(api.crearClaseApoyo(datos), '/clases-apoyo/');
     expect([alta.method, alta.body]).toEqual(['POST', datos]);
 

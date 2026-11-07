@@ -10,7 +10,11 @@ import {
 /** Datos que hay que mandar para crear o modificar una clase de apoyo. */
 export interface DatosClaseApoyo {
   materia_id: number;
-  horario: string;
+  /** 1 = lunes ... 6 = sábado */
+  dia: number;
+  /** "HH:MM" */
+  hora_inicio: string;
+  hora_fin: string;
   aula: string;
 }
 

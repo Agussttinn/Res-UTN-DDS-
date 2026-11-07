@@ -254,7 +254,7 @@ def _clases_apoyo_queryset(request):
     clases = ClaseApoyo.objects.select_related('materia__especialidad', 'tutor').annotate(
         cantidad_suscritos=Count('suscripciones', distinct=True),
         suscrito=Exists(Suscripcion.objects.filter(clase=OuterRef('pk'), usuario_id=request.user.pk)),
-    ).order_by('id')
+    ).order_by('dia', 'hora_inicio', 'id')  # como un cronograma
     materia_id = _id_numerico(request, 'materia')
     if materia_id is not None:
         clases = clases.filter(materia_id=materia_id)
@@ -282,10 +282,10 @@ class ClaseApoyoDetail(generics.RetrieveUpdateDestroyAPIView):
     @transaction.atomic
     def perform_update(self, serializer):
         antes = serializer.instance
-        valores_antes = {'Materia': antes.materia.nombre, 'Horario': antes.horario, 'Aula': antes.aula}
+        valores_antes = {'Materia': antes.materia.nombre, 'Día y horario': antes.horario, 'Aula': antes.aula}
         clase = serializer.save()
         clase.refresh_from_db(fields=['materia'])
-        valores_despues = {'Materia': clase.materia.nombre, 'Horario': clase.horario, 'Aula': clase.aula}
+        valores_despues = {'Materia': clase.materia.nombre, 'Día y horario': clase.horario, 'Aula': clase.aula}
         cambios = [
             f'{campo}: {valor} → {valores_despues[campo]}'
             for campo, valor in valores_antes.items() if valor != valores_despues[campo]
