@@ -143,7 +143,7 @@ describe('ClasesApoyoComponent', () => {
     expect(dias).toEqual(['Elegí el día', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']);
     expect(elemento.querySelector<HTMLInputElement>('#clase-hora-inicio')!.type).toBe('time');
     expect(elemento.querySelector<HTMLInputElement>('#clase-hora-fin')!.type).toBe('time');
-    expect(textoDe(fixture)).toContain('De lunes a sábado, entre las 07:00 y las 23:30. Mínimo 30 minutos.');
+    expect(textoDe(fixture)).toContain('De lunes a sábado, entre las 09:00 y las 23:30. Mínimo 30 minutos.');
   });
 
   it('publicar con campos vacíos marca cada campo en rojo y no llama a la API', async () => {
@@ -171,7 +171,7 @@ describe('ClasesApoyoComponent', () => {
     const casos: [string, string, string, string][] = [
       ['16:00', '14:00', 'hora-fin', 'Tiene que ser posterior a la hora de inicio.'],
       ['14:00', '14:15', 'hora-fin', 'La clase tiene que durar al menos 30 minutos.'],
-      ['06:00', '08:00', 'hora-inicio', 'Tiene que estar entre las 07:00 y 23:30.'],
+      ['06:00', '08:00', 'hora-inicio', 'Tiene que estar entre las 09:00 y 23:30.'],
     ];
     await completarFormulario(fixture);
     for (const [desde, hasta, campo, mensaje] of casos) {

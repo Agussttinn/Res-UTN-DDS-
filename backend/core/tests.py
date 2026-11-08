@@ -24,7 +24,7 @@ from . import sysacad_client
 from .admin import UsuarioAdmin
 from .archivos import TAMANO_MAXIMO_MB
 from .auth import crear_token
-from .models import ClaseApoyo, Especialidad, Materia, Material, MensajeClase, Notificacion, Ponderacion, Suscripcion, Usuario
+from .models import ClaseApoyo, Especialidad, EstadoMaterial, Materia, Material, Rol, MensajeClase, Notificacion, Ponderacion, Suscripcion, Usuario
 from .observador import EventoClase, ObservadorClase, SujetoClase
 
 CONTRASENA = 'claveSegura123'
@@ -57,7 +57,7 @@ class ApiTestCase(APITestCase):
     def crear_usuario(legajo, rol='alumno', contrasena=CONTRASENA):
         return Usuario.objects.create(
             legajo=legajo, nombre_y_apellido=f'Usuario {legajo}', correo=f'u{legajo}@mail.com',
-            contraseña=make_password(contrasena), rol=rol,
+            contraseña=make_password(contrasena), rol=Rol.objects.get(nombre=rol),
         )
 
     def como(self, usuario):
@@ -67,7 +67,8 @@ class ApiTestCase(APITestCase):
     def crear_material(self, autor=None, validado=False, materia=None, titulo='Resumen U1'):
         return Material.objects.create(
             materia=materia or self.materia, usuario=autor or self.alumno, titulo=titulo,
-            tipo='resumen', validacion=validado,
+            tipo='resumen',
+            estado=EstadoMaterial.objects.get(nombre='aprobado' if validado else 'pendiente'),
             archivo=SimpleUploadedFile('apunte.pdf', b'%PDF-1.4 contenido', content_type='application/pdf'),
         )
 
@@ -107,7 +108,7 @@ class RegistroAlumnoTests(ApiTestCase):
 
         usuario = Usuario.objects.get(legajo="48293")
         self.assertEqual(usuario.correo, "smartinez@frd.utn.edu.ar")
-        self.assertEqual(usuario.rol, "alumno")
+        self.assertEqual(usuario.rol.nombre, "alumno")
         # la contraseña nunca se guarda en texto plano
         self.assertNotEqual(usuario.contraseña, "miclave123")
         self.assertTrue(check_password("miclave123", usuario.contraseña))
@@ -348,7 +349,7 @@ class AutenticacionTests(ApiTestCase):
         token = crear_token(self.admin)
         self.assertEqual(self.client.get('/api/usuarios/', HTTP_AUTHORIZATION=f'Bearer {token}').status_code, 200)
 
-        Usuario.objects.filter(pk=self.admin.pk).update(rol='alumno')  # le sacan el rol de administrador
+        Usuario.objects.filter(pk=self.admin.pk).update(rol=Rol.objects.get(nombre='alumno'))  # le sacan el rol de administrador
 
         self.assertEqual(self.client.get('/api/usuarios/', HTTP_AUTHORIZATION=f'Bearer {token}').status_code, 403)
 
@@ -358,7 +359,7 @@ class AutenticacionTests(ApiTestCase):
 class PermisosGeneralesTests(ApiTestCase):
     def test_ningun_recurso_es_publico_salvo_login_y_registro(self):
         rutas = [
-            '/api/usuarios/', '/api/usuarios/4/', '/api/especialidades/', '/api/materias/',
+            '/api/usuarios/', '/api/usuarios/4/', '/api/roles/', '/api/especialidades/', '/api/materias/',
             '/api/materiales/', '/api/materiales/pendientes/', '/api/clases-apoyo/', '/api/ponderaciones/',
         ]
         for ruta in rutas:
@@ -391,7 +392,7 @@ class UsuarioApiTests(ApiTestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertNotIn('contraseña', response.data)
         tutor = Usuario.objects.get(legajo='77')
-        self.assertEqual(tutor.rol, 'tutor')
+        self.assertEqual(tutor.rol.nombre, 'tutor')
         self.assertNotEqual(tutor.contraseña, CONTRASENA)
         self.assertTrue(check_password(CONTRASENA, tutor.contraseña))
 
@@ -427,7 +428,7 @@ class UsuarioApiTests(ApiTestCase):
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.alumno.refresh_from_db()
-        self.assertEqual(self.alumno.rol, 'alumno')
+        self.assertEqual(self.alumno.rol.nombre, 'alumno')
 
     def test_el_administrador_cambia_la_contrasena_y_no_puede_cambiar_el_legajo(self):
         self.como(self.admin)
@@ -463,7 +464,7 @@ class UsuarioAdminDjangoTests(ApiTestCase):
         UsuarioAdmin(Usuario, admin.site).save_model(request=None, obj=usuario, form=None, change=False)
 
     def test_hashea_una_contrasena_en_texto_plano(self):
-        usuario = Usuario(legajo='88', nombre_y_apellido='A', correo='a88@mail.com', rol='administrador', contraseña='texto-plano')
+        usuario = Usuario(legajo='88', nombre_y_apellido='A', correo='a88@mail.com', rol=Rol.objects.get(nombre='administrador'), contraseña='texto-plano')
 
         self.guardar(usuario)
 
@@ -481,6 +482,26 @@ class UsuarioAdminDjangoTests(ApiTestCase):
 
 
 class EspecialidadYMateriaApiTests(ApiTestCase):
+    def test_solo_el_administrador_lista_los_roles(self):
+        self.como(self.alumno)
+        self.assertEqual(self.client.get('/api/roles/').status_code, 403)
+
+        self.como(self.admin)
+        response = self.client.get('/api/roles/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([r['nombre'] for r in response.data], ['alumno', 'tutor', 'administrador'])
+        self.assertEqual(self.client.post('/api/roles/', {'nombre': 'X'}, format='json').status_code, 405)
+
+    def test_filtra_materias_por_especialidad(self):
+        otra = Especialidad.objects.create(nombre='Química', codigo_sysacad='QUI')
+        quimica = Materia.objects.create(nombre='Química General', anio=1, especialidad=otra)
+        self.como(self.alumno)
+
+        with override_settings(CARRERAS_HABILITADAS=['ISI', 'QUI']):
+            response = self.client.get(f'/api/materias/?especialidad={otra.id}')
+
+        self.assertEqual([m['id'] for m in response.data], [quimica.id])
+
     def test_un_alumno_lee_pero_no_escribe(self):
         self.como(self.alumno)
 
@@ -682,7 +703,7 @@ class MaterialApiTests(ApiTestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         material = Material.objects.get()
         self.assertEqual(material.usuario, self.alumno)
-        self.assertFalse(material.validacion)
+        self.assertEqual(material.estado.nombre, 'pendiente')
 
     def test_el_archivo_es_obligatorio(self):
         self.como(self.alumno)
@@ -781,7 +802,7 @@ class MaterialApiTests(ApiTestCase):
         self.client.patch(f'{self.url}{material.id}/', {'validacion': True}, format='json')
 
         material.refresh_from_db()
-        self.assertFalse(material.validacion)
+        self.assertEqual(material.estado.nombre, 'pendiente')
 
     def test_un_material_validado_solo_lo_modifica_un_administrador(self):
         material = self.crear_material(autor=self.alumno, validado=True)
@@ -836,17 +857,70 @@ class ModeracionTests(ApiTestCase):
         self.como(self.otro_alumno)
         self.assertEqual(self.client.get(f'/api/materiales/{material.id}/').status_code, 200)
 
-    def test_rechazar_elimina_el_material_y_su_archivo(self):
+    def test_rechazar_conserva_el_material_y_guarda_el_motivo(self):
         material = self.crear_material(autor=self.alumno)
         ruta = material.archivo.path
-        self.assertTrue(os.path.exists(ruta))
         self.como(self.admin)
 
-        response = self.client.post(f'/api/materiales/{material.id}/moderar/', {'accion': 'rechazar'}, format='json')
+        response = self.client.post(
+            f'/api/materiales/{material.id}/moderar/', {'accion': 'rechazar', 'motivo': 'Ilegible'}, format='json',
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(Material.objects.filter(pk=material.pk).exists())
-        self.assertFalse(os.path.exists(ruta))
+        material.refresh_from_db()
+        self.assertEqual(material.estado.nombre, 'rechazado')
+        self.assertEqual(material.motivo_rechazo, 'Ilegible')
+        self.assertTrue(os.path.exists(ruta))
+        self.assertFalse(response.data['validacion'])
+        self.como(self.otro_alumno)
+        self.assertEqual(self.client.get(f'/api/materiales/{material.id}/').status_code, 404)
+
+    def test_el_autor_corrige_un_material_rechazado_y_vuelve_a_pendiente(self):
+        material = self.crear_material(autor=self.alumno)
+        self.como(self.admin)
+        self.client.post(f'/api/materiales/{material.id}/moderar/', {'accion': 'rechazar', 'motivo': 'Ilegible'}, format='json')
+
+        self.como(self.alumno)
+        response = self.client.patch(f'/api/materiales/{material.id}/', {'titulo': 'Corregido'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        material.refresh_from_db()
+        self.assertEqual(material.estado.nombre, 'pendiente')
+        self.assertIsNone(material.motivo_rechazo)
+
+    def test_archivar_solo_desde_aprobado_y_no_se_puede_puntuar(self):
+        pendiente = self.crear_material(autor=self.alumno)
+        aprobado = self.crear_material(autor=self.alumno, validado=True, titulo='Aprobado')
+        self.como(self.admin)
+
+        response = self.client.post(f'/api/materiales/{pendiente.id}/moderar/', {'accion': 'archivar'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+
+        response = self.client.post(f'/api/materiales/{aprobado.id}/moderar/', {'accion': 'archivar'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        aprobado.refresh_from_db()
+        self.assertEqual(aprobado.estado.nombre, 'archivado')
+
+        self.como(self.otro_alumno)
+        response = self.client.post('/api/ponderaciones/', {'material_id': aprobado.id, 'valor': 4}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_la_media_se_guarda_en_el_material_al_puntuar(self):
+        material = self.crear_material(autor=self.alumno, validado=True)
+        for usuario, valor in ((self.otro_alumno, 5), (self.tutor, 2)):
+            self.como(usuario)
+            self.client.post('/api/ponderaciones/', {'material_id': material.id, 'valor': valor}, format='json')
+
+        material.refresh_from_db()
+        self.assertEqual(material.cantidad_ponderaciones, 2)
+        self.assertEqual(float(material.promedio_ponderacion), 3.5)
+
+        self.como(self.tutor)
+        ponderacion = Ponderacion.objects.get(material=material, usuario=self.tutor)
+        self.client.delete(f'/api/ponderaciones/{ponderacion.id}/')
+        material.refresh_from_db()
+        self.assertEqual(material.cantidad_ponderaciones, 1)
+        self.assertEqual(float(material.promedio_ponderacion), 5.0)
 
     def test_solo_el_administrador_puede_moderar(self):
         material = self.crear_material(autor=self.alumno)
@@ -854,10 +928,10 @@ class ModeracionTests(ApiTestCase):
         for usuario in (self.alumno, self.otro_alumno, self.tutor):
             self.como(usuario)
             response = self.client.post(f'/api/materiales/{material.id}/moderar/', {'accion': 'aprobar'}, format='json')
-            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, usuario.rol)
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, usuario.rol.nombre)
 
         material.refresh_from_db()
-        self.assertFalse(material.validacion)
+        self.assertEqual(material.estado.nombre, 'pendiente')
 
     def test_accion_invalida_o_material_inexistente(self):
         material = self.crear_material()
@@ -1329,7 +1403,7 @@ class HorarioClaseApoyoTests(ApiTestCase):
         response = self.publicar(hora_inicio='06:00', hora_fin='08:00')
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(str(response.data['hora_inicio'][0]), 'Tiene que estar entre las 07:00 y 23:30.')
+        self.assertEqual(str(response.data['hora_inicio'][0]), 'Tiene que estar entre las 09:00 y 23:30.')
 
     def test_un_tutor_no_puede_tener_dos_clases_superpuestas(self):
         self.publicar()

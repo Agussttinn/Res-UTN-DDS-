@@ -91,6 +91,8 @@ class Material(models.Model):
         ])
     estado = models.ForeignKey(EstadoMaterial, on_delete=models.PROTECT, related_name='materiales')
     comentario = models.TextField(blank=True, null=True)
+    # Por qué el administrador rechazó el material. Se conserva mientras está rechazado; al reenviarlo se borra.
+    motivo_rechazo = models.TextField(blank=True, null=True)
     # El apunte en sí. Nullable en la base solo para no romper los materiales cargados antes de que
     # existiera este campo; al crear uno nuevo por la API, el serializer lo exige.
     archivo = models.FileField(
@@ -138,6 +140,7 @@ class ClaseApoyo(models.Model):
     aula = models.CharField(max_length=20)
 
     class Meta:
+        db_table = 'clases_apoyo'
         ordering = ['dia', 'hora_inicio', 'id']
 
     @property
@@ -157,6 +160,7 @@ class Ponderacion(models.Model):
     fecha = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = 'ponderaciones'
         # un usuario solo puede tener una ponderación por material (si vota de nuevo, se actualiza la anterior)
         constraints = [
             models.UniqueConstraint(fields=['material', 'usuario'], name='ponderacion_unica_por_usuario_y_material'),
@@ -173,6 +177,7 @@ class Suscripcion(models.Model):
     fecha = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = 'suscripciones'
         constraints = [
             models.UniqueConstraint(fields=['clase', 'usuario'], name='suscripcion_unica_por_usuario_y_clase'),
         ]
@@ -189,6 +194,7 @@ class MensajeClase(models.Model):
     fecha = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = 'mensajes_clase'
         ordering = ['-fecha', '-id']
 
     def __str__(self):
@@ -215,6 +221,7 @@ class Notificacion(models.Model):
     leida = models.BooleanField(default=False)
 
     class Meta:
+        db_table = 'notificaciones'
         ordering = ['-fecha', '-id']
 
     def __str__(self):

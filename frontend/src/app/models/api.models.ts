@@ -89,8 +89,12 @@ export interface Material {
   titulo: string;
   fecha_de_carga: string;
   tipo: TipoMaterial;
-  /** false = pendiente de revisión: solo lo ven su autor y los administradores. */
+  /** Etapa de la moderación: pendiente -> aprobado | rechazado -> archivado. */
+  estado: EstadoMaterial;
+  /** true si ya pasó la moderación (aprobado o archivado). Se mantiene por compatibilidad: usar `estado`. */
   validacion: boolean;
+  /** Por qué lo rechazó un administrador. Solo viene con valor cuando está rechazado. */
+  motivo_rechazo: string | null;
   comentario: string | null;
   /** URL completa del archivo, o null en materiales viejos sin archivo. */
   archivo: string | null;
@@ -155,7 +159,16 @@ export interface RespuestaLogin {
   usuario: Usuario;
 }
 
-export type AccionModeracion = 'aprobar' | 'rechazar';
+export type AccionModeracion = 'aprobar' | 'rechazar' | 'archivar';
+
+export type EstadoMaterial = 'pendiente' | 'aprobado' | 'rechazado' | 'archivado';
+
+export const ETIQUETA_ESTADO: Record<EstadoMaterial, string> = {
+  pendiente: 'Pendiente de revisión',
+  aprobado: 'Aprobado',
+  rechazado: 'Rechazado',
+  archivado: 'Archivado',
+};
 
 export const ETIQUETA_TIPO: Record<TipoMaterial, string> = {
   resumen: 'Resumen',

@@ -64,8 +64,9 @@ export class ApiService {
     return this.http.get<Material[]>(`${API_URL}/materiales/pendientes/`);
   }
 
-  moderarMaterial(id: number, accion: AccionModeracion): Observable<unknown> {
-    return this.http.post(`${API_URL}/materiales/${id}/moderar/`, { accion });
+  /** `motivo` solo se usa al rechazar: el autor lo ve para poder corregir el apunte y reenviarlo. */
+  moderarMaterial(id: number, accion: AccionModeracion, motivo?: string): Observable<unknown> {
+    return this.http.post(`${API_URL}/materiales/${id}/moderar/`, motivo ? { accion, motivo } : { accion });
   }
 
   // ---- estrellas ----

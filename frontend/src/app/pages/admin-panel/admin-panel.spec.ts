@@ -8,7 +8,7 @@ describe('AdminPanelComponent', () => {
   let http: HttpTestingController;
 
   const pendiente = (id: number, titulo: string) =>
-    unMaterial({ id, titulo, validacion: false, usuario: { legajo: '200', nombre_y_apellido: 'Ana Alumna', rol: 'alumno' }, comentario: 'Con ejercicios resueltos' });
+    unMaterial({ id, titulo, estado: 'pendiente', validacion: false, usuario: { legajo: '200', nombre_y_apellido: 'Ana Alumna', rol: 'alumno' }, comentario: 'Con ejercicios resueltos' });
 
   beforeEach(() => {
     localStorage.clear();
@@ -22,9 +22,13 @@ describe('AdminPanelComponent', () => {
     http.verify();
   });
 
-  async function abrir(pendientes: ReturnType<typeof pendiente>[]): Promise<ComponentFixture<AdminPanelComponent>> {
+  async function abrir(
+    pendientes: ReturnType<typeof pendiente>[],
+    todos: ReturnType<typeof unMaterial>[] = []
+  ): Promise<ComponentFixture<AdminPanelComponent>> {
     const fixture = crearComponente(AdminPanelComponent);
     http.expectOne(`${API_URL}/materiales/pendientes/`).flush(pendientes);
+    http.expectOne(`${API_URL}/materiales/`).flush(todos);
     await estabilizar(fixture);
     return fixture;
   }
@@ -37,6 +41,7 @@ describe('AdminPanelComponent', () => {
     expect(textoDe(fixture)).toContain('Consultando documentos pendientes');
 
     http.expectOne(`${API_URL}/materiales/pendientes/`).flush([pendiente(7, 'Resumen Unidad 1')]);
+    http.expectOne(`${API_URL}/materiales/`).flush([]);
     await estabilizar(fixture);
 
     const texto = textoDe(fixture);
@@ -57,6 +62,7 @@ describe('AdminPanelComponent', () => {
     const peticion = http.expectOne(`${API_URL}/materiales/7/moderar/`);
     expect(peticion.request.body).toEqual({ accion: 'aprobar' });
     peticion.flush(unMaterial({ id: 7 }));
+    http.expectOne(`${API_URL}/materiales/`).flush([]); // recarga la lista de aprobados
     await estabilizar(fixture);
 
     const texto = textoDe(fixture);
@@ -65,28 +71,45 @@ describe('AdminPanelComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('h3')).toHaveLength(1);
   });
 
-  it('rechazar pide confirmación: si se cancela no pasa nada', async () => {
+  it('rechazar pide el motivo: si se cancela no pasa nada', async () => {
     const fixture = await abrir([pendiente(7, 'Resumen Unidad 1')]);
-    const confirmar = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const pedir = vi.spyOn(window, 'prompt').mockReturnValue(null);
 
     boton(fixture, 'Rechazar').click();
 
-    expect(confirmar).toHaveBeenCalledWith(expect.stringContaining('Resumen Unidad 1'));
+    expect(pedir).toHaveBeenCalledWith(expect.stringContaining('Resumen Unidad 1'));
     http.expectNone(`${API_URL}/materiales/7/moderar/`);
   });
 
-  it('rechazar confirmado manda la acción y saca el apunte', async () => {
+  it('rechazar manda el motivo, saca el apunte de la cola y avisa que el autor puede reenviarlo', async () => {
     const fixture = await abrir([pendiente(7, 'Resumen Unidad 1')]);
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.spyOn(window, 'prompt').mockReturnValue('Ilegible');
 
     boton(fixture, 'Rechazar').click();
     const peticion = http.expectOne(`${API_URL}/materiales/7/moderar/`);
-    expect(peticion.request.body).toEqual({ accion: 'rechazar' });
-    peticion.flush({ detalle: 'Material rechazado y eliminado.' });
+    expect(peticion.request.body).toEqual({ accion: 'rechazar', motivo: 'Ilegible' });
+    peticion.flush(unMaterial({ id: 7, estado: 'rechazado', validacion: false, motivo_rechazo: 'Ilegible' }));
     await estabilizar(fixture);
 
-    expect(textoDe(fixture)).toContain('fue rechazado y eliminado');
+    expect(textoDe(fixture)).toContain('fue rechazado');
+    expect(textoDe(fixture)).toContain('puede corregirlo y reenviarlo');
     expect(textoDe(fixture)).toContain('No hay documentos pendientes');
+  });
+
+  it('archivar: lista los aprobados, pide confirmación y manda la acción', async () => {
+    const fixture = await abrir([], [unMaterial({ id: 9, titulo: 'Final 2023' }), unMaterial({ id: 10, titulo: 'Ya archivado', estado: 'archivado' })]);
+    expect(textoDe(fixture)).toContain('Final 2023');
+    expect(textoDe(fixture)).not.toContain('Ya archivado');
+
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    boton(fixture, 'Archivar').click();
+    const peticion = http.expectOne(`${API_URL}/materiales/9/moderar/`);
+    expect(peticion.request.body).toEqual({ accion: 'archivar' });
+    peticion.flush(unMaterial({ id: 9, estado: 'archivado' }));
+    await estabilizar(fixture);
+
+    expect(textoDe(fixture)).toContain('"Final 2023" fue archivado');
+    expect(fixture.nativeElement.querySelectorAll('h3')).toHaveLength(0);
   });
 
   it('mientras procesa un apunte sus botones se deshabilitan (evita el doble clic)', async () => {
@@ -113,6 +136,7 @@ describe('AdminPanelComponent', () => {
   it('si no puede cargar la cola muestra el error y permite reintentar', async () => {
     const fixture = crearComponente(AdminPanelComponent);
     http.expectOne(`${API_URL}/materiales/pendientes/`).flush({ detail: 'Esta acción es solo para administradores.' }, { status: 403, statusText: 'Forbidden' });
+    http.expectOne(`${API_URL}/materiales/`).flush({}, { status: 403, statusText: 'Forbidden' });
     await estabilizar(fixture);
 
     expect(textoDe(fixture)).toContain('Esta acción es solo para administradores.');

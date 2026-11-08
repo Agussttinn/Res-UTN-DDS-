@@ -5,7 +5,7 @@ from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError, transaction
-from django.db.models import Avg, Count, Exists, OuterRef, Q
+from django.db.models import Count, Exists, OuterRef, Q
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
@@ -32,6 +32,7 @@ from .permissions import (
 )
 from .serializer import (
     UsuarioSerializer,
+    RolSerializer,
     EspecialidadSerializer,
     MateriaSerializer,
     MaterialSerializer,
@@ -118,6 +119,13 @@ class UsuarioDetail(ProtegidoAlBorrarMixin, generics.RetrieveUpdateDestroyAPIVie
     permission_classes = [PuedeVerUsuario]
 
 
+class RolList(generics.ListAPIView):
+    """Roles disponibles (alumno, tutor, administrador...). Solo lectura: se agregan como filas de la tabla roles."""
+    queryset = Rol.objects.order_by('id')
+    serializer_class = RolSerializer
+    permission_classes = [EsAdministrador]
+
+
 # ---------- especialidades y materias ----------
 
 class EspecialidadListCreate(generics.ListCreateAPIView):
@@ -134,7 +142,7 @@ class EspecialidadDetail(ProtegidoAlBorrarMixin, generics.RetrieveUpdateDestroyA
 
 class MateriaListCreate(generics.ListCreateAPIView):
     """GET: materias de las carreras habilitadas (settings.CARRERAS_HABILITADAS), ordenadas por año y nombre.
-    Filtros opcionales: ?anio=<n>, ?electiva=true|false y ?buscar=<parte del nombre>.
+    Filtros opcionales: ?especialidad=<id>, ?anio=<n>, ?electiva=true|false y ?buscar=<parte del nombre>.
     Se resuelven en la base local, no en SySACAD."""
     serializer_class = MateriaSerializer
     permission_classes = [SoloAdministradorEscribe]
@@ -143,6 +151,9 @@ class MateriaListCreate(generics.ListCreateAPIView):
         materias = Materia.objects.select_related('especialidad').filter(
             especialidad__codigo_sysacad__in=settings.CARRERAS_HABILITADAS,
         ).order_by('anio', 'nombre')
+        especialidad_id = _id_numerico(self.request, 'especialidad')
+        if especialidad_id is not None:
+            materias = materias.filter(especialidad_id=especialidad_id)
         anio = _id_numerico(self.request, 'anio')
         if anio is not None:
             materias = materias.filter(anio=anio)
@@ -220,7 +231,8 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView):
         material = serializer.save()
         if reenvia:
             material.estado = EstadoMaterial.objects.get(nombre=EstadoMaterial.PENDIENTE)
-            material.save(update_fields=['estado'])
+            material.motivo_rechazo = None
+            material.save(update_fields=['estado', 'motivo_rechazo'])
 
     def perform_destroy(self, instance):
         _eliminar_material_y_archivo(instance)
@@ -241,8 +253,10 @@ class MaterialPendientes(generics.ListAPIView):
 
 
 class MaterialModerar(APIView):
-    """Body: {"accion": "aprobar"} -> el material pasa a estar validado y visible para todos.
-             {"accion": "rechazar"} -> el material y su archivo se eliminan."""
+    """Body: {"accion": "aprobar"}  -> pendiente -> aprobado (visible para todos).
+             {"accion": "rechazar", "motivo": "..."} -> pendiente -> rechazado (solo lo ven el autor y los administradores,
+                                                      que lo puede corregir y reenviar).
+             {"accion": "archivar"} -> aprobado -> archivado (solo lectura, ya no se puede puntuar)."""
     permission_classes = [EsAdministrador]
 
     ACCIONES = {
@@ -271,7 +285,9 @@ class MaterialModerar(APIView):
             )
  
         material.estado = EstadoMaterial.objects.get(nombre=estado_nuevo)
-        material.save(update_fields=['estado'])
+        if accion == 'rechazar':
+            material.motivo_rechazo = str(_datos(request).get('motivo') or '').strip() or None
+        material.save(update_fields=['estado', 'motivo_rechazo'])
         return Response(MaterialSerializer(material, context={'request': request}).data)
 
 
@@ -279,7 +295,7 @@ class MaterialModerar(APIView):
 
 def _clases_apoyo_queryset(request):
     """Las clases con, en la misma consulta, cuántos suscritos tienen y si quien consulta es uno de ellos."""
-    clases = ClaseApoyo.objects.select_related('materia__especialidad', 'tutor_rol').annotate(
+    clases = ClaseApoyo.objects.select_related('materia__especialidad', 'tutor__rol').annotate(
         cantidad_suscritos=Count('suscripciones', distinct=True),
         suscrito=Exists(Suscripcion.objects.filter(clase=OuterRef('pk'), usuario_id=request.user.pk)),
     ).order_by('dia', 'hora_inicio', 'id')  # como un cronograma
@@ -384,7 +400,7 @@ class ClaseApoyoMensajes(generics.ListCreateAPIView):
         clase = self.get_clase()
         if not (_puede_gestionar(self.request, clase) or clase.suscrito):
             self.permission_denied(self.request, message='Para ver los mensajes tenés que estar suscrito a la clase.')
-        return clase.mensajes.select_related('autor_rol')
+        return clase.mensajes.select_related('autor__rol')
 
     @transaction.atomic
     def perform_create(self, serializer):
@@ -451,6 +467,11 @@ class PonderacionDetail(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return _ponderaciones_queryset(self.request)
+
+    def perform_destroy(self, instance):
+        material = instance.material
+        instance.delete()
+        material.recalcular_ponderacion()
 
 
 # ---------- login y registro (públicos) ----------

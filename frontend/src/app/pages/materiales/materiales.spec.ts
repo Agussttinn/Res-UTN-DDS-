@@ -143,15 +143,33 @@ describe('MaterialesComponent', () => {
     });
 
     it('un apunte propio pendiente lleva la etiqueta y sus estrellas están deshabilitadas', async () => {
-      const fixture = await abrir({ materiales: [unMaterial({ validacion: false, usuario: AUTORA_ALUMNA })] });
+      const fixture = await abrir({ materiales: [unMaterial({ estado: 'pendiente', validacion: false, usuario: AUTORA_ALUMNA })] });
 
       expect(textoDe(fixture)).toContain('Pendiente de revisión');
       expect(estrellas(fixture)).toHaveLength(5);
       expect(estrellas(fixture).every((e) => e.disabled)).toBe(true);
     });
 
+    it('un apunte propio rechazado muestra el motivo para poder corregirlo', async () => {
+      const fixture = await abrir({
+        materiales: [unMaterial({ estado: 'rechazado', validacion: false, motivo_rechazo: 'Ilegible', usuario: AUTORA_ALUMNA })]
+      });
+
+      expect(textoDe(fixture)).toContain('Rechazado');
+      expect(textoDe(fixture)).toContain('Motivo: Ilegible');
+      expect(estrellas(fixture).every((e) => e.disabled)).toBe(true);
+    });
+
+    it('un apunte archivado lleva la etiqueta y ya no se puede puntuar', async () => {
+      const fixture = await abrir({ materiales: [unMaterial({ estado: 'archivado', validacion: true })] });
+
+      expect(textoDe(fixture)).toContain('Archivado');
+      expect(estrellas(fixture).every((e) => e.disabled)).toBe(true);
+      expect(textoDe(fixture)).toContain('ya no se puede puntuar');
+    });
+
     it('no se puede puntuar el propio apunte, aunque ya esté validado', async () => {
-      const fixture = await abrir({ materiales: [unMaterial({ validacion: true, usuario: AUTORA_ALUMNA })] });
+      const fixture = await abrir({ materiales: [unMaterial({ estado: 'aprobado', validacion: true, usuario: AUTORA_ALUMNA })] });
 
       expect(estrellas(fixture).every((e) => e.disabled)).toBe(true);
       expect(textoDe(fixture)).toContain('No podés puntuar tu propio apunte.');
@@ -426,11 +444,11 @@ describe('MaterialesComponent', () => {
       expect(datos.get('archivo')).toBe(pdf);
       expect(datos.has('usuario')).toBe(false);
       expect(datos.has('usuario_id')).toBe(false);
-      peticion.flush(unMaterial({ validacion: false }), { status: 201, statusText: 'Created' });
+      peticion.flush(unMaterial({ estado: 'pendiente', validacion: false }), { status: 201, statusText: 'Created' });
 
       const recarga = http.expectOne((r) => r.method === 'GET' && r.url === `${API_URL}/materiales/`);
       expect(textoDe(fixture)).not.toContain('Buscando recursos');
-      recarga.flush([unMaterial({ validacion: false, usuario: AUTORA_ALUMNA })]);
+      recarga.flush([unMaterial({ estado: 'pendiente', validacion: false, usuario: AUTORA_ALUMNA })]);
       await estabilizar(fixture);
 
       const texto = textoDe(fixture);

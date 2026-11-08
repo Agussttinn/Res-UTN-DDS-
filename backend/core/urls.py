@@ -5,6 +5,8 @@ urlpatterns = [
     path('usuarios/', views.UsuarioListCreate.as_view()),
     path('usuarios/<str:pk>/', views.UsuarioDetail.as_view()),
 
+    path('roles/', views.RolList.as_view()),
+
     path('especialidades/', views.EspecialidadListCreate.as_view()),
     path('especialidades/<int:pk>/', views.EspecialidadDetail.as_view()),
 

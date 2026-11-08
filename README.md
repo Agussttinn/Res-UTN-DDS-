@@ -126,10 +126,12 @@ Representa las entidades del negocio:
 - **Materia** y **Especialidad**.
 
 ### 2. Diagrama Entidad-Relación (E-R)
-- **`USUARIO`**: `(PK: legajo, nombre, correo, contraseña, rol)`
+- **`ROL`**: `(PK: id, nombre)`. Los roles son datos: agregar uno no cambia el esquema.
+- **`USUARIO`**: `(PK: legajo, nombre, correo, contraseña, FK: rol_id)`
 - **`ESPECIALIDAD`**: `(PK: idEspecialidad, nombre)`
 - **`MATERIA`**: `(PK: idMateria, FK: idEspecialidad, nombre, año)`
-- **`MATERIAL`**: `(PK: idMaterial, FK: idMateria, FK: legajoUsuario, titulo, fechaCarga, tipo, validacion, comentario)`
+- **`ESTADO_MATERIAL`**: `(PK: id, nombre)` con `pendiente`, `aprobado`, `rechazado` y `archivado`.
+- **`MATERIAL`**: `(PK: idMaterial, FK: idMateria, FK: legajoUsuario, FK: estado_id, titulo, fechaCarga, tipo, comentario, motivo_rechazo, archivo, promedio_ponderacion, cantidad_ponderaciones)`. La última media se guarda en el material y se actualiza al votar.
 - **`CLASE_APOYO`**: `(PK: idClase, FK: idMateria, FK: legajoTutor, dia, horaInicio, horaFin, aula)`
 - **`PONDERACION`**: `(PK: idPonderacion, FK: idMaterial, FK: legajoUsuario, valor, fecha)`
 
@@ -379,17 +381,18 @@ curl http://127.0.0.1:8000/api/materias/ -H "Authorization: Bearer <token>"
 | `POST /registro/` | público | Crea la cuenta de un alumno validando el legajo contra SySACAD |
 | `GET` `POST /usuarios/` | administrador | Listar / dar de alta usuarios |
 | `GET` `PUT` `PATCH` `DELETE /usuarios/{legajo}/` | `GET`: uno mismo o administrador; el resto, administrador | Ver / modificar / borrar |
+| `GET /roles/` | administrador | Roles disponibles (solo lectura) |
 | `GET` `POST /especialidades/` | `GET`: logueado; `POST`: administrador | Listar / crear |
 | `GET` `PUT` `PATCH` `DELETE /especialidades/{id}/` | `GET`: logueado; resto: administrador | Detalle / modificar / borrar |
-| `GET /materias/?anio={n}&electiva={true\|false}&buscar={texto}` | logueado | Materias de las carreras habilitadas, por año y nombre. Filtros opcionales; `buscar` busca por nombre en todos los años |
+| `GET /materias/?especialidad={id}&anio={n}&electiva={true\|false}&buscar={texto}` | logueado | Materias de las carreras habilitadas, por año y nombre. Filtros opcionales; `buscar` busca por nombre en todos los años |
 | `POST /materias/` | administrador | Crear una materia a mano |
 | `GET` `PUT` `PATCH` `DELETE /materias/{id}/` | `GET`: logueado; resto: administrador | Detalle / modificar / borrar |
 | `POST /materias/sincronizar/{carrera}/` | administrador | Importa el plan de estudio de SySACAD a la base local. Por ahora solo `ISI` (las demás responden `400`) |
 | `GET /materiales/?materia={id}` | logueado | Materiales visibles para quien consulta; el filtro es opcional |
 | `POST /materiales/` | logueado | Sube un material (`multipart/form-data`); queda **pendiente** |
-| `GET` `PUT` `PATCH` `DELETE /materiales/{id}/` | ver: logueado; modificar: autor (si sigue pendiente) o administrador; borrar: autor o administrador | Detalle / modificar / borrar |
+| `GET` `PUT` `PATCH` `DELETE /materiales/{id}/` | ver: logueado; modificar: autor (si está pendiente o rechazado) o administrador; borrar: autor o administrador | Detalle / modificar / borrar |
 | `GET /materiales/pendientes/` | administrador | Cola de moderación, los más viejos primero |
-| `POST /materiales/{id}/moderar/` | administrador | Aprueba o rechaza un material |
+| `POST /materiales/{id}/moderar/` | administrador | Aprueba, rechaza (con motivo) o archiva un material |
 | `GET /clases-apoyo/?materia={id}` | logueado | Listar clases; el filtro es opcional |
 | `POST /clases-apoyo/` | tutor o administrador | Publicar una clase |
 | `GET` `PUT` `PATCH` `DELETE /clases-apoyo/{id}/` | su tutor o administrador | Detalle / modificar / cancelar. Modificar y cancelar avisan a los suscritos |
@@ -414,7 +417,9 @@ curl http://127.0.0.1:8000/api/materias/ -H "Authorization: Bearer <token>"
 //   materia_id=1  titulo="Resumen U1"  tipo=resumen|parcial|final  comentario="(opcional)"  archivo=<el archivo>
 
 // POST /materiales/7/moderar/  (administrador)
-{ "accion": "aprobar" }        // o "rechazar"
+{ "accion": "aprobar" }                              // pendiente -> aprobado
+{ "accion": "rechazar", "motivo": "Ilegible" }       // pendiente -> rechazado (el motivo es opcional)
+{ "accion": "archivar" }                             // aprobado -> archivado
 
 // POST /clases-apoyo/  (tutor; un administrador debe agregar además "tutor_id": "<legajo del tutor>")
 { "materia_id": 1, "dia": 1, "hora_inicio": "14:00", "hora_fin": "16:00", "aula": "L-203" }   // dia: 1 = lunes ... 6 = sábado
@@ -425,9 +430,9 @@ curl http://127.0.0.1:8000/api/materias/ -H "Authorization: Bearer <token>"
 Al **leer**, las relaciones vienen anidadas (por ejemplo `material.materia.nombre`); al **escribir** se manda solo el id (`materia_id`, `material_id`).
 
 ### Reglas de Negocio
-- **Moderación:** un material nace *pendiente* y solo lo ven su autor y los administradores. Un administrador lo **aprueba** (queda visible para todos) o lo **rechaza** (se **elimina** el material y su archivo). Mientras está pendiente el autor puede editarlo; una vez validado solo lo modifica un administrador.
+- **Moderación:** un material nace *pendiente* y solo lo ven su autor y los administradores. Un administrador lo **aprueba** (queda visible para todos) o lo **rechaza** con un motivo (el material **no se borra**: queda *rechazado* y solo lo ven su autor y los administradores). El autor puede corregirlo y reenviarlo, y vuelve a *pendiente*. Un administrador puede **archivar** un material aprobado (fin de ciclo lectivo o cambio de plan): queda de solo lectura y ya no se puede puntuar. Mientras está pendiente o rechazado el autor puede editarlo; una vez aprobado o archivado solo lo modifica un administrador.
 - **Archivos:** `pdf`, `doc`, `docx`, `ppt`, `pptx`, `xls`, `xlsx`, `txt`, `png`, `jpg` y `jpeg`, de hasta **10 MB**. Se guardan en `backend/media/` (no se sube a git) con un nombre aleatorio.
-- **Estrellas:** de 1 a 5, un voto por usuario y por material (votar de nuevo cambia el voto). No se puede puntuar el **propio** material ni uno **pendiente**. Cada material trae `promedio_ponderacion` (con un decimal, o `null` si nadie votó) y `cantidad_ponderaciones`.
+- **Estrellas:** de 1 a 5, un voto por usuario y por material (votar de nuevo cambia el voto). No se puede puntuar el **propio** material ni uno que no esté **aprobado** (pendiente, rechazado o archivado). Cada material trae `estado`, `motivo_rechazo`, `promedio_ponderacion` (con un decimal, o `null` si nadie votó) y `cantidad_ponderaciones`.
 - **Registro:** el legajo se valida contra SySACAD (de ahí salen el nombre y el correo) y la cuenta siempre queda con rol `alumno`. La contraseña debe tener al menos 8 caracteres, no ser una clave común ni solo números.
 - **Clases de apoyo:** las publica un tutor y quedan a su nombre. Un administrador puede modificar o cancelar cualquiera. Cada clase trae `suscrito` (si quien consulta la sigue) y `cantidad_suscritos`.
 - **Día y horario de una clase:** se guardan por separado: `dia` (1 = lunes ... 6 = sábado), `hora_inicio` y `hora_fin` (`"HH:MM"`). Las horas tienen que estar entre las 07:00 y las 23:30, el fin después del inicio, con al menos 30 minutos de clase, y un tutor no puede tener dos clases que se superpongan. Al leer, cada clase trae también `horario` ya armado para mostrar ("lunes de 14:00 a 16:00"), y la lista viene ordenada por día y hora. Las clases creadas antes de este cambio (horario en texto libre) se convirtieron solas al migrar. Las que no se pudieron interpretar quedan "a confirmar" hasta que su tutor las modifique.

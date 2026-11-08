@@ -62,4 +62,23 @@
       }
     </div>
   }
+
+  @if (!cargando() && aprobados().length > 0) {
+    <div class="border-t pt-4 space-y-3">
+      <h2 class="text-lg font-bold text-slate-800">Aprobados</h2>
+      <p class="text-xs text-slate-500">Archivá los apuntes que ya no corresponden (fin de ciclo lectivo o cambio de plan de estudio).</p>
+      @for (item of aprobados(); track item.id) {
+        <div class="bg-white p-3 rounded-xl border border-slate-200 flex justify-between items-center gap-3">
+          <div class="min-w-0">
+            <h3 class="font-semibold text-slate-800 text-sm truncate">{{ item.titulo }}</h3>
+            <p class="text-xs text-slate-500">{{ item.materia.nombre }} · {{ etiquetaTipo[item.tipo] }}</p>
+          </div>
+          <button type="button" (click)="moderar(item, 'archivar')" [disabled]="procesando() === item.id"
+                  class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-50 shrink-0">
+            Archivar
+          </button>
+        </div>
+      }
+    </div>
+  }
 </section>

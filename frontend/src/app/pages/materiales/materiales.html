@@ -75,9 +75,20 @@
               <p class="text-xs text-slate-600 mb-2">{{ item.comentario }}</p>
             }
             <p class="text-[11px] text-slate-400">Subido por: {{ item.usuario.nombre_y_apellido }}</p>
-            @if (!item.validacion) {
+            @if (item.estado === 'pendiente') {
               <span class="inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 uppercase">
                 Pendiente de revisión
+              </span>
+            } @else if (item.estado === 'rechazado') {
+              <span class="inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-700 uppercase">
+                Rechazado
+              </span>
+              @if (item.motivo_rechazo) {
+                <p class="text-xs text-rose-700 mt-1">Motivo: {{ item.motivo_rechazo }}</p>
+              }
+            } @else if (item.estado === 'archivado') {
+              <span class="inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-600 uppercase">
+                Archivado
               </span>
             }
           </div>

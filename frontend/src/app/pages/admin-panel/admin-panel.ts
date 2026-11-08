@@ -18,6 +18,8 @@ export class AdminPanelComponent implements OnInit {
   readonly etiquetaTipo = ETIQUETA_TIPO;
 
   readonly pendientes = signal<Material[]>([]);
+  /** Aprobados que se pueden archivar (fin de ciclo lectivo o cambio de plan de estudio). */
+  readonly aprobados = signal<Material[]>([]);
   readonly cargando = signal(true);
   readonly error = signal('');
   readonly aviso = signal('');
@@ -26,6 +28,14 @@ export class AdminPanelComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarPendientes();
+    this.cargarAprobados();
+  }
+
+  cargarAprobados(): void {
+    this.api.getMateriales().subscribe({
+      next: (data) => this.aprobados.set(data.filter((m) => m.estado === 'aprobado')),
+      error: () => this.aprobados.set([]) // la cola de pendientes sigue funcionando sin esta lista
+    });
   }
 
   cargarPendientes(): void {
@@ -44,8 +54,15 @@ export class AdminPanelComponent implements OnInit {
   }
 
   moderar(item: Material, accion: AccionModeracion): void {
-    // Rechazar elimina el apunte y su archivo: no se puede deshacer.
-    if (accion === 'rechazar' && !confirm(`¿Rechazar "${item.titulo}"? Se eliminará el apunte y su archivo.`)) {
+    let motivo: string | undefined;
+    if (accion === 'rechazar') {
+      // El apunte no se borra: queda rechazado y el autor ve el motivo para poder corregirlo y reenviarlo.
+      const respuesta = prompt(`¿Por qué se rechaza "${item.titulo}"? El autor va a ver este motivo.`);
+      if (respuesta === null) {
+        return; // canceló
+      }
+      motivo = respuesta.trim() || undefined;
+    } else if (accion === 'archivar' && !confirm(`¿Archivar "${item.titulo}"? Queda solo de lectura y ya no se puede puntuar.`)) {
       return;
     }
 
@@ -53,10 +70,14 @@ export class AdminPanelComponent implements OnInit {
     this.aviso.set('');
     this.error.set('');
 
-    this.api.moderarMaterial(item.id, accion).subscribe({
+    this.api.moderarMaterial(item.id, accion, motivo).subscribe({
       next: () => {
         this.pendientes.update((lista) => lista.filter((p) => p.id !== item.id));
-        this.aviso.set(accion === 'aprobar' ? `"${item.titulo}" fue aprobado y ya lo ven todos.` : `"${item.titulo}" fue rechazado y eliminado.`);
+        this.aprobados.update((lista) => lista.filter((p) => p.id !== item.id));
+        if (accion === 'aprobar') {
+          this.cargarAprobados(); // el recién aprobado pasa a la lista de archivables
+        }
+        this.aviso.set(this.mensajeDe(accion, item.titulo));
         this.procesando.set(null);
       },
       error: (err: unknown) => {
@@ -64,5 +85,16 @@ export class AdminPanelComponent implements OnInit {
         this.procesando.set(null);
       }
     });
+  }
+
+  private mensajeDe(accion: AccionModeracion, titulo: string): string {
+    switch (accion) {
+      case 'aprobar':
+        return `"${titulo}" fue aprobado y ya lo ven todos.`;
+      case 'rechazar':
+        return `"${titulo}" fue rechazado. El autor puede corregirlo y reenviarlo.`;
+      case 'archivar':
+        return `"${titulo}" fue archivado.`;
+    }
   }
 }

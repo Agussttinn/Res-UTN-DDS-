@@ -8,16 +8,12 @@ ADMINISTRADOR = 'administrador'
 
 def rol_de(request):
     """Rol del usuario logueado, o None si es anónimo."""
-    return getattr(request.user, 'rol', None)
+    rol = getattr(request.user, 'rol', None)
+    return rol.nombre if rol is not None else None
 
 
 def es_administrador(request):
-    return (
-        request.user
-        and request.user.is_authenticated
-        and hasattr(request.user, 'rol')
-        and request.user.rol.nombre == ADMINISTRADOR
-    )
+    return rol_de(request) == ADMINISTRADOR
 
 class EsAdministrador(BasePermission):
     """Solo el administrador (lectura y escritura)."""
@@ -81,4 +77,4 @@ class PuedeModificarMaterial(BasePermission):
             return False
         if request.method == 'DELETE':
             return True
-        return not obj.estado.nombre in (EstadoMaterial.PENDIENTE, EstadoMaterial.RECHAZADO)
+        return obj.estado.nombre in (EstadoMaterial.PENDIENTE, EstadoMaterial.RECHAZADO)

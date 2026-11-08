@@ -160,12 +160,15 @@ export class MaterialesComponent implements OnInit {
 
   /** Solo se puntúan apuntes ya validados y que no sean propios (la API lo vuelve a verificar). */
   puedeVotar(item: Material): boolean {
-    return item.validacion && item.usuario.legajo !== this.auth.usuario()?.legajo;
+    return item.estado === 'aprobado' && item.usuario.legajo !== this.auth.usuario()?.legajo;
   }
 
   motivoSinVoto(item: Material): string {
-    if (!item.validacion) {
-      return 'Todavía está pendiente de revisión.';
+    if (item.estado === 'archivado') {
+      return 'Está archivado: ya no se puede puntuar.';
+    }
+    if (item.estado !== 'aprobado') {
+      return 'Todavía no está aprobado.';
     }
     return item.usuario.legajo === this.auth.usuario()?.legajo ? 'No podés puntuar tu propio apunte.' : '';
   }
