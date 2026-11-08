@@ -17,7 +17,7 @@ from rest_framework.views import APIView
 
 from . import sysacad_client, sysacad_sync
 from .auth import crear_token
-from .models import Usuario, Especialidad, Materia, Material, ClaseApoyo, Ponderacion, Suscripcion, Notificacion
+from .models import Rol, EstadoMaterial,Usuario, Especialidad, Materia, Material, ClaseApoyo, Ponderacion, Suscripcion, Notificacion
 from .observador import EventoClase, SujetoClase
 from .permissions import (
     ADMINISTRADOR,
@@ -40,6 +40,8 @@ from .serializer import (
     MensajeClaseSerializer,
     NotificacionSerializer,
 )
+
+ESTADOS_PUBLICOS = (EstadoMaterial.APROBADO, EstadoMaterial.ARCHIVADO)
 
 # Cualquier usuario logueado LEE; solo el rol indicado ESCRIBE.
 SoloAdministradorEscribe = lectura_autenticada_escritura_para(ADMINISTRADOR)
@@ -72,13 +74,18 @@ def materiales_visibles_para(usuario):
 
     Trae en la misma consulta la materia, el autor y el promedio de estrellas, para no hacer
     varias consultas extra por cada material de la lista."""
-    materiales = Material.objects.select_related('materia__especialidad', 'usuario').annotate(
-        promedio_anotado=Avg('ponderaciones__valor'),
-        cantidad_anotada=Count('ponderaciones'),
-    )
-    if usuario.rol != ADMINISTRADOR:
-        materiales = materiales.filter(Q(validacion=True) | Q(usuario=usuario))
+    materiales = Material.objects.select_related('materia__especialidad', 'usuario__rol', 'estado')
+    if usuario.rol.nombre != ADMINISTRADOR:
+        materiales = materiales.filter(Q(estado__nombre__in=ESTADOS_PUBLICOS) | Q(usuario=usuario))
     return materiales
+
+def _eliminar_material_y_archivo(material):
+    """Borra el material y también su archivo del disco (si no, quedaría un archivo huérfano en media/).
+    Primero se borra el registro: si eso falla, el archivo sigue estando y no se pierde nada."""
+    archivo = material.archivo
+    material.delete()
+    if archivo:
+        archivo.delete(save=False)
 
 
 class ProtegidoAlBorrarMixin:
@@ -100,13 +107,13 @@ class ProtegidoAlBorrarMixin:
 class UsuarioListCreate(generics.ListCreateAPIView):
     """Listar y dar de alta usuarios a mano (por ejemplo tutores y administradores): solo administradores.
     Los alumnos se dan de alta solos con POST /api/registro/."""
-    queryset = Usuario.objects.all()
+    queryset = Usuario.objects.select_related('rol')
     serializer_class = UsuarioSerializer
     permission_classes = [EsAdministrador]
 
 
 class UsuarioDetail(ProtegidoAlBorrarMixin, generics.RetrieveUpdateDestroyAPIView):
-    queryset = Usuario.objects.all()
+    queryset = Usuario.objects.select_related('rol')
     serializer_class = UsuarioSerializer
     permission_classes = [PuedeVerUsuario]
 
@@ -197,7 +204,7 @@ class MaterialListCreate(generics.ListCreateAPIView):
         return materiales
 
     def perform_create(self, serializer):
-        serializer.save(usuario=self.request.user)  # el autor es quien está logueado
+        serializer.save(usuario=self.request.user)
 
 
 class MaterialDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -206,6 +213,18 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return materiales_visibles_para(self.request.user)
+    
+    def perform_update(self, serializer):
+        # Si el autor corrige un material RECHAZADO, vuelve a la cola de revisión (pendiente).
+        reenvia = serializer.instance.estado.nombre == EstadoMaterial.RECHAZADO and not es_administrador(self.request)
+        material = serializer.save()
+        if reenvia:
+            material.estado = EstadoMaterial.objects.get(nombre=EstadoMaterial.PENDIENTE)
+            material.save(update_fields=['estado'])
+
+    def perform_destroy(self, instance):
+        _eliminar_material_y_archivo(instance)
+    
 
 
 class MaterialPendientes(generics.ListAPIView):
@@ -216,7 +235,7 @@ class MaterialPendientes(generics.ListAPIView):
     def get_queryset(self):
         return (
             materiales_visibles_para(self.request.user)
-            .filter(validacion=False)
+            .filter(estado__nombre=EstadoMaterial.PENDIENTE)
             .order_by('fecha_de_carga', 'id')
         )
 
@@ -226,32 +245,41 @@ class MaterialModerar(APIView):
              {"accion": "rechazar"} -> el material y su archivo se eliminan."""
     permission_classes = [EsAdministrador]
 
+    ACCIONES = {
+        'aprobar': (EstadoMaterial.PENDIENTE, EstadoMaterial.APROBADO),
+        'rechazar': (EstadoMaterial.PENDIENTE, EstadoMaterial.RECHAZADO),
+        'archivar': (EstadoMaterial.APROBADO, EstadoMaterial.ARCHIVADO),
+    }
+ 
     def post(self, request, pk):
-        material = get_object_or_404(Material, pk=pk)
-        accion = _datos(request).get('accion')
-
-        if accion == 'aprobar':
-            material.validacion = True
-            material.save(update_fields=['validacion'])
-            return Response(MaterialSerializer(material, context={'request': request}).data)
-
-        if accion == 'rechazar':
-            if material.archivo:
-                material.archivo.delete(save=False)
-            material.delete()
-            return Response({"detalle": "Material rechazado y eliminado."})
-
-        return Response(
-            {"error": 'La acción tiene que ser "aprobar" o "rechazar".'},
-            status=status.HTTP_400_BAD_REQUEST,
+        material = get_object_or_404(
+            Material.objects.select_related('materia__especialidad', 'usuario__rol', 'estado'), pk=pk,
         )
+        accion = _datos(request).get('accion')
+ 
+        if accion not in self.ACCIONES:
+            return Response(
+                {"error": 'La acción tiene que ser "aprobar", "rechazar" o "archivar".'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+ 
+        estado_requerido, estado_nuevo = self.ACCIONES[accion]
+        if material.estado.nombre != estado_requerido:
+            return Response(
+                {"error": f'No se puede {accion} un material que está {material.estado.nombre}.'},
+                status=status.HTTP_409_CONFLICT,
+            )
+ 
+        material.estado = EstadoMaterial.objects.get(nombre=estado_nuevo)
+        material.save(update_fields=['estado'])
+        return Response(MaterialSerializer(material, context={'request': request}).data)
 
 
 # ---------- clases de apoyo ----------
 
 def _clases_apoyo_queryset(request):
     """Las clases con, en la misma consulta, cuántos suscritos tienen y si quien consulta es uno de ellos."""
-    clases = ClaseApoyo.objects.select_related('materia__especialidad', 'tutor').annotate(
+    clases = ClaseApoyo.objects.select_related('materia__especialidad', 'tutor_rol').annotate(
         cantidad_suscritos=Count('suscripciones', distinct=True),
         suscrito=Exists(Suscripcion.objects.filter(clase=OuterRef('pk'), usuario_id=request.user.pk)),
     ).order_by('dia', 'hora_inicio', 'id')  # como un cronograma
@@ -325,7 +353,7 @@ class ClaseApoyoSuscripcion(APIView):
 
     def post(self, request, pk):
         clase = _clase_de_la_url(request, pk)
-        if request.user.rol != ALUMNO:
+        if request.user.rol.nombre != ALUMNO:
             return Response({"error": "Solo los alumnos pueden suscribirse a una clase."}, status=status.HTTP_403_FORBIDDEN)
         nueva = SujetoClase(clase).suscribir(request.user)
         return self._estado(clase, status.HTTP_201_CREATED if nueva else status.HTTP_200_OK)
@@ -356,7 +384,7 @@ class ClaseApoyoMensajes(generics.ListCreateAPIView):
         clase = self.get_clase()
         if not (_puede_gestionar(self.request, clase) or clase.suscrito):
             self.permission_denied(self.request, message='Para ver los mensajes tenés que estar suscrito a la clase.')
-        return clase.mensajes.select_related('autor')
+        return clase.mensajes.select_related('autor_rol')
 
     @transaction.atomic
     def perform_create(self, serializer):
@@ -396,7 +424,7 @@ def _ponderaciones_queryset(request):
     """Cada usuario ve solo sus propias ponderaciones (el administrador, todas).
     Filtro opcional: ?material=<id> para saber qué estrellas le puso el usuario a ese material."""
     ponderaciones = Ponderacion.objects.select_related(
-        'material__materia__especialidad', 'material__usuario', 'usuario'
+        'material__materia__especialidad', 'material__usuario__rol', 'material__estado', 'usuario__rol'
     )
     if not es_administrador(request):
         ponderaciones = ponderaciones.filter(usuario=request.user)
@@ -446,7 +474,7 @@ class LoginAlumno(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        usuario = Usuario.objects.filter(pk=str(legajo)).first()
+        usuario = Usuario.objects.select_related('rol').filter(pk=str(legajo)).first()
 
         # Mismo mensaje si el legajo no existe o la contraseña está mal:
         # así no se puede averiguar qué legajos están registrados.
@@ -535,7 +563,7 @@ class RegistroAlumno(APIView):
                     nombre_y_apellido=nombre,
                     correo=correo,
                     contraseña=make_password(contrasena),
-                    rol='alumno',
+                    rol=Rol.objects.get(nombre=ALUMNO),
                 )
         except IntegrityError:
             # Dos registros simultáneos con el mismo legajo/correo: gana el primero.

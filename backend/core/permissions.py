@@ -1,6 +1,6 @@
 """Permisos por rol (Alumno / Tutor / Administrador, ver RNF03 del README)."""
 from rest_framework.permissions import SAFE_METHODS, BasePermission
-
+from .models import EstadoMaterial
 ALUMNO = 'alumno'
 TUTOR = 'tutor'
 ADMINISTRADOR = 'administrador'
@@ -12,8 +12,12 @@ def rol_de(request):
 
 
 def es_administrador(request):
-    return rol_de(request) == ADMINISTRADOR
-
+    return (
+        request.user
+        and request.user.is_authenticated
+        and hasattr(request.user, 'rol')
+        and request.user.rol.nombre == ADMINISTRADOR
+    )
 
 class EsAdministrador(BasePermission):
     """Solo el administrador (lectura y escritura)."""
@@ -77,4 +81,4 @@ class PuedeModificarMaterial(BasePermission):
             return False
         if request.method == 'DELETE':
             return True
-        return not obj.validacion
+        return not obj.estado.nombre in (EstadoMaterial.PENDIENTE, EstadoMaterial.RECHAZADO)

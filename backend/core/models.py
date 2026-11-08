@@ -1,19 +1,33 @@
+from decimal import Decimal
+
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models.aggregates import Avg, Count
 
 from .archivos import ruta_material, validar_extension, validar_tamano
 
 # Create your models here.
+class Rol(models.Model):
+    """Rol de un usuario (alumno, tutor, administrador...). Es una tabla y no un texto fijo para poder
+    sumar roles nuevos agregando una fila, sin cambiar el esquema."""
+    nombre = models.CharField(max_length=30, unique=True)
+ 
+    class Meta:
+        db_table = 'roles'
+ 
+    def __str__(self):
+        return self.nombre
+    
 class Usuario(models.Model):
     legajo = models.CharField(max_length=20, primary_key=True) #El legajo debería ser único para cada usuario
     nombre_y_apellido = models.CharField(max_length=100)
     correo = models.EmailField(unique=True) # valida formato y evita duplicados.
     contraseña = models.CharField(max_length=255)
-    rol = models.CharField(max_length=20, choices=[
-        ('alumno', 'Alumno'), 
-        ('tutor', 'Tutor'), 
-        ('administrador', 'Administrador'),
-    ])# aca cuando haga usuario.rol deberia devolver el valor de la tupla, no el string que se le asigna al campo rol
+    rol = models.ForeignKey(Rol, on_delete=models.PROTECT, related_name='usuarios')
+ 
+    class Meta:
+        db_table = 'usuarios'
+    # aca cuando haga usuario.rol deberia devolver el valor de la tupla, no el string que se le asigna al campo rol
     def __str__(self):
         return self.nombre_y_apellido
 
@@ -31,6 +45,8 @@ class Especialidad(models.Model):
     nombre = models.CharField(max_length=100)
     # Código de carrera en SySACAD (ej. "ISI", "QUI"), usado para sincronizar el plan de estudio. Null si la especialidad no viene de SySACAD.
     codigo_sysacad = models.CharField(max_length=10, unique=True, null=True, blank=True)
+    class Meta:
+        db_table = 'especialidades'
     def __str__(self):
         return self.nombre
 
@@ -42,9 +58,26 @@ class Materia(models.Model):
     id_sysacad = models.CharField(max_length=30, unique=True, null=True, blank=True)
     # Electiva del plan de estudio. `anio` es igual el nivel desde el que se puede cursar.
     electiva = models.BooleanField(default=False)
+    class Meta:
+        db_table = 'materias'
     def __str__(self):
         return self.nombre
 
+class EstadoMaterial(models.Model):
+    """Estado de un material en el circuito de moderación: pendiente -> aprobado | rechazado -> archivado."""
+    PENDIENTE = 'pendiente'
+    APROBADO = 'aprobado'
+    RECHAZADO = 'rechazado'
+    ARCHIVADO = 'archivado'
+    NOMBRES = (PENDIENTE, APROBADO, RECHAZADO, ARCHIVADO)
+ 
+    nombre = models.CharField(max_length=30, unique=True)
+ 
+    class Meta:
+        db_table = 'estados_material'
+ 
+    def __str__(self):
+        return self.nombre
 
 class Material(models.Model): 
     materia = models.ForeignKey(Materia, on_delete=models.CASCADE, related_name='materiales') 
@@ -56,7 +89,7 @@ class Material(models.Model):
             ('parcial', 'Parcial'), 
             ('final', 'Final'),
         ])
-    validacion = models.BooleanField(default=False)
+    estado = models.ForeignKey(EstadoMaterial, on_delete=models.PROTECT, related_name='materiales')
     comentario = models.TextField(blank=True, null=True)
     # El apunte en sí. Nullable en la base solo para no romper los materiales cargados antes de que
     # existiera este campo; al crear uno nuevo por la API, el serializer lo exige.
@@ -64,8 +97,25 @@ class Material(models.Model):
         upload_to=ruta_material, null=True, blank=True,
         validators=[validar_extension, validar_tamano],
     )
+    promedio_ponderacion = models.DecimalField(max_digits=3, decimal_places=2, null=True, blank=True, editable=False)
+    cantidad_ponderaciones = models.PositiveIntegerField(default=0, editable=False)
+ 
+    class Meta:
+        db_table = 'materiales'
     def __str__(self):
         return self.titulo
+    
+    def recalcular_ponderacion(self):
+        """Guarda en el material la última media de sus ponderaciones y cuántas son."""
+        datos = self.ponderaciones.aggregate(promedio=Avg('valor'), cantidad=Count('id'))
+        promedio = datos['promedio']
+        if promedio is not None:
+            promedio = Decimal(str(promedio)).quantize(Decimal('0.01'))
+        Material.objects.filter(pk=self.pk).update(
+            promedio_ponderacion=promedio, cantidad_ponderaciones=datos['cantidad'],
+        )
+        self.promedio_ponderacion = promedio
+        self.cantidad_ponderaciones = datos['cantidad']
 
 class ClaseApoyo(models.Model):
     # Día de la semana con la numeración ISO (1 = lunes), así el cronograma se ordena solo por día y hora.

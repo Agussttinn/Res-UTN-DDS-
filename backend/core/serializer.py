@@ -5,7 +5,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.db.models import Avg
 from rest_framework import serializers
 
-from .models import Usuario,Especialidad,Materia,Material,ClaseApoyo,Ponderacion,MensajeClase,Notificacion
+from .models import Rol, Usuario,Especialidad,Materia,EstadoMaterial,Material,ClaseApoyo,Ponderacion,MensajeClase,Notificacion
 from .permissions import TUTOR
 
 
@@ -13,11 +13,11 @@ class UsuarioSerializer(serializers.ModelSerializer):
     # Solo se escribe (alta/cambio de clave por un administrador), nunca se devuelve en el JSON.
     # Se guarda hasheada, jamás en texto plano.
     contraseña = serializers.CharField(write_only=True, required=False)
-
+    rol = serializers.SlugRelatedField(slug_field='nombre', queryset=Rol.objects.all())
     class Meta:
         model = Usuario
         fields = ('legajo','nombre_y_apellido','correo','rol','contraseña')
-
+    
     def validate_contraseña(self, value):
         validate_password(value)  # largo mínimo, no demasiado común, no solo números
         return value
@@ -41,6 +41,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
 class UsuarioPublicoSerializer(serializers.ModelSerializer):
     """Lo mínimo de un usuario para mostrarlo dentro de otros recursos (autor de un material,
     tutor de una clase). No incluye el correo: los demás usuarios no tienen por qué verlo."""
+    rol = serializers.SlugRelatedField(slug_field='nombre', read_only=True)
     class Meta:
         model = Usuario
         fields = ('legajo','nombre_y_apellido','rol')
@@ -91,6 +92,7 @@ class MaterialSerializer(serializers.ModelSerializer):
     materia_id = serializers.IntegerField(write_only=True)
     materia = serializers.SerializerMethodField()
     usuario = serializers.SerializerMethodField()
+    estado = serializers.SerializerMethodField()
     promedio_ponderacion = serializers.SerializerMethodField()
     cantidad_ponderaciones = serializers.SerializerMethodField()
 
@@ -99,10 +101,10 @@ class MaterialSerializer(serializers.ModelSerializer):
         fields = ('id','materia','usuario','titulo','fecha_de_carga','tipo','validacion','comentario','archivo','promedio_ponderacion','cantidad_ponderaciones','materia_id')
         # validacion NO se puede escribir desde afuera: un material nace pendiente y solo un
         # administrador lo aprueba (POST /materiales/<id>/moderar/). Si no, cada alumno se auto-validaría.
-        read_only_fields = ('validacion',)
+        read_only_fields = ('cantidad_ponderaciones',)
         # El autor (usuario) tampoco se manda en el JSON: sale del token del que está logueado
         # (la vista lo pasa con serializer.save(usuario=request.user)), así nadie sube material a nombre de otro.
-
+ 
     def validate_materia_id(self, value):
         if not Materia.objects.filter(pk=value).exists():
             raise serializers.ValidationError("No existe una materia con ese id.")
@@ -149,9 +151,6 @@ class MaterialSerializer(serializers.ModelSerializer):
         return UsuarioPublicoSerializer(usuario).data
 
     # Ponderación del material = promedio de las estrellas (1 a 5) que le pusieron los usuarios.
-    # Si todavía nadie lo puntuó, el promedio es None (null en el JSON) y la cantidad es 0.
-    # Las vistas de lista traen estos dos números ya calculados en la misma consulta (annotate);
-    # si el objeto no los trae (por ejemplo, recién creado), se calculan acá.
     def get_promedio_ponderacion(self, obj):
         if hasattr(obj, 'promedio_anotado'):
             promedio = obj.promedio_anotado
@@ -163,6 +162,17 @@ class MaterialSerializer(serializers.ModelSerializer):
         if hasattr(obj, 'cantidad_anotada'):
             return obj.cantidad_anotada
         return obj.ponderaciones.count()
+    
+    def get_validacion(self, obj):
+        # Compatibilidad con el frontend: true si el material ya pasó la moderación (aprobado o archivado).
+        return obj.estado.nombre in (EstadoMaterial.APROBADO, EstadoMaterial.ARCHIVADO)
+ 
+    # Ponderación del material = última media guardada de las estrellas (1 a 5) que le pusieron los usuarios.
+    # Se actualiza al votar (ver Material.recalcular_ponderacion). Si todavía nadie lo puntuó es None
+    # (null en el JSON) y la cantidad es 0.
+    def get_promedio_ponderacion(self, obj):
+        promedio = obj.promedio_ponderacion
+        return round(float(promedio), 1) if promedio is not None else None
 
 # Franja en la que se pueden dar clases de apoyo (horario de la facultad) y duración mínima de una clase.
 HORA_MINIMA_CLASE = datetime.time(9, 0)
@@ -340,10 +350,10 @@ class PonderacionSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        # Reglas de negocio al puntuar (no aplican al editar las estrellas de un voto existente).
+    # Reglas de negocio al puntuar (no aplican al editar las estrellas de un voto existente).
         if self.instance is None:
-            material = Material.objects.get(pk=attrs['material_id'])
-            if not material.validacion:
+            material = Material.objects.select_related('estado').get(pk=attrs['material_id'])
+            if material.estado.nombre != EstadoMaterial.APROBADO:
                 raise serializers.ValidationError({'material_id': 'Solo se pueden puntuar materiales ya validados.'})
             if material.usuario_id == self.context['request'].user.pk:
                 raise serializers.ValidationError({'material_id': 'No podés puntuar tu propio material.'})

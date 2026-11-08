@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.hashers import identify_hasher, make_password
 
 # Register your models here.
-from .models import Usuario, Especialidad, Materia, Material, ClaseApoyo, Ponderacion, Suscripcion, MensajeClase, Notificacion
+from .models import Rol, EstadoMaterial,Usuario, Especialidad, Materia, Material, ClaseApoyo, Ponderacion, Suscripcion, MensajeClase, Notificacion
 
 
 @admin.register(Usuario)
@@ -19,7 +19,8 @@ class UsuarioAdmin(admin.ModelAdmin):
             obj.contraseña = make_password(obj.contraseña)
         super().save_model(request, obj, form, change)
 
-
+admin.site.register(Rol)
+admin.site.register(EstadoMaterial)
 admin.site.register(Especialidad)
 admin.site.register(Materia)
 admin.site.register(Material)
