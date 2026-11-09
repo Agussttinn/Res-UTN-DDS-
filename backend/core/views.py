@@ -218,7 +218,7 @@ class MaterialListCreate(generics.ListCreateAPIView):
         return materiales
 
     def perform_create(self, serializer):
-        serializer.save(alumno=self.request.user.alumno)
+        serializer.save(alumno=self.request.user.como_alumno())
 
 
 class MaterialDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -398,13 +398,13 @@ class ClaseApoyoSuscripcion(APIView):
         clase = _clase_de_la_url(request, pk)
         if rol_de(request) != ALUMNO:
             return Response({"error": "Solo los alumnos pueden suscribirse a una clase."}, status=status.HTTP_403_FORBIDDEN)
-        nueva = SujetoClase(clase).suscribir(request.user.alumno)
+        nueva = SujetoClase(clase).suscribir(request.user.como_alumno())
         return self._estado(clase, status.HTTP_201_CREATED if nueva else status.HTTP_200_OK)
 
     def delete(self, request, pk):
         clase = _clase_de_la_url(request, pk)
         if rol_de(request) == ALUMNO:
-            SujetoClase(clase).desuscribir(request.user.alumno)
+            SujetoClase(clase).desuscribir(request.user.como_alumno())
         return self._estado(clase, status.HTTP_200_OK)
 
     def _estado(self, clase, codigo):
@@ -487,7 +487,7 @@ class PonderacionListCreate(generics.ListCreateAPIView):
         return _ponderaciones_queryset(self.request)
 
     def perform_create(self, serializer):
-        serializer.save(alumno=self.request.user.alumno)  # puntúa quien está logueado
+        serializer.save(alumno=self.request.user.como_alumno())  # puntúa quien está logueado
 
 
 class PonderacionDetail(generics.RetrieveUpdateDestroyAPIView):

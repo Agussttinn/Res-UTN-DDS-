@@ -14,7 +14,8 @@ from django.contrib.auth.hashers import check_password, make_password
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import CommandError, call_command
-from django.db import connection
+from django.core.exceptions import ValidationError
+from django.db import DatabaseError, connection, transaction
 from django.test import TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from rest_framework import status
@@ -1448,15 +1449,40 @@ class SubtiposDeUsuarioTests(ApiTestCase):
         self.assertTrue(Tutor.objects.filter(pk='7').exists())
         self.assertFalse(Alumno.objects.filter(pk='7').exists())
 
-    def test_si_ya_tiene_registros_la_fila_anterior_se_conserva(self):
-        material = self.crear_material(autor=self.alumno)
+    def test_no_se_le_cambia_el_rol_a_alguien_con_apuntes_o_clases_de_su_rol_actual(self):
+        self.crear_material(autor=self.alumno)
+        self.como(self.admin)
 
+        response = self.client.patch(f'/api/usuarios/{self.alumno.legajo}/', {'rol': 'tutor'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('apunte', str(response.data['rol']))
+
+        ClaseApoyo.objects.create(materia=self.materia, tutor=self.tutor.tutor, aula='L-1')
+        response = self.client.patch(f'/api/usuarios/{self.tutor.legajo}/', {'rol': 'alumno'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('clase', str(response.data['rol']))
+
+        # nada cambió: siguen con su rol y en su tabla
+        self.alumno.refresh_from_db()
+        self.assertEqual(self.alumno.rol.nombre, 'alumno')
+        self.assertEqual(self._filas(self.alumno.legajo), {'alumno': True, 'tutor': False, 'administrador': False})
+
+    def test_si_no_tiene_registros_la_api_le_cambia_el_rol_y_lo_mueve_de_tabla(self):
+        self.como(self.admin)
+
+        response = self.client.patch(f'/api/usuarios/{self.otro_alumno.legajo}/', {'rol': 'tutor'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self._filas(self.otro_alumno.legajo), {'alumno': False, 'tutor': True, 'administrador': False})
+
+    def test_el_panel_de_django_tambien_rechaza_el_cambio_con_el_motivo(self):
+        self.crear_material(autor=self.alumno)
         self.alumno.rol = Rol.objects.get(nombre='tutor')
-        self.alumno.save()
 
-        self.assertTrue(Tutor.objects.filter(pk=self.alumno.legajo).exists())
-        self.assertTrue(Alumno.objects.filter(pk=self.alumno.legajo).exists())  # tiene un material: no se pierde
-        material.refresh_from_db()
+        with self.assertRaises(ValidationError) as ctx:
+            self.alumno.clean()
+
+        self.assertIn('apunte', str(ctx.exception))
 
     def test_la_clase_solo_puede_ser_de_un_tutor(self):
         self.como(self.admin)
@@ -1467,6 +1493,135 @@ class SubtiposDeUsuarioTests(ApiTestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('tutor_id', response.data)
+
+    def test_un_tutor_sin_su_fila_en_tutores_puede_crear_una_clase(self):
+        """Si le cambiaron el rol directo en la base, la fila que le falta se completa sola (antes: error 500)."""
+        Tutor.objects.filter(pk=self.tutor.legajo).delete()
+        self.como(self.tutor)
+
+        response = self.client.post('/api/clases-apoyo/', {
+            'materia_id': self.materia.id, 'dia': 1, 'hora_inicio': '14:00', 'hora_fin': '16:00', 'aula': 'L-1',
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(Tutor.objects.filter(pk=self.tutor.legajo).exists())
+        self.assertEqual(ClaseApoyo.objects.get().tutor_id, self.tutor.legajo)
+
+    def test_el_administrador_asigna_una_clase_a_un_tutor_sin_su_fila(self):
+        Tutor.objects.filter(pk=self.otro_tutor.legajo).delete()
+        self.como(self.admin)
+
+        response = self.client.post('/api/clases-apoyo/', {
+            'materia_id': self.materia.id, 'dia': 2, 'hora_inicio': '10:00', 'hora_fin': '12:00', 'aula': 'L-2',
+            'tutor_id': self.otro_tutor.legajo,
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(ClaseApoyo.objects.get().tutor_id, self.otro_tutor.legajo)
+
+    def test_un_alumno_sin_su_fila_en_alumnos_sube_material_puntua_y_se_suscribe(self):
+        Alumno.objects.filter(pk=self.otro_alumno.legajo).delete()
+        aprobado = self.crear_material(autor=self.alumno, validado=True)
+        clase = ClaseApoyo.objects.create(materia=self.materia, tutor=self.tutor.tutor, dia=1,
+                                          hora_inicio=datetime.time(9), hora_fin=datetime.time(10), aula='L-3')
+        self.como(self.otro_alumno)
+
+        puntua = self.client.post('/api/ponderaciones/', {'material_id': aprobado.id, 'valor': 5}, format='json')
+        sube = self.client.post('/api/materiales/', {
+            'materia_id': self.materia.id, 'titulo': 'X', 'tipo': 'resumen',
+            'archivo': SimpleUploadedFile('a.pdf', b'%PDF-1.4 x', content_type='application/pdf'),
+        }, format='multipart')
+        suscribe = self.client.post(f'/api/clases-apoyo/{clase.id}/suscripcion/')
+
+        self.assertEqual((puntua.status_code, sube.status_code, suscribe.status_code), (201, 201, 201))
+        self.assertTrue(Alumno.objects.filter(pk=self.otro_alumno.legajo).exists())
+
+    def test_el_comando_sincronizar_subtipos_completa_las_filas_que_faltan_y_no_borra(self):
+        Tutor.objects.filter(pk=self.tutor.legajo).delete()          # a un tutor le falta su fila
+        Administrador.objects.filter(pk=self.admin.legajo).delete()  # y a un administrador
+        Alumno.objects.create(usuario=self.tutor)                    # y hay una fila de un rol que ya no es el suyo
+
+        salida = io.StringIO()
+        call_command('sincronizar_subtipos', stdout=salida)
+
+        self.assertTrue(Tutor.objects.filter(pk=self.tutor.legajo).exists())
+        self.assertTrue(Administrador.objects.filter(pk=self.admin.legajo).exists())
+        self.assertTrue(Alumno.objects.filter(pk=self.tutor.legajo).exists())  # no se borra
+        self.assertIn('2 fila(s) creadas', salida.getvalue())
+        self.assertIn('no se borran', salida.getvalue())
+
+    # ---- triggers de la base: el cambio de rol funciona venga de donde venga (DBeaver, SQL a mano, la app...)
+
+    def _sql(self, sentencia, *params):
+        with connection.cursor() as cursor:
+            cursor.execute(sentencia, list(params))
+
+    def _filas(self, legajo):
+        return {
+            'alumno': Alumno.objects.filter(pk=legajo).exists(),
+            'tutor': Tutor.objects.filter(pk=legajo).exists(),
+            'administrador': Administrador.objects.filter(pk=legajo).exists(),
+        }
+
+    def test_un_update_directo_del_rol_mueve_al_usuario_a_la_tabla_del_rol_nuevo(self):
+        nuevo = self.crear_usuario('8')
+        self.assertEqual(self._filas('8'), {'alumno': True, 'tutor': False, 'administrador': False})
+
+        self._sql('UPDATE usuarios SET rol_id = %s WHERE legajo = %s', Rol.objects.get(nombre='tutor').id, '8')
+        self.assertEqual(self._filas('8'), {'alumno': False, 'tutor': True, 'administrador': False})
+
+        self._sql('UPDATE usuarios SET rol_id = %s WHERE legajo = %s', Rol.objects.get(nombre='administrador').id, '8')
+        self.assertEqual(self._filas('8'), {'alumno': False, 'tutor': False, 'administrador': True})
+
+        # ahora puede hacer lo que hace un tutor: crear una clase (antes fallaba con error 500)
+        self._sql('UPDATE usuarios SET rol_id = %s WHERE legajo = %s', Rol.objects.get(nombre='tutor').id, '8')
+        nuevo.refresh_from_db()
+        self.como(nuevo)
+        response = self.client.post('/api/clases-apoyo/', {
+            'materia_id': self.materia.id, 'dia': 3, 'hora_inicio': '10:00', 'hora_fin': '12:00', 'aula': 'L-8',
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_un_insert_directo_de_un_usuario_crea_su_fila(self):
+        rol = Rol.objects.get(nombre='tutor')
+        self._sql(
+            'INSERT INTO usuarios (legajo, nombre_y_apellido, correo, contraseña, rol_id) VALUES (%s, %s, %s, %s, %s)',
+            '9', 'Cargado a mano', 'a9@mail.com', 'x', rol.id,
+        )
+
+        self.assertEqual(self._filas('9'), {'alumno': False, 'tutor': True, 'administrador': False})
+
+    def test_un_update_directo_que_dejaria_registros_huerfanos_se_rechaza_con_un_mensaje(self):
+        self.crear_material(autor=self.alumno)
+        ClaseApoyo.objects.create(materia=self.materia, tutor=self.tutor.tutor, aula='L-1')
+        tutor = Rol.objects.get(nombre='tutor')
+        alumno = Rol.objects.get(nombre='alumno')
+
+        with self.assertRaises(DatabaseError) as ctx:
+            with transaction.atomic():
+                self._sql('UPDATE usuarios SET rol_id = %s WHERE legajo = %s', tutor.id, self.alumno.legajo)
+        self.assertIn('como alumno tiene apuntes o puntuaciones', str(ctx.exception))
+
+        with self.assertRaises(DatabaseError) as ctx:
+            with transaction.atomic():
+                self._sql('UPDATE usuarios SET rol_id = %s WHERE legajo = %s', alumno.id, self.tutor.legajo)
+        self.assertIn('como tutor tiene clases de apoyo o mensajes', str(ctx.exception))
+
+        # el cambio no se hizo y todo quedó como estaba
+        self.assertEqual(Usuario.objects.get(pk=self.alumno.legajo).rol.nombre, 'alumno')
+        self.assertEqual(self._filas(self.alumno.legajo), {'alumno': True, 'tutor': False, 'administrador': False})
+        self.assertEqual(self._filas(self.tutor.legajo), {'alumno': False, 'tutor': True, 'administrador': False})
+
+    def test_al_cambiar_de_rol_se_borran_las_suscripciones_y_avisos_de_alumno(self):
+        clase = ClaseApoyo.objects.create(materia=self.materia, tutor=self.tutor.tutor, aula='L-2')
+        Suscripcion.objects.create(clase=clase, alumno=self.otro_alumno.alumno)
+        Notificacion.objects.create(alumno=self.otro_alumno.alumno, tipo=Notificacion.MENSAJE, titulo='x', texto='y')
+
+        self._sql('UPDATE usuarios SET rol_id = %s WHERE legajo = %s', Rol.objects.get(nombre='tutor').id, self.otro_alumno.legajo)
+
+        self.assertEqual(Suscripcion.objects.count(), 0)
+        self.assertEqual(Notificacion.objects.count(), 0)
+        self.assertEqual(self._filas(self.otro_alumno.legajo), {'alumno': False, 'tutor': True, 'administrador': False})
 
     def test_solo_los_alumnos_suben_materiales(self):
         for usuario in (self.tutor, self.admin):

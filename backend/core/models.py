@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.aggregates import Avg, Count
@@ -45,6 +46,41 @@ class Usuario(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         self.sincronizar_subtipo()
+
+    def motivo_para_no_dejar_el_rol(self):
+        """Si tiene registros que dependen de su rol actual, explica por qué no se le puede cambiar el rol.
+        Si no, devuelve None. (La base lo vuelve a verificar con un trigger.)"""
+        rol = self.rol.nombre
+        if rol == 'alumno':
+            apuntes = Material.objects.filter(alumno_id=self.pk).count()
+            puntuaciones = Ponderacion.objects.filter(alumno_id=self.pk).count()
+            if apuntes or puntuaciones:
+                return (f'Como alumno tiene {apuntes} apunte(s) y {puntuaciones} puntuación(es). '
+                        'Borralos o reasignalos antes de cambiarle el rol.')
+        elif rol == 'tutor':
+            clases = ClaseApoyo.objects.filter(tutor_id=self.pk).count()
+            mensajes = MensajeClase.objects.filter(tutor_id=self.pk).count()
+            if clases or mensajes:
+                return (f'Como tutor tiene {clases} clase(s) de apoyo y {mensajes} mensaje(s). '
+                        'Borralas o reasignalas antes de cambiarle el rol.')
+        return None
+
+    def clean(self):
+        super().clean()
+        anterior = Usuario.objects.select_related('rol').filter(pk=self.pk).first() if self.pk else None
+        if anterior is not None and anterior.rol_id != self.rol_id:
+            motivo = anterior.motivo_para_no_dejar_el_rol()
+            if motivo:
+                raise ValidationError({'rol': motivo})
+
+    def asegurar_subtipo(self):
+        """Crea la fila del subtipo que le falta a su rol (sin borrar nada) y la devuelve.
+        El rol es lo que manda: si alguien lo cambió directo en la base, la tabla del rol se completa al usarla."""
+        modelo = SUBTIPOS.get(self.rol.nombre)
+        return modelo.objects.get_or_create(usuario=self)[0] if modelo is not None else None
+
+    def como_alumno(self):
+        return Alumno.objects.get_or_create(usuario=self)[0]
 
     def sincronizar_subtipo(self):
         """Mantiene la fila del subtipo (alumnos, tutores o administradores) que corresponde al rol.

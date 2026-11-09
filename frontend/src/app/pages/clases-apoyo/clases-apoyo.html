@@ -21,6 +21,13 @@
         <option [ngValue]="m.id">{{ m.nombre }}</option>
       }
     </select>
+    @if (auth.esTutor()) {
+      <button type="button" (click)="soloMias.set(!soloMias())" [attr.aria-pressed]="soloMias()"
+              [class]="soloMias() ? 'bg-brand-600 text-white' : 'bg-white text-slate-700 border border-slate-200'"
+              class="ml-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+        📌 Mis clases
+      </button>
+    }
   </div>
 
   @if (aviso()) {
@@ -41,13 +48,17 @@
       <span>{{ error() }}</span>
       <button type="button" (click)="cargarClases()" class="font-semibold underline shrink-0">Reintentar</button>
     </div>
-  } @else if (clases().length === 0) {
+  } @else if (clasesFiltradas().length === 0) {
     <div class="text-center py-12 bg-white rounded-xl border border-slate-200 text-slate-500">
-      No hay clases de apoyo programadas por el momento.
+      @if (soloMias()) {
+        Todavía no publicaste ninguna clase{{ filtroMateria() !== null ? ' de esta materia' : '' }}.
+      } @else {
+        No hay clases de apoyo programadas por el momento.
+      }
     </div>
   } @else {
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      @for (clase of clases(); track clase.id) {
+      @for (clase of clasesFiltradas(); track clase.id) {
         <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
           <div>
             <h3 class="text-lg font-bold text-slate-800">{{ clase.materia.nombre }}</h3>

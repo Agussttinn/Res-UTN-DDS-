@@ -128,7 +128,7 @@ Representa las entidades del negocio:
 ### 2. Diagrama Entidad-Relación (E-R)
 - **`ROL`**: `(PK: id, nombre)`. Los roles son datos: agregar uno no cambia el esquema.
 - **`USUARIO`**: `(PK: legajo, nombre, correo, contraseña, FK: rol_id)`
-- **`ALUMNO`**, **`TUTOR`** y **`ADMINISTRADOR`**: `(PK y FK: legajo)`, una tabla por rol, cada una 1 a 0..1 con `USUARIO`. Las tablas son `alumnos`, `tutores` y `administradores`. Al crear o cambiar un usuario se crea la fila de su rol.
+- **`ALUMNO`**, **`TUTOR`** y **`ADMINISTRADOR`**: `(PK y FK: legajo)`, una tabla por rol, cada una 1 a 0..1 con `USUARIO`. Las tablas son `alumnos`, `tutores` y `administradores`. Al crear un usuario o cambiarle el rol, la fila se crea y se mueve sola: lo hacen **triggers de MariaDB** (migración `0015`), así que funciona venga el cambio de donde venga (la app, el panel de Django o un `UPDATE` directo desde DBeaver). Esas tablas tienen **solo** a quienes cumplen el rol; todos los usuarios, sin distinción, están únicamente en `usuarios`. Si alguien tiene registros que dependen de su rol (un alumno con apuntes o puntuaciones, un tutor con clases o mensajes), **no se le puede cambiar el rol**: la API, el panel de Django y la propia base (migración `0016`) lo rechazan con un mensaje que explica por qué. Hay que borrar o reasignar esos registros primero. Al cambiar de alumno a otro rol se borran sus suscripciones y avisos. Para completar filas faltantes de datos viejos: `python manage.py sincronizar_subtipos`.
 - **`ESPECIALIDAD`**: `(PK: idEspecialidad, nombre)`
 - **`MATERIA`**: `(PK: idMateria, FK: idEspecialidad, nombre, año)`
 - **`ESTADO_MATERIAL`**: `(PK: id, nombre)` con `pendiente`, `aprobado`, `rechazado` y `archivado`.

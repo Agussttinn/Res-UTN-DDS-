@@ -151,6 +151,74 @@ describe('AdminPanelComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('h3')).toHaveLength(0);
   });
 
+  describe('filtro por antigüedad', () => {
+    const haceDias = (dias: number) => new Date(Date.now() - dias * 24 * 60 * 60 * 1000).toISOString();
+    const titulos = (fixture: ComponentFixture<unknown>) =>
+      Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('h3')).map((h) => h.textContent?.trim());
+    const elegir = async (fixture: ComponentFixture<unknown>, id: string, valor: string) => {
+      const select = (fixture.nativeElement as HTMLElement).querySelector<HTMLSelectElement>(id)!;
+      select.value = valor;
+      select.dispatchEvent(new Event('change'));
+      await estabilizar(fixture);
+    };
+    const cola = () => [
+      { ...pendiente(1, 'Reciente'), fecha_de_carga: haceDias(2) },
+      { ...pendiente(2, 'Del mes'), fecha_de_carga: haceDias(20) },
+      { ...pendiente(3, 'Viejo'), fecha_de_carga: haceDias(90) },
+      { ...pendiente(4, 'Muy viejo'), fecha_de_carga: haceDias(300) }
+    ];
+
+    it('por defecto muestra todo, con los más antiguos primero', async () => {
+      const fixture = await abrir(cola());
+      expect(titulos(fixture)).toEqual(['Muy viejo', 'Viejo', 'Del mes', 'Reciente']);
+    });
+
+    it('se puede ordenar con los más recientes primero', async () => {
+      const fixture = await abrir(cola());
+
+      await elegir(fixture, '#orden-apuntes', 'recientes');
+
+      expect(titulos(fixture)).toEqual(['Reciente', 'Del mes', 'Viejo', 'Muy viejo']);
+    });
+
+    it('filtra por los últimos 7 días, los últimos 30, más de 30 y más de 6 meses', async () => {
+      const fixture = await abrir(cola());
+
+      await elegir(fixture, '#filtro-antiguedad', 'semana');
+      expect(titulos(fixture)).toEqual(['Reciente']);
+      await elegir(fixture, '#filtro-antiguedad', 'mes');
+      expect(titulos(fixture)).toEqual(['Del mes', 'Reciente']);
+      await elegir(fixture, '#filtro-antiguedad', 'mas-mes');
+      expect(titulos(fixture)).toEqual(['Muy viejo', 'Viejo']);
+      await elegir(fixture, '#filtro-antiguedad', 'mas-6-meses');
+      expect(titulos(fixture)).toEqual(['Muy viejo']);
+      await elegir(fixture, '#filtro-antiguedad', 'todas');
+      expect(titulos(fixture)).toHaveLength(4);
+    });
+
+    it('si ninguno coincide con el filtro lo dice, sin confundirlo con "no hay pendientes"', async () => {
+      const fixture = await abrir([{ ...pendiente(1, 'Reciente'), fecha_de_carga: haceDias(2) }]);
+
+      await elegir(fixture, '#filtro-antiguedad', 'mas-6-meses');
+
+      expect(textoDe(fixture)).toContain('Ningún apunte pendiente coincide con ese filtro de antigüedad');
+      expect(textoDe(fixture)).not.toContain('No hay documentos pendientes de revisión');
+    });
+
+    it('el mismo filtro vale para la lista de aprobados (para archivar los viejos) y muestra su fecha', async () => {
+      const aprobados = [
+        unMaterial({ id: 10, titulo: 'Aprobado nuevo', estado: 'aprobado', fecha_de_carga: haceDias(3) }),
+        unMaterial({ id: 11, titulo: 'Aprobado viejo', estado: 'aprobado', fecha_de_carga: haceDias(400) })
+      ];
+      const fixture = await abrir([], aprobados);
+      expect(textoDe(fixture)).toContain('subido el');
+
+      await elegir(fixture, '#filtro-antiguedad', 'mas-6-meses');
+
+      expect(titulos(fixture)).toEqual(['Aprobado viejo']);
+    });
+  });
+
   it('mientras procesa un apunte sus botones se deshabilitan (evita el doble clic)', async () => {
     const fixture = await abrir([pendiente(7, 'Resumen Unidad 1')]);
 

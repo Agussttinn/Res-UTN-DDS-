@@ -297,6 +297,41 @@ describe('ClasesApoyoComponent', () => {
       expect(boton(fixture, 'Suscribirme')).toBeTruthy();
     });
 
+    it('el tutor filtra "Mis clases" y vuelve a ver todas al apagarlo', async () => {
+      const fixture = await abrir(TUTOR, [
+        unaClase({ id: 1, materia: unaMateria({ id: 1, nombre: 'Algoritmos' }) }),
+        unaClase({ id: 2, materia: unaMateria({ id: 2, nombre: 'Física' }), tutor: OTRO_TUTOR })
+      ]);
+      expect(textoDe(fixture)).toContain('Algoritmos');
+      expect(textoDe(fixture)).toContain('Física');
+
+      boton(fixture, 'Mis clases')!.click();
+      await estabilizar(fixture);
+      expect(textoDe(fixture)).toContain('Algoritmos');
+      expect(textoDe(fixture)).not.toContain('Física');
+
+      boton(fixture, 'Mis clases')!.click();
+      await estabilizar(fixture);
+      expect(textoDe(fixture)).toContain('Física');
+    });
+
+    it('si el tutor todavía no publicó ninguna, "Mis clases" lo dice', async () => {
+      const fixture = await abrir(TUTOR, [unaClase({ id: 2, tutor: OTRO_TUTOR })]);
+
+      boton(fixture, 'Mis clases')!.click();
+      await estabilizar(fixture);
+
+      expect(textoDe(fixture)).toContain('Todavía no publicaste ninguna clase');
+    });
+
+    it('"Mis clases" es solo para tutores', async () => {
+      for (const usuario of [ALUMNA, ADMINISTRADORA]) {
+        TestBed.resetTestingModule();
+        const fixture = await abrir(usuario, [unaClase()]);
+        expect(boton(fixture, 'Mis clases')).toBeUndefined();
+      }
+    });
+
     it('los tutores no tienen botón de suscribirse', async () => {
       const fixture = await abrir(TUTOR, [unaClase()]);
       expect(boton(fixture, 'Suscribirme')).toBeUndefined();

@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { BuscadorMateriaComponent } from '../../components/buscador-materia/buscador-materia.component';
@@ -57,6 +57,15 @@ export class ClasesApoyoComponent implements OnInit {
   readonly aviso = signal('');
   readonly errorAccion = signal('');
   readonly filtroMateria = signal<number | null>(null);
+  /** Solo las clases que dicta el tutor logueado. */
+  readonly soloMias = signal(false);
+  readonly clasesFiltradas = computed(() => {
+    if (!this.soloMias()) {
+      return this.clases();
+    }
+    const legajo = this.auth.usuario()?.legajo;
+    return this.clases().filter((c) => c.tutor.legajo === legajo);
+  });
 
   // Formulario para publicar / modificar una clase (solo tutores)
   readonly dias = DIAS_SEMANA;

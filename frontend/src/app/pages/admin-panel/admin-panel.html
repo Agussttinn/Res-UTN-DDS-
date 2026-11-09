@@ -4,6 +4,27 @@
     <p class="text-xs sm:text-sm text-slate-500">Revisión de documentos compartidos por la comunidad estudiantil.</p>
   </div>
 
+  <!-- Filtros por antigüedad y orden (valen para las dos listas) -->
+  <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+    <div class="flex items-center gap-2">
+      <label for="filtro-antiguedad" class="text-xs font-semibold text-slate-600">Antigüedad:</label>
+      <select id="filtro-antiguedad" [value]="antiguedad()" (change)="antiguedad.set($any($event.target).value)"
+              class="border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none focus:border-brand-500">
+        @for (a of antiguedades; track a.valor) {
+          <option [value]="a.valor">{{ a.etiqueta }}</option>
+        }
+      </select>
+    </div>
+    <div class="flex items-center gap-2">
+      <label for="orden-apuntes" class="text-xs font-semibold text-slate-600">Orden:</label>
+      <select id="orden-apuntes" [value]="orden()" (change)="orden.set($any($event.target).value)"
+              class="border border-slate-300 rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none focus:border-brand-500">
+        <option value="antiguos">Más antiguos primero</option>
+        <option value="recientes">Más recientes primero</option>
+      </select>
+    </div>
+  </div>
+
   @if (aviso()) {
     <div role="status" class="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-lg flex items-start justify-between gap-3">
       <span>{{ aviso() }}</span>
@@ -22,9 +43,13 @@
     <div class="text-center py-12 bg-white rounded-xl border border-slate-200 text-slate-500">
       No hay documentos pendientes de revisión. 🎉
     </div>
+  } @else if (pendientesFiltrados().length === 0) {
+    <div class="text-center py-12 bg-white rounded-xl border border-slate-200 text-slate-500">
+      Ningún apunte pendiente coincide con ese filtro de antigüedad.
+    </div>
   } @else {
     <div class="space-y-3">
-      @for (item of pendientes(); track item.id) {
+      @for (item of pendientesFiltrados(); track item.id) {
         <div class="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row justify-between sm:items-center gap-4 shadow-sm">
           <div>
             <div class="flex items-center gap-2 mb-1">
@@ -67,11 +92,14 @@
     <div class="border-t pt-4 space-y-3">
       <h2 class="text-lg font-bold text-slate-800">Aprobados</h2>
       <p class="text-xs text-slate-500">Archivá los apuntes que ya no corresponden (fin de ciclo lectivo o cambio de plan de estudio).</p>
-      @for (item of aprobados(); track item.id) {
+      @if (aprobadosFiltrados().length === 0) {
+        <p class="text-sm text-slate-500">Ningún apunte aprobado coincide con ese filtro de antigüedad.</p>
+      }
+      @for (item of aprobadosFiltrados(); track item.id) {
         <div class="bg-white p-3 rounded-xl border border-slate-200 flex justify-between items-center gap-3">
           <div class="min-w-0">
             <h3 class="font-semibold text-slate-800 text-sm truncate">{{ item.titulo }}</h3>
-            <p class="text-xs text-slate-500">{{ item.materia.nombre }} · {{ etiquetaTipo[item.tipo] }}</p>
+            <p class="text-xs text-slate-500">{{ item.materia.nombre }} · {{ etiquetaTipo[item.tipo] }} · subido el {{ item.fecha_de_carga | date:'dd/MM/yyyy' }}</p>
           </div>
           <button type="button" (click)="moderar(item, 'archivar')" [disabled]="procesando() === item.id"
                   class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-50 shrink-0">

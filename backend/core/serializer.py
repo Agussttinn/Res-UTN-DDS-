@@ -24,6 +24,11 @@ class UsuarioSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if self.instance is None and 'contraseña' not in attrs:
             raise serializers.ValidationError({'contraseña': 'Este campo es obligatorio.'})
+        # Cambiar de rol a alguien con apuntes, puntuaciones, clases o mensajes de su rol anterior no se permite.
+        if self.instance is not None and 'rol' in attrs and attrs['rol'].id != self.instance.rol_id:
+            motivo = self.instance.motivo_para_no_dejar_el_rol()
+            if motivo:
+                raise serializers.ValidationError({'rol': motivo})
         return attrs
 
     def create(self, validated_data):
@@ -224,7 +229,8 @@ class ClaseApoyoSerializer(serializers.ModelSerializer):
         return value
 
     def validate_tutor_id(self, value):
-        if not Tutor.objects.filter(pk=value).exists():
+        # Alcanza con que el usuario tenga rol tutor: su fila en la tabla tutores se completa al asignarle la clase.
+        if not Usuario.objects.filter(pk=value, rol__nombre=TUTOR).exists():
             raise serializers.ValidationError("No existe un tutor con ese legajo.")
         return value
 
@@ -294,6 +300,7 @@ class ClaseApoyoSerializer(serializers.ModelSerializer):
         if not tutor_id:
             raise serializers.ValidationError({'tutor_id': 'Indicá el legajo del tutor a cargo de la clase.'})
 
+        Tutor.objects.get_or_create(usuario_id=tutor_id)  # por si le falta su fila en tutores
         clase_apoyo = ClaseApoyo.objects.create(
             materia_id = materia_id,
             tutor_id = tutor_id,
@@ -314,6 +321,7 @@ class ClaseApoyoSerializer(serializers.ModelSerializer):
             instance.materia_id = materia_id
         # Cambiar de tutor una clase existente solo lo puede hacer un administrador.
         if tutor_id is not None and self.context['request'].user.rol.nombre != TUTOR:
+            Tutor.objects.get_or_create(usuario_id=tutor_id)
             instance.tutor_id = tutor_id
 
         instance.save()
