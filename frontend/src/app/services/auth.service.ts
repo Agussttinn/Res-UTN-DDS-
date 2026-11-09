@@ -29,6 +29,7 @@ export class AuthService {
   readonly rol = computed<Rol | null>(() => this._usuario()?.rol ?? null);
   readonly esAdministrador = computed(() => this.rol() === 'administrador');
   readonly esTutor = computed(() => this.rol() === 'tutor');
+  readonly esAlumno = computed(() => this.rol() === 'alumno');
 
   constructor() {
     this.restaurarSesion();

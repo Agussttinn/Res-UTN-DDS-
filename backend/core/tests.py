@@ -24,7 +24,10 @@ from . import sysacad_client
 from .admin import UsuarioAdmin
 from .archivos import TAMANO_MAXIMO_MB
 from .auth import crear_token
-from .models import ClaseApoyo, Especialidad, EstadoMaterial, Materia, Material, Rol, MensajeClase, Notificacion, Ponderacion, Suscripcion, Usuario
+from .models import (
+    Administrador, Alumno, ClaseApoyo, Especialidad, EstadoMaterial, Materia, Material, MensajeClase, Notificacion,
+    Ponderacion, Rol, Suscripcion, Tutor, Usuario,
+)
 from .observador import EventoClase, ObservadorClase, SujetoClase
 
 CONTRASENA = 'claveSegura123'
@@ -66,7 +69,7 @@ class ApiTestCase(APITestCase):
 
     def crear_material(self, autor=None, validado=False, materia=None, titulo='Resumen U1'):
         return Material.objects.create(
-            materia=materia or self.materia, usuario=autor or self.alumno, titulo=titulo,
+            materia=materia or self.materia, alumno=(autor or self.alumno).alumno, titulo=titulo,
             tipo='resumen',
             estado=EstadoMaterial.objects.get(nombre='aprobado' if validado else 'pendiente'),
             archivo=SimpleUploadedFile('apunte.pdf', b'%PDF-1.4 contenido', content_type='application/pdf'),
@@ -692,7 +695,7 @@ class MaterialApiTests(ApiTestCase):
         self.assertTrue(response.data['archivo'].startswith('http://testserver/media/materiales/'))
         self.assertTrue(response.data['archivo'].endswith('.pdf'))
         material = Material.objects.get()
-        self.assertEqual(material.usuario, self.alumno)
+        self.assertEqual(material.alumno, self.alumno.alumno)
         self.assertTrue(os.path.exists(material.archivo.path))
 
     def test_no_se_puede_subir_material_a_nombre_de_otro_ni_auto_validarlo(self):
@@ -702,7 +705,7 @@ class MaterialApiTests(ApiTestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         material = Material.objects.get()
-        self.assertEqual(material.usuario, self.alumno)
+        self.assertEqual(material.alumno, self.alumno.alumno)
         self.assertEqual(material.estado.nombre, 'pendiente')
 
     def test_el_archivo_es_obligatorio(self):
@@ -778,7 +781,7 @@ class MaterialApiTests(ApiTestCase):
 
         for numero in range(5):
             material = self.crear_material(validado=True, titulo=f'Otro {numero}')
-            Ponderacion.objects.create(material=material, usuario=self.otro_alumno, valor=4)
+            Ponderacion.objects.create(material=material, alumno=self.otro_alumno.alumno, valor=4)
         with CaptureQueriesContext(connection) as con_seis:
             respuesta = self.client.get(self.url)
 
@@ -875,6 +878,35 @@ class ModeracionTests(ApiTestCase):
         self.como(self.otro_alumno)
         self.assertEqual(self.client.get(f'/api/materiales/{material.id}/').status_code, 404)
 
+    def test_al_rechazar_el_alumno_recibe_una_notificacion_con_el_motivo(self):
+        material = self.crear_material(autor=self.alumno, titulo='Resumen Unidad 2')
+        self.como(self.admin)
+
+        self.client.post(f'/api/materiales/{material.id}/moderar/', {'accion': 'rechazar', 'motivo': 'Ilegible'}, format='json')
+
+        aviso = Notificacion.objects.get()
+        self.assertEqual(aviso.alumno_id, self.alumno.legajo)
+        self.assertEqual(aviso.tipo, Notificacion.RECHAZO)
+        self.assertIsNone(aviso.clase)
+        self.assertIn('Resumen Unidad 2', aviso.titulo)
+        self.assertIn('Ilegible', aviso.texto)
+        self.assertIn('corregirlo', aviso.texto)
+
+        # el alumno la ve en la campanita; los demás no
+        self.como(self.alumno)
+        lista = self.client.get('/api/notificaciones/').data
+        self.assertEqual([n['tipo'] for n in lista], ['rechazo'])
+        self.como(self.otro_alumno)
+        self.assertEqual(self.client.get('/api/notificaciones/').data, [])
+
+    def test_aprobar_o_archivar_no_generan_notificacion_de_rechazo(self):
+        pendiente = self.crear_material(autor=self.alumno)
+        self.como(self.admin)
+        self.client.post(f'/api/materiales/{pendiente.id}/moderar/', {'accion': 'aprobar'}, format='json')
+        self.client.post(f'/api/materiales/{pendiente.id}/moderar/', {'accion': 'archivar'}, format='json')
+
+        self.assertEqual(Notificacion.objects.count(), 0)
+
     def test_el_autor_corrige_un_material_rechazado_y_vuelve_a_pendiente(self):
         material = self.crear_material(autor=self.alumno)
         self.como(self.admin)
@@ -907,7 +939,8 @@ class ModeracionTests(ApiTestCase):
 
     def test_la_media_se_guarda_en_el_material_al_puntuar(self):
         material = self.crear_material(autor=self.alumno, validado=True)
-        for usuario, valor in ((self.otro_alumno, 5), (self.tutor, 2)):
+        segundo_alumno = self.crear_usuario('6')
+        for usuario, valor in ((self.otro_alumno, 5), (segundo_alumno, 2)):
             self.como(usuario)
             self.client.post('/api/ponderaciones/', {'material_id': material.id, 'valor': valor}, format='json')
 
@@ -915,8 +948,8 @@ class ModeracionTests(ApiTestCase):
         self.assertEqual(material.cantidad_ponderaciones, 2)
         self.assertEqual(float(material.promedio_ponderacion), 3.5)
 
-        self.como(self.tutor)
-        ponderacion = Ponderacion.objects.get(material=material, usuario=self.tutor)
+        self.como(segundo_alumno)
+        ponderacion = Ponderacion.objects.get(material=material, alumno=segundo_alumno.alumno)
         self.client.delete(f'/api/ponderaciones/{ponderacion.id}/')
         material.refresh_from_db()
         self.assertEqual(material.cantidad_ponderaciones, 1)
@@ -955,7 +988,7 @@ class ClaseApoyoApiTests(ApiTestCase):
 
     def crear_clase(self, tutor=None, materia=None):
         return ClaseApoyo.objects.create(
-            materia=materia or self.materia, tutor=tutor or self.tutor,
+            materia=materia or self.materia, tutor=(tutor or self.tutor).tutor,
             dia=1, hora_inicio=datetime.time(14), hora_fin=datetime.time(16), aula='L-203',
         )
 
@@ -967,7 +1000,7 @@ class ClaseApoyoApiTests(ApiTestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['tutor']['legajo'], self.tutor.legajo)
-        self.assertEqual(ClaseApoyo.objects.get().tutor, self.tutor)
+        self.assertEqual(ClaseApoyo.objects.get().tutor.usuario, self.tutor)
 
     def test_un_alumno_no_puede_crear_clases(self):
         self.como(self.alumno)
@@ -1021,7 +1054,7 @@ class ClaseApoyoApiTests(ApiTestCase):
         self.client.patch(f'{self.url}{clase.id}/', {'tutor_id': self.otro_tutor.legajo}, format='json')
 
         clase.refresh_from_db()
-        self.assertEqual(clase.tutor, self.tutor)
+        self.assertEqual(clase.tutor.usuario, self.tutor)
 
 
 # ---------------------------------------------------------------- ponderaciones (estrellas)
@@ -1054,12 +1087,12 @@ class PonderacionTests(ApiTestCase):
         response = self.puntuar(4)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Ponderacion.objects.get().usuario, self.otro_alumno)
+        self.assertEqual(Ponderacion.objects.get().alumno, self.otro_alumno.alumno)
 
     def test_promedio_de_varias_ponderaciones(self):
         self.como(self.otro_alumno)
         self.puntuar(5)
-        self.como(self.tutor)
+        self.como(self.crear_usuario('6'))
         self.puntuar(2)
 
         datos = self.material_actual()
@@ -1098,7 +1131,7 @@ class PonderacionTests(ApiTestCase):
 
         self.puntuar(5, usuario_id=self.admin.legajo, usuario=self.admin.legajo)
 
-        self.assertEqual(Ponderacion.objects.get().usuario, self.otro_alumno)
+        self.assertEqual(Ponderacion.objects.get().alumno, self.otro_alumno.alumno)
 
     def test_no_se_puede_puntuar_el_propio_material(self):
         self.como(self.alumno)  # es el autor
@@ -1118,9 +1151,9 @@ class PonderacionTests(ApiTestCase):
 
     def test_cada_usuario_ve_solo_sus_ponderaciones_y_puede_filtrar_por_material(self):
         otro_material = self.crear_material(autor=self.alumno, validado=True, titulo='Otro')
-        Ponderacion.objects.create(material=self.material, usuario=self.otro_alumno, valor=5)
-        Ponderacion.objects.create(material=otro_material, usuario=self.otro_alumno, valor=3)
-        Ponderacion.objects.create(material=self.material, usuario=self.tutor, valor=1)
+        Ponderacion.objects.create(material=self.material, alumno=self.otro_alumno.alumno, valor=5)
+        Ponderacion.objects.create(material=otro_material, alumno=self.otro_alumno.alumno, valor=3)
+        Ponderacion.objects.create(material=self.material, alumno=self.crear_usuario('6').alumno, valor=1)
 
         self.como(self.otro_alumno)
         self.assertEqual(len(self.client.get(self.url).data), 2)
@@ -1132,7 +1165,7 @@ class PonderacionTests(ApiTestCase):
         self.assertEqual(len(self.client.get(self.url).data), 3)
 
     def test_solo_el_dueno_o_un_administrador_toca_una_ponderacion(self):
-        ponderacion = Ponderacion.objects.create(material=self.material, usuario=self.otro_alumno, valor=5)
+        ponderacion = Ponderacion.objects.create(material=self.material, alumno=self.otro_alumno.alumno, valor=5)
         detalle = f'{self.url}{ponderacion.id}/'
 
         self.como(self.tutor)
@@ -1150,7 +1183,7 @@ class PonderacionTests(ApiTestCase):
 
     def test_editar_una_ponderacion_solo_cambia_las_estrellas(self):
         otro_material = self.crear_material(autor=self.alumno, validado=True, titulo='Otro')
-        ponderacion = Ponderacion.objects.create(material=self.material, usuario=self.otro_alumno, valor=5)
+        ponderacion = Ponderacion.objects.create(material=self.material, alumno=self.otro_alumno.alumno, valor=5)
         self.como(self.otro_alumno)
 
         response = self.client.put(
@@ -1159,15 +1192,15 @@ class PonderacionTests(ApiTestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         ponderacion.refresh_from_db()
-        self.assertEqual((ponderacion.material, ponderacion.usuario, ponderacion.valor), (self.material, self.otro_alumno, 2))
+        self.assertEqual((ponderacion.material, ponderacion.alumno, ponderacion.valor), (self.material, self.otro_alumno.alumno, 2))
 
     def test_la_restriccion_de_la_base_impide_dos_votos_del_mismo_usuario(self):
         from django.db import IntegrityError, transaction
 
-        Ponderacion.objects.create(material=self.material, usuario=self.otro_alumno, valor=5)
+        Ponderacion.objects.create(material=self.material, alumno=self.otro_alumno.alumno, valor=5)
 
         with self.assertRaises(IntegrityError), transaction.atomic():
-            Ponderacion.objects.create(material=self.material, usuario=self.otro_alumno, valor=1)
+            Ponderacion.objects.create(material=self.material, alumno=self.otro_alumno.alumno, valor=1)
 
 
 # ---------------------------------------------------------------- suscripciones y avisos (patrón Observer)
@@ -1176,7 +1209,7 @@ class SuscripcionYAvisosTests(ApiTestCase):
     def setUp(self):
         super().setUp()
         self.clase = ClaseApoyo.objects.create(
-            materia=self.materia, tutor=self.tutor, dia=1, hora_inicio=datetime.time(14), hora_fin=datetime.time(16), aula='L-203',
+            materia=self.materia, tutor=self.tutor.tutor, dia=1, hora_inicio=datetime.time(14), hora_fin=datetime.time(16), aula='L-203',
         )
         self.url_clase = f'/api/clases-apoyo/{self.clase.id}/'
 
@@ -1185,7 +1218,7 @@ class SuscripcionYAvisosTests(ApiTestCase):
         return self.client.post(f'{self.url_clase}suscripcion/')
 
     def notificaciones(self, usuario):
-        return list(Notificacion.objects.filter(usuario=usuario))
+        return list(Notificacion.objects.filter(alumno_id=usuario.pk))
 
     def test_un_alumno_se_suscribe_y_la_clase_lo_refleja(self):
         response = self.suscribir(self.alumno)
@@ -1283,23 +1316,25 @@ class SuscripcionYAvisosTests(ApiTestCase):
             self.assertEqual(aviso.tipo, Notificacion.MENSAJE)
             self.assertEqual(aviso.texto, 'Traigan la guía 3')
 
-    def test_solo_el_tutor_de_la_clase_o_un_administrador_mandan_mensajes(self):
+    def test_solo_el_tutor_de_la_clase_manda_mensajes(self):
         self.suscribir(self.alumno)
-        for usuario in (self.alumno, self.otro_tutor):
+        for usuario in (self.alumno, self.otro_tutor, self.admin):
             self.como(usuario)
             response = self.client.post(f'{self.url_clase}mensajes/', {'texto': 'Hola'}, format='json')
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-        self.como(self.admin)
-        self.assertEqual(self.client.post(f'{self.url_clase}mensajes/', {'texto': 'Hola'}, format='json').status_code, 201)
+        self.como(self.tutor)
+        response = self.client.post(f'{self.url_clase}mensajes/', {'texto': 'Hola'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['autor']['legajo'], self.tutor.legajo)
 
     def test_un_mensaje_vacio_es_400(self):
         self.como(self.tutor)
         self.assertEqual(self.client.post(f'{self.url_clase}mensajes/', {'texto': '   '}, format='json').status_code, 400)
 
     def test_los_mensajes_los_ven_los_suscritos_y_el_tutor_pero_no_los_demas(self):
-        MensajeClase.objects.create(clase=self.clase, autor=self.tutor, texto='Primero')
-        MensajeClase.objects.create(clase=self.clase, autor=self.tutor, texto='Segundo')
+        MensajeClase.objects.create(clase=self.clase, tutor=self.tutor.tutor, texto='Primero')
+        MensajeClase.objects.create(clase=self.clase, tutor=self.tutor.tutor, texto='Segundo')
         url = f'{self.url_clase}mensajes/'
 
         self.como(self.alumno)
@@ -1348,6 +1383,83 @@ class SuscripcionYAvisosTests(ApiTestCase):
 
 
 # ---------------------------------------------------------------- día y horario de las clases de apoyo
+
+# ---------------------------------------------------------------- alumnos, tutores y administradores
+
+class SubtiposDeUsuarioTests(ApiTestCase):
+    """Cada usuario tiene una fila en la tabla de su rol (alumnos, tutores o administradores), con el legajo como clave."""
+
+    def test_cada_usuario_tiene_su_fila_segun_el_rol(self):
+        self.assertTrue(Alumno.objects.filter(pk=self.alumno.legajo).exists())
+        self.assertTrue(Tutor.objects.filter(pk=self.tutor.legajo).exists())
+        self.assertTrue(Administrador.objects.filter(pk=self.admin.legajo).exists())
+        # y solo en la suya
+        self.assertFalse(Tutor.objects.filter(pk=self.alumno.legajo).exists())
+        self.assertFalse(Alumno.objects.filter(pk=self.admin.legajo).exists())
+        self.assertFalse(Administrador.objects.filter(pk=self.tutor.legajo).exists())
+
+    def test_el_administrador_da_de_alta_un_tutor_por_la_api_y_queda_en_la_tabla_de_tutores(self):
+        self.como(self.admin)
+        response = self.client.post('/api/usuarios/', {
+            'legajo': '150', 'nombre_y_apellido': 'Tomás Tutor', 'correo': 'tomas@utn.edu.ar', 'rol': 'tutor',
+            'contraseña': CONTRASENA,
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(Tutor.objects.filter(pk='150').exists())
+        self.assertFalse(Alumno.objects.filter(pk='150').exists())
+
+    def test_cambiar_el_rol_mueve_la_fila_a_la_otra_tabla(self):
+        nuevo = self.crear_usuario('7')
+        self.assertTrue(Alumno.objects.filter(pk='7').exists())
+
+        nuevo.rol = Rol.objects.get(nombre='tutor')
+        nuevo.save()
+
+        self.assertTrue(Tutor.objects.filter(pk='7').exists())
+        self.assertFalse(Alumno.objects.filter(pk='7').exists())
+
+    def test_si_ya_tiene_registros_la_fila_anterior_se_conserva(self):
+        material = self.crear_material(autor=self.alumno)
+
+        self.alumno.rol = Rol.objects.get(nombre='tutor')
+        self.alumno.save()
+
+        self.assertTrue(Tutor.objects.filter(pk=self.alumno.legajo).exists())
+        self.assertTrue(Alumno.objects.filter(pk=self.alumno.legajo).exists())  # tiene un material: no se pierde
+        material.refresh_from_db()
+
+    def test_la_clase_solo_puede_ser_de_un_tutor(self):
+        self.como(self.admin)
+        response = self.client.post('/api/clases-apoyo/', {
+            'materia_id': self.materia.id, 'dia': 1, 'hora_inicio': '14:00', 'hora_fin': '16:00', 'aula': 'L-1',
+            'tutor_id': self.alumno.legajo,
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('tutor_id', response.data)
+
+    def test_solo_los_alumnos_suben_materiales(self):
+        for usuario in (self.tutor, self.admin):
+            self.como(usuario)
+            response = self.client.post('/api/materiales/', {
+                'materia_id': self.materia.id, 'titulo': 'X', 'tipo': 'resumen',
+                'archivo': SimpleUploadedFile('a.pdf', b'%PDF-1.4 x', content_type='application/pdf'),
+            }, format='multipart')
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, usuario.rol.nombre)
+        self.assertEqual(Material.objects.count(), 0)
+
+    def test_solo_los_alumnos_puntuan(self):
+        material = self.crear_material(autor=self.alumno, validado=True)
+        for usuario in (self.tutor, self.admin):
+            self.como(usuario)
+            response = self.client.post('/api/ponderaciones/', {'material_id': material.id, 'valor': 4}, format='json')
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, usuario.rol.nombre)
+
+        self.como(self.otro_alumno)
+        response = self.client.post('/api/ponderaciones/', {'material_id': material.id, 'valor': 4}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
 
 class HorarioClaseApoyoTests(ApiTestCase):
     url = '/api/clases-apoyo/'
@@ -1427,7 +1539,7 @@ class HorarioClaseApoyoTests(ApiTestCase):
         self.assertEqual(response.data['horario'], 'lunes de 14:00 a 17:00')
 
     def test_una_clase_vieja_sin_horario_queda_a_confirmar_y_hay_que_completarlo_al_modificarla(self):
-        clase = ClaseApoyo.objects.create(materia=self.materia, tutor=self.tutor, aula='L-203')
+        clase = ClaseApoyo.objects.create(materia=self.materia, tutor=self.tutor.tutor, aula='L-203')
         self.como(self.tutor)
 
         self.assertEqual(self.client.get(self.url).data[0]['horario'], 'a confirmar')

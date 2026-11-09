@@ -125,6 +125,11 @@ export class ClasesApoyoComponent implements OnInit {
     return this.auth.esAdministrador() || (this.auth.esTutor() && clase.tutor.legajo === this.auth.usuario()?.legajo);
   }
 
+  /** Solo el tutor a cargo de la clase manda mensajes (un administrador los puede ver, pero no escribirlos). */
+  puedeEnviarMensajes(clase: ClaseApoyo): boolean {
+    return this.auth.esTutor() && clase.tutor.legajo === this.auth.usuario()?.legajo;
+  }
+
   /** Los mensajes los ven sus suscritos, su tutor y los administradores. */
   puedeVerMensajes(clase: ClaseApoyo): boolean {
     return clase.suscrito || this.puedeGestionar(clase);

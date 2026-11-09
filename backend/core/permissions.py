@@ -72,7 +72,7 @@ class PuedeModificarMaterial(BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS or es_administrador(request):
             return True
-        if obj.usuario_id != request.user.pk:
+        if obj.alumno_id != request.user.pk:
             self.message = 'Solo el autor o un administrador puede modificar este material.'
             return False
         if request.method == 'DELETE':

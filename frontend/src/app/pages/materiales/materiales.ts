@@ -48,7 +48,7 @@ const CAMPO_DE_LA_API: Record<string, CampoFormulario> = {
 })
 export class MaterialesComponent implements OnInit {
   private readonly api = inject(ApiService);
-  private readonly auth = inject(AuthService);
+  protected readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly injector = inject(Injector);
 
@@ -160,10 +160,13 @@ export class MaterialesComponent implements OnInit {
 
   /** Solo se puntúan apuntes ya validados y que no sean propios (la API lo vuelve a verificar). */
   puedeVotar(item: Material): boolean {
-    return item.estado === 'aprobado' && item.usuario.legajo !== this.auth.usuario()?.legajo;
+    return this.auth.esAlumno() && item.estado === 'aprobado' && item.usuario.legajo !== this.auth.usuario()?.legajo;
   }
 
   motivoSinVoto(item: Material): string {
+    if (!this.auth.esAlumno()) {
+      return 'Solo los alumnos puntúan los apuntes.';
+    }
     if (item.estado === 'archivado') {
       return 'Está archivado: ya no se puede puntuar.';
     }

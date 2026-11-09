@@ -133,7 +133,7 @@ export interface MensajeClase {
   fecha: string;
 }
 
-export type TipoNotificacion = 'modificacion' | 'cancelacion' | 'mensaje';
+export type TipoNotificacion = 'modificacion' | 'cancelacion' | 'mensaje' | 'rechazo';
 
 export interface Notificacion {
   id: number;

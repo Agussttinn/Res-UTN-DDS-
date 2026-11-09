@@ -10,10 +10,12 @@
       }
       <p class="text-xs sm:text-sm text-slate-500">Documentos validados por administradores y puntuados por la comunidad.</p>
     </div>
-    <button type="button" (click)="abrirModal()"
-            class="bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm transition-all flex items-center gap-2">
-      <span>➕</span> Compartir Apunte
-    </button>
+    @if (auth.esAlumno()) {
+      <button type="button" (click)="abrirModal()"
+              class="bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm transition-all flex items-center gap-2">
+        <span>➕</span> Compartir Apunte
+      </button>
+    }
   </div>
 
   @if (aviso()) {

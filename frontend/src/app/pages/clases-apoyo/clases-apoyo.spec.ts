@@ -313,6 +313,23 @@ describe('ClasesApoyoComponent', () => {
       expect((fixture.nativeElement as HTMLElement).querySelector('#nuevo-mensaje')).toBeNull();
     });
 
+    it('un administrador lee los mensajes pero no los escribe: los manda solo el tutor de la clase', async () => {
+      const fixture = await abrir(ADMINISTRADORA, [unaClase({ id: 3 })]);
+
+      boton(fixture, 'Mensajes')!.click();
+      http.expectOne(`${API_URL}/clases-apoyo/3/mensajes/`).flush([MENSAJE]);
+      await estabilizar(fixture);
+
+      expect(textoDe(fixture)).toContain('Traigan la guía 3');
+      expect((fixture.nativeElement as HTMLElement).querySelector('#nuevo-mensaje')).toBeNull();
+    });
+
+    it('otro tutor tampoco puede escribir en una clase ajena', async () => {
+      const fixture = await abrir({ ...OTRO_TUTOR, correo: 'otra@utn.edu.ar' }, [unaClase({ id: 3 })]);
+
+      expect(boton(fixture, 'Mensajes')).toBeUndefined();
+    });
+
     it('el tutor manda un mensaje a sus suscritos y aparece primero en la lista', async () => {
       const fixture = await abrir(TUTOR, [unaClase({ id: 3, cantidad_suscritos: 2 })]);
       boton(fixture, 'Mensajes')!.click();

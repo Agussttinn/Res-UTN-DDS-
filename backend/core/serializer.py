@@ -4,7 +4,7 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
-from .models import Rol, Usuario,Especialidad,Materia,EstadoMaterial,Material,ClaseApoyo,Ponderacion,MensajeClase,Notificacion
+from .models import Rol, Tutor, Usuario,Especialidad,Materia,EstadoMaterial,Material,ClaseApoyo,Ponderacion,MensajeClase,Notificacion
 from .permissions import TUTOR
 
 
@@ -107,8 +107,8 @@ class MaterialSerializer(serializers.ModelSerializer):
         # estado y validacion NO se pueden escribir desde afuera: un material nace pendiente y solo un
         # administrador lo aprueba (POST /materiales/<id>/moderar/). Si no, cada alumno se auto-validaría.
         read_only_fields = ('motivo_rechazo',)
-        # El autor (usuario) tampoco se manda en el JSON: sale del token del que está logueado
-        # (la vista lo pasa con serializer.save(usuario=request.user)), así nadie sube material a nombre de otro.
+        # El autor (alumno) tampoco se manda en el JSON: sale del token del que está logueado
+        # (la vista lo pasa con serializer.save(alumno=...)), así nadie sube material a nombre de otro.
  
     def validate_materia_id(self, value):
         if not Materia.objects.filter(pk=value).exists():
@@ -125,7 +125,7 @@ class MaterialSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         materia_id = validated_data.pop('materia_id')
 
-        # validated_data ya trae 'usuario' (lo agrega la vista con serializer.save(usuario=...))
+        # validated_data ya trae 'alumno' (lo agrega la vista con serializer.save(alumno=...))
         material = Material.objects.create(
             materia_id = materia_id,
             estado = EstadoMaterial.objects.get(nombre=EstadoMaterial.PENDIENTE),
@@ -153,8 +153,7 @@ class MaterialSerializer(serializers.ModelSerializer):
         return MateriaSerializer(materia).data
 
     def get_usuario(self, obj):
-        usuario = obj.usuario
-        return UsuarioPublicoSerializer(usuario).data
+        return UsuarioPublicoSerializer(obj.alumno.usuario).data
 
     def get_estado(self, obj):
         return obj.estado.nombre
@@ -225,7 +224,7 @@ class ClaseApoyoSerializer(serializers.ModelSerializer):
         return value
 
     def validate_tutor_id(self, value):
-        if not Usuario.objects.filter(pk=value, rol__nombre=TUTOR).exists():
+        if not Tutor.objects.filter(pk=value).exists():
             raise serializers.ValidationError("No existe un tutor con ese legajo.")
         return value
 
@@ -327,8 +326,7 @@ class ClaseApoyoSerializer(serializers.ModelSerializer):
         return MateriaSerializer(materia).data
 
     def get_tutor(self, obj):
-        tutor = obj.tutor
-        return UsuarioPublicoSerializer(tutor).data
+        return UsuarioPublicoSerializer(obj.tutor.usuario).data
 
 
 class PonderacionSerializer(serializers.ModelSerializer):
@@ -340,7 +338,7 @@ class PonderacionSerializer(serializers.ModelSerializer):
         model = Ponderacion
         fields = ('material','usuario','valor','fecha','material_id')
         #Una ponderacion no tiene sentido que tenga un id, por eso la API no lo va a devolver en el JSON
-        # El usuario que puntúa sale del token (la vista hace serializer.save(usuario=request.user)):
+        # El alumno que puntúa sale del token (la vista hace serializer.save(alumno=...)):
         # nadie puede puntuar a nombre de otro.
 
     def validate_material_id(self, value):
@@ -354,20 +352,20 @@ class PonderacionSerializer(serializers.ModelSerializer):
             material = Material.objects.select_related('estado').get(pk=attrs['material_id'])
             if material.estado.nombre != EstadoMaterial.APROBADO:
                 raise serializers.ValidationError({'material_id': 'Solo se pueden puntuar materiales ya validados.'})
-            if material.usuario_id == self.context['request'].user.pk:
+            if material.alumno_id == self.context['request'].user.pk:
                 raise serializers.ValidationError({'material_id': 'No podés puntuar tu propio material.'})
         return attrs
 
     #Para el POST
-    # Un usuario tiene una sola ponderación por material: si ya había votado, se actualiza
+    # Un alumno tiene una sola ponderación por material: si ya había votado, se actualiza
     # su valor (cambia sus estrellas); si no, se crea una nueva.
     def create(self, validated_data):
         material_id = validated_data.pop('material_id')
-        usuario = validated_data.pop('usuario')  # lo agrega la vista con serializer.save(usuario=...)
+        alumno = validated_data.pop('alumno')  # lo agrega la vista con serializer.save(alumno=...)
 
         ponderacion, _ = Ponderacion.objects.update_or_create(
             material_id = material_id,
-            usuario = usuario,
+            alumno = alumno,
             defaults = validated_data,
         )
         ponderacion.material.recalcular_ponderacion()
@@ -376,7 +374,7 @@ class PonderacionSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         # De una ponderación existente solo se pueden cambiar las estrellas: ni el material ni
-        # el usuario (cambiarlos podría chocar con otro voto y no tiene sentido de negocio).
+        # el alumno (cambiarlos podría chocar con otro voto y no tiene sentido de negocio).
         instance.valor = validated_data.get('valor', instance.valor)
         instance.save()
         instance.material.recalcular_ponderacion()
@@ -388,8 +386,7 @@ class PonderacionSerializer(serializers.ModelSerializer):
         return MaterialSerializer(material, context=self.context).data
 
     def get_usuario(self, obj):
-        usuario = obj.usuario
-        return UsuarioPublicoSerializer(usuario).data
+        return UsuarioPublicoSerializer(obj.alumno.usuario).data
 
 
 class MensajeClaseSerializer(serializers.ModelSerializer):
@@ -402,7 +399,7 @@ class MensajeClaseSerializer(serializers.ModelSerializer):
         fields = ('id', 'autor', 'texto', 'fecha')
 
     def get_autor(self, obj):
-        return UsuarioPublicoSerializer(obj.autor).data
+        return UsuarioPublicoSerializer(obj.tutor.usuario).data
 
 
 class NotificacionSerializer(serializers.ModelSerializer):

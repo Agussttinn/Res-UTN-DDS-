@@ -17,7 +17,7 @@ from rest_framework.views import APIView
 
 from . import sysacad_client, sysacad_sync
 from .auth import crear_token
-from .models import Rol, EstadoMaterial,Usuario, Especialidad, Materia, Material, ClaseApoyo, Ponderacion, Suscripcion, Notificacion
+from .models import Rol, EstadoMaterial, Alumno, Usuario, Especialidad, Materia, Material, ClaseApoyo, Ponderacion, Suscripcion, Notificacion
 from .observador import EventoClase, SujetoClase
 from .permissions import (
     ADMINISTRADOR,
@@ -29,6 +29,7 @@ from .permissions import (
     PuedeVerUsuario,
     es_administrador,
     lectura_autenticada_escritura_para,
+    rol_de,
 )
 from .serializer import (
     UsuarioSerializer,
@@ -47,6 +48,7 @@ ESTADOS_PUBLICOS = (EstadoMaterial.APROBADO, EstadoMaterial.ARCHIVADO)
 # Cualquier usuario logueado LEE; solo el rol indicado ESCRIBE.
 SoloAdministradorEscribe = lectura_autenticada_escritura_para(ADMINISTRADOR)
 TutorOAdministradorEscriben = lectura_autenticada_escritura_para(TUTOR, ADMINISTRADOR)
+SoloAlumnoEscribe = lectura_autenticada_escritura_para(ALUMNO)
 
 # El legajo va dentro de una URL hacia SySACAD: solo letras y números, sin "/" ni "..".
 LEGAJO_VALIDO = re.compile(r'^[A-Za-z0-9]{1,20}$')
@@ -75,9 +77,9 @@ def materiales_visibles_para(usuario):
 
     Trae en la misma consulta la materia, el autor y el promedio de estrellas, para no hacer
     varias consultas extra por cada material de la lista."""
-    materiales = Material.objects.select_related('materia__especialidad', 'usuario__rol', 'estado')
+    materiales = Material.objects.select_related('materia__especialidad', 'alumno__usuario__rol', 'estado')
     if usuario.rol.nombre != ADMINISTRADOR:
-        materiales = materiales.filter(Q(estado__nombre__in=ESTADOS_PUBLICOS) | Q(usuario=usuario))
+        materiales = materiales.filter(Q(estado__nombre__in=ESTADOS_PUBLICOS) | Q(alumno_id=usuario.pk))
     return materiales
 
 def _eliminar_material_y_archivo(material):
@@ -204,8 +206,9 @@ class MateriaSincronizar(APIView):
 
 class MaterialListCreate(generics.ListCreateAPIView):
     """GET: materiales validados (más los propios pendientes). Filtro opcional: ?materia=<id>.
-    POST: cualquier usuario logueado carga un material (multipart, con el archivo); queda PENDIENTE."""
+    POST: solo los alumnos cargan un material (multipart, con el archivo); queda PENDIENTE."""
     serializer_class = MaterialSerializer
+    permission_classes = [SoloAlumnoEscribe]
 
     def get_queryset(self):
         materiales = materiales_visibles_para(self.request.user).order_by('-fecha_de_carga', '-id')
@@ -215,7 +218,7 @@ class MaterialListCreate(generics.ListCreateAPIView):
         return materiales
 
     def perform_create(self, serializer):
-        serializer.save(usuario=self.request.user)
+        serializer.save(alumno=self.request.user.alumno)
 
 
 class MaterialDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -267,7 +270,7 @@ class MaterialModerar(APIView):
  
     def post(self, request, pk):
         material = get_object_or_404(
-            Material.objects.select_related('materia__especialidad', 'usuario__rol', 'estado'), pk=pk,
+            Material.objects.select_related('materia__especialidad', 'alumno__usuario__rol', 'estado'), pk=pk,
         )
         accion = _datos(request).get('accion')
  
@@ -288,16 +291,31 @@ class MaterialModerar(APIView):
         if accion == 'rechazar':
             material.motivo_rechazo = str(_datos(request).get('motivo') or '').strip() or None
         material.save(update_fields=['estado', 'motivo_rechazo'])
+        if accion == 'rechazar':
+            self._avisar_rechazo(material)
         return Response(MaterialSerializer(material, context={'request': request}).data)
+
+    @staticmethod
+    def _avisar_rechazo(material):
+        """Le llega al alumno autor una notificación (la campanita) con el motivo y cómo corregirlo."""
+        texto = 'Podés corregirlo y reenviarlo desde Materiales: vuelve a quedar pendiente de revisión.'
+        if material.motivo_rechazo:
+            texto = f'Motivo: {material.motivo_rechazo}. ' + texto
+        Notificacion.objects.create(
+            alumno=material.alumno,
+            tipo=Notificacion.RECHAZO,
+            titulo=f'Rechazaron tu apunte "{material.titulo}"',
+            texto=texto,
+        )
 
 
 # ---------- clases de apoyo ----------
 
 def _clases_apoyo_queryset(request):
     """Las clases con, en la misma consulta, cuántos suscritos tienen y si quien consulta es uno de ellos."""
-    clases = ClaseApoyo.objects.select_related('materia__especialidad', 'tutor__rol').annotate(
+    clases = ClaseApoyo.objects.select_related('materia__especialidad', 'tutor__usuario__rol').annotate(
         cantidad_suscritos=Count('suscripciones', distinct=True),
-        suscrito=Exists(Suscripcion.objects.filter(clase=OuterRef('pk'), usuario_id=request.user.pk)),
+        suscrito=Exists(Suscripcion.objects.filter(clase=OuterRef('pk'), alumno_id=request.user.pk)),
     ).order_by('dia', 'hora_inicio', 'id')  # como un cronograma
     materia_id = _id_numerico(request, 'materia')
     if materia_id is not None:
@@ -363,32 +381,38 @@ def _puede_gestionar(request, clase):
     return es_administrador(request) or clase.tutor_id == request.user.pk
 
 
+def _es_tutor_de(request, clase):
+    """Solo el tutor a cargo de la clase (un administrador no habla en nombre del tutor)."""
+    return rol_de(request) == TUTOR and clase.tutor_id == request.user.pk
+
+
 class ClaseApoyoSuscripcion(APIView):
     """POST: el alumno logueado se suscribe a la clase (recibe avisos de cambios y mensajes).
     DELETE: deja de seguirla. Solo los alumnos se suscriben."""
 
     def post(self, request, pk):
         clase = _clase_de_la_url(request, pk)
-        if request.user.rol.nombre != ALUMNO:
+        if rol_de(request) != ALUMNO:
             return Response({"error": "Solo los alumnos pueden suscribirse a una clase."}, status=status.HTTP_403_FORBIDDEN)
-        nueva = SujetoClase(clase).suscribir(request.user)
+        nueva = SujetoClase(clase).suscribir(request.user.alumno)
         return self._estado(clase, status.HTTP_201_CREATED if nueva else status.HTTP_200_OK)
 
     def delete(self, request, pk):
         clase = _clase_de_la_url(request, pk)
-        SujetoClase(clase).desuscribir(request.user)
+        if rol_de(request) == ALUMNO:
+            SujetoClase(clase).desuscribir(request.user.alumno)
         return self._estado(clase, status.HTTP_200_OK)
 
     def _estado(self, clase, codigo):
         return Response({
-            "suscrito": clase.suscripciones.filter(usuario=self.request.user).exists(),
+            "suscrito": clase.suscripciones.filter(alumno_id=self.request.user.pk).exists(),
             "cantidad_suscritos": clase.suscripciones.count(),
         }, status=codigo)
 
 
 class ClaseApoyoMensajes(generics.ListCreateAPIView):
     """GET: mensajes de la clase, los más nuevos primero (sus suscritos, su tutor o un administrador).
-    POST: el tutor de la clase (o un administrador) manda un mensaje, que les llega a todos los suscritos."""
+    POST: el tutor de la clase manda un mensaje, que les llega a todos los suscritos."""
     serializer_class = MensajeClaseSerializer
 
     def get_clase(self):
@@ -400,18 +424,18 @@ class ClaseApoyoMensajes(generics.ListCreateAPIView):
         clase = self.get_clase()
         if not (_puede_gestionar(self.request, clase) or clase.suscrito):
             self.permission_denied(self.request, message='Para ver los mensajes tenés que estar suscrito a la clase.')
-        return clase.mensajes.select_related('autor__rol')
+        return clase.mensajes.select_related('tutor__usuario__rol')
 
     @transaction.atomic
     def perform_create(self, serializer):
         clase = self.get_clase()
-        if not _puede_gestionar(self.request, clase):
-            self.permission_denied(self.request, message='Solo el tutor de la clase o un administrador pueden enviar mensajes.')
-        mensaje = serializer.save(clase=clase, autor=self.request.user)
+        if not _es_tutor_de(self.request, clase):
+            self.permission_denied(self.request, message='Solo el tutor de la clase puede enviar mensajes.')
+        mensaje = serializer.save(clase=clase, tutor=clase.tutor)
         SujetoClase(clase).notificar(EventoClase(
             tipo=Notificacion.MENSAJE,
             clase=clase,
-            titulo=f'Mensaje de {mensaje.autor.nombre_y_apellido} ({clase.materia.nombre})',
+            titulo=f'Mensaje de {clase.tutor.usuario.nombre_y_apellido} ({clase.materia.nombre})',
             texto=mensaje.texto,
         ))
 
@@ -423,14 +447,14 @@ class NotificacionList(generics.ListAPIView):
     serializer_class = NotificacionSerializer
 
     def get_queryset(self):
-        return Notificacion.objects.filter(usuario=self.request.user)[:50]
+        return Notificacion.objects.filter(alumno_id=self.request.user.pk)[:50]
 
 
 class NotificacionesMarcarLeidas(APIView):
     """Marca como leídas todas las notificaciones del usuario logueado."""
 
     def post(self, request):
-        marcadas = Notificacion.objects.filter(usuario=request.user, leida=False).update(leida=True)
+        marcadas = Notificacion.objects.filter(alumno_id=request.user.pk, leida=False).update(leida=True)
         return Response({"marcadas": marcadas})
 
 
@@ -440,10 +464,10 @@ def _ponderaciones_queryset(request):
     """Cada usuario ve solo sus propias ponderaciones (el administrador, todas).
     Filtro opcional: ?material=<id> para saber qué estrellas le puso el usuario a ese material."""
     ponderaciones = Ponderacion.objects.select_related(
-        'material__materia__especialidad', 'material__usuario__rol', 'material__estado', 'usuario__rol'
+        'material__materia__especialidad', 'material__alumno__usuario__rol', 'material__estado', 'alumno__usuario__rol'
     )
     if not es_administrador(request):
-        ponderaciones = ponderaciones.filter(usuario=request.user)
+        ponderaciones = ponderaciones.filter(alumno_id=request.user.pk)
     material_id = _id_numerico(request, 'material')
     if material_id is not None:
         ponderaciones = ponderaciones.filter(material_id=material_id)
@@ -451,19 +475,21 @@ def _ponderaciones_queryset(request):
 
 
 class PonderacionListCreate(generics.ListCreateAPIView):
+    """POST: solo los alumnos puntúan."""
     serializer_class = PonderacionSerializer
+    permission_classes = [SoloAlumnoEscribe]
 
     def get_queryset(self):
         return _ponderaciones_queryset(self.request)
 
     def perform_create(self, serializer):
-        serializer.save(usuario=self.request.user)  # puntúa quien está logueado
+        serializer.save(alumno=self.request.user.alumno)  # puntúa quien está logueado
 
 
 class PonderacionDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PonderacionSerializer
     permission_classes = [IsAuthenticated, EsDuenioOAdministrador]
-    campo_duenio = 'usuario'
+    campo_duenio = 'alumno'
 
     def get_queryset(self):
         return _ponderaciones_queryset(self.request)

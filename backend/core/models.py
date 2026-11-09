@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.aggregates import Avg, Count
+from django.db.models.deletion import ProtectedError
 
 from .archivos import ruta_material, validar_extension, validar_tamano
 
@@ -40,6 +41,62 @@ class Usuario(models.Model):
     @property
     def is_anonymous(self):
         return False
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.sincronizar_subtipo()
+
+    def sincronizar_subtipo(self):
+        """Mantiene la fila del subtipo (alumnos, tutores o administradores) que corresponde al rol.
+        Si el rol cambió, se crea la nueva y se quita la anterior, salvo que ya tenga registros asociados."""
+        actual = self.rol.nombre
+        for rol, modelo in SUBTIPOS.items():
+            if rol == actual:
+                modelo.objects.get_or_create(usuario=self)
+            else:
+                try:
+                    modelo.objects.filter(usuario=self).delete()
+                except ProtectedError:
+                    pass  # tiene materiales, clases, etc.: se conserva para no perder datos
+
+
+class Alumno(models.Model):
+    """Usuario con rol alumno: sube y puntúa materiales, se suscribe a clases y recibe notificaciones.
+    Su clave primaria es el mismo legajo del Usuario (una tabla por subtipo)."""
+    usuario = models.OneToOneField(Usuario, primary_key=True, on_delete=models.CASCADE, db_column='legajo', related_name='alumno')
+
+    class Meta:
+        db_table = 'alumnos'
+
+    def __str__(self):
+        return str(self.usuario)
+
+
+class Tutor(models.Model):
+    """Usuario con rol tutor: publica clases de apoyo y manda mensajes a sus suscritos."""
+    usuario = models.OneToOneField(Usuario, primary_key=True, on_delete=models.CASCADE, db_column='legajo', related_name='tutor')
+
+    class Meta:
+        db_table = 'tutores'
+
+    def __str__(self):
+        return str(self.usuario)
+
+
+class Administrador(models.Model):
+    """Usuario con rol administrador: modera, archiva y edita materiales, gestiona usuarios y sincroniza materias."""
+    usuario = models.OneToOneField(Usuario, primary_key=True, on_delete=models.CASCADE, db_column='legajo', related_name='administrador')
+
+    class Meta:
+        db_table = 'administradores'
+
+    def __str__(self):
+        return str(self.usuario)
+
+
+# nombre del rol -> tabla del subtipo
+SUBTIPOS = {'alumno': Alumno, 'tutor': Tutor, 'administrador': Administrador}
+
 
 class Especialidad(models.Model):
     nombre = models.CharField(max_length=100)
@@ -81,7 +138,7 @@ class EstadoMaterial(models.Model):
 
 class Material(models.Model): 
     materia = models.ForeignKey(Materia, on_delete=models.CASCADE, related_name='materiales') 
-    usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT, related_name='materiales')
+    alumno = models.ForeignKey(Alumno, on_delete=models.PROTECT, related_name='materiales')
     titulo = models.CharField(max_length=100)
     fecha_de_carga = models.DateTimeField(auto_now_add=True)
     tipo = models.CharField(max_length=20, choices=[
@@ -131,7 +188,7 @@ class ClaseApoyo(models.Model):
     ]
 
     materia = models.ForeignKey(Materia, on_delete=models.CASCADE, related_name='clases_apoyo')
-    tutor = models.ForeignKey(Usuario, on_delete=models.PROTECT, related_name='clases_apoyo')
+    tutor = models.ForeignKey(Tutor, on_delete=models.PROTECT, related_name='clases_apoyo')
     # Día y horas pueden ser null solo en clases viejas cuyo horario (antes texto libre) no se pudo interpretar
     # al migrar: quedan "a confirmar" hasta que el tutor las complete. La API exige los tres.
     dia = models.PositiveSmallIntegerField(choices=DIAS, null=True, blank=True)
@@ -155,41 +212,41 @@ class ClaseApoyo(models.Model):
 
 class Ponderacion(models.Model):
     material = models.ForeignKey(Material, on_delete=models.CASCADE, related_name='ponderaciones')
-    usuario = models.ForeignKey(Usuario, on_delete=models.PROTECT, related_name='ponderaciones')
+    alumno = models.ForeignKey(Alumno, on_delete=models.PROTECT, related_name='ponderaciones')
     valor = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])  # estrellas de 1 a 5
     fecha = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'ponderaciones'
-        # un usuario solo puede tener una ponderación por material (si vota de nuevo, se actualiza la anterior)
+        # un alumno solo puede tener una ponderación por material (si vota de nuevo, se actualiza la anterior)
         constraints = [
-            models.UniqueConstraint(fields=['material', 'usuario'], name='ponderacion_unica_por_usuario_y_material'),
+            models.UniqueConstraint(fields=['material', 'alumno'], name='ponderacion_unica_por_alumno_y_material'),
         ]
 
     def __str__(self):
-        return f"{self.material} - {self.usuario}"
+        return f"{self.material} - {self.alumno}"
 
 class Suscripcion(models.Model):
     """Un alumno que sigue una clase de apoyo para enterarse de sus cambios y mensajes.
     En el patrón Observer es un observador registrado en esa clase (ver observador.py)."""
     clase = models.ForeignKey(ClaseApoyo, on_delete=models.CASCADE, related_name='suscripciones')
-    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='suscripciones')
+    alumno = models.ForeignKey(Alumno, on_delete=models.CASCADE, related_name='suscripciones')
     fecha = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'suscripciones'
         constraints = [
-            models.UniqueConstraint(fields=['clase', 'usuario'], name='suscripcion_unica_por_usuario_y_clase'),
+            models.UniqueConstraint(fields=['clase', 'alumno'], name='suscripcion_unica_por_alumno_y_clase'),
         ]
 
     def __str__(self):
-        return f"{self.usuario} sigue {self.clase}"
+        return f"{self.alumno} sigue {self.clase}"
 
 
 class MensajeClase(models.Model):
-    """Mensaje que el tutor de una clase (o un administrador) les manda a sus suscritos."""
+    """Mensaje que el tutor de una clase les manda a sus suscritos."""
     clase = models.ForeignKey(ClaseApoyo, on_delete=models.CASCADE, related_name='mensajes')
-    autor = models.ForeignKey(Usuario, on_delete=models.PROTECT, related_name='mensajes_de_clases')
+    tutor = models.ForeignKey(Tutor, on_delete=models.PROTECT, related_name='mensajes_de_clases')
     texto = models.TextField()
     fecha = models.DateTimeField(auto_now_add=True)
 
@@ -202,18 +259,21 @@ class MensajeClase(models.Model):
 
 
 class Notificacion(models.Model):
-    """Aviso que recibe un usuario en la app (la campanita). Lo genera el patrón Observer."""
+    """Aviso que recibe un alumno en la app (la campanita). Los de clases los genera el patrón Observer;
+    el de rechazo de un material, la moderación."""
     MODIFICACION = 'modificacion'
     CANCELACION = 'cancelacion'
     MENSAJE = 'mensaje'
+    RECHAZO = 'rechazo'
 
-    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='notificaciones')
+    alumno = models.ForeignKey(Alumno, on_delete=models.CASCADE, related_name='notificaciones')
     # Si la clase se cancela (se borra), el aviso queda igual: por eso SET_NULL y no CASCADE.
     clase = models.ForeignKey(ClaseApoyo, on_delete=models.SET_NULL, null=True, blank=True, related_name='notificaciones')
     tipo = models.CharField(max_length=20, choices=[
         (MODIFICACION, 'Modificación'),
         (CANCELACION, 'Cancelación'),
         (MENSAJE, 'Mensaje'),
+        (RECHAZO, 'Rechazo de un material'),
     ])
     titulo = models.CharField(max_length=150)
     texto = models.TextField()
@@ -225,4 +285,4 @@ class Notificacion(models.Model):
         ordering = ['-fecha', '-id']
 
     def __str__(self):
-        return f"{self.usuario}: {self.titulo}"
+        return f"{self.alumno}: {self.titulo}"

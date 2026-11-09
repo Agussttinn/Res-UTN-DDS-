@@ -128,12 +128,14 @@ Representa las entidades del negocio:
 ### 2. Diagrama Entidad-Relación (E-R)
 - **`ROL`**: `(PK: id, nombre)`. Los roles son datos: agregar uno no cambia el esquema.
 - **`USUARIO`**: `(PK: legajo, nombre, correo, contraseña, FK: rol_id)`
+- **`ALUMNO`**, **`TUTOR`** y **`ADMINISTRADOR`**: `(PK y FK: legajo)`, una tabla por rol, cada una 1 a 0..1 con `USUARIO`. Las tablas son `alumnos`, `tutores` y `administradores`. Al crear o cambiar un usuario se crea la fila de su rol.
 - **`ESPECIALIDAD`**: `(PK: idEspecialidad, nombre)`
 - **`MATERIA`**: `(PK: idMateria, FK: idEspecialidad, nombre, año)`
 - **`ESTADO_MATERIAL`**: `(PK: id, nombre)` con `pendiente`, `aprobado`, `rechazado` y `archivado`.
-- **`MATERIAL`**: `(PK: idMaterial, FK: idMateria, FK: legajoUsuario, FK: estado_id, titulo, fechaCarga, tipo, comentario, motivo_rechazo, archivo, promedio_ponderacion, cantidad_ponderaciones)`. La última media se guarda en el material y se actualiza al votar.
-- **`CLASE_APOYO`**: `(PK: idClase, FK: idMateria, FK: legajoTutor, dia, horaInicio, horaFin, aula)`
-- **`PONDERACION`**: `(PK: idPonderacion, FK: idMaterial, FK: legajoUsuario, valor, fecha)`
+- **`MATERIAL`**: `(PK: idMaterial, FK: idMateria, FK: alumno_id, FK: estado_id, titulo, fechaCarga, tipo, comentario, motivo_rechazo, archivo, promedio_ponderacion, cantidad_ponderaciones)`. La última media se guarda en el material y se actualiza al votar.
+- **`CLASE_APOYO`**: `(PK: idClase, FK: idMateria, FK: tutor_id, dia, horaInicio, horaFin, aula)`
+- **`PONDERACION`**: `(PK: idPonderacion, FK: idMaterial, FK: alumno_id, valor, fecha)`
+- **`SUSCRIPCION`**: `(PK: id, FK: clase_id, FK: alumno_id, fecha)`; **`MENSAJE_CLASE`**: `(PK: id, FK: clase_id, FK: tutor_id, texto, fecha)`; **`NOTIFICACION`**: `(PK: id, FK: alumno_id, FK: clase_id opcional, tipo, titulo, texto, fecha, leida)`.
 
 ### 3. Diagrama de Estados (Entidad: Material)
 ```text
@@ -369,9 +371,9 @@ curl http://127.0.0.1:8000/api/materias/ -H "Authorization: Bearer <token>"
 | :--- | :--- | :--- | :--- |
 | Materias y especialidades | leer | leer | leer y escribir |
 | Usuarios | ver el propio | ver el propio | todo (así se dan de alta tutores y administradores) |
-| Materiales | ver los validados y los propios; subir; editar sus pendientes; borrar los propios | igual que el alumno | todo, y modera |
-| Clases de apoyo | leer; suscribirse y leer los mensajes de las que sigue | leer; publicar; modificar, cancelar y mandar mensajes en las propias | todo (para crear una necesita indicar el tutor) |
-| Ponderaciones (estrellas) | puntuar; ver las propias | igual | puntuar; ver todas |
+| Materiales | ver los validados y los propios; subir; editar sus pendientes o rechazados; borrar los propios | ver los validados | todo (editar, moderar, archivar), pero no sube |
+| Clases de apoyo | leer; suscribirse y leer los mensajes de las que sigue | leer; publicar; modificar, cancelar y mandar mensajes en las propias | modificar, cancelar y leer los mensajes de cualquiera (para crear una indica el tutor); no manda mensajes |
+| Ponderaciones (estrellas) | puntuar; ver las propias | solo leer | ver todas y borrarlas; no puntúa |
 
 ### Endpoints
 
@@ -389,7 +391,7 @@ curl http://127.0.0.1:8000/api/materias/ -H "Authorization: Bearer <token>"
 | `GET` `PUT` `PATCH` `DELETE /materias/{id}/` | `GET`: logueado; resto: administrador | Detalle / modificar / borrar |
 | `POST /materias/sincronizar/{carrera}/` | administrador | Importa el plan de estudio de SySACAD a la base local. Por ahora solo `ISI` (las demás responden `400`) |
 | `GET /materiales/?materia={id}` | logueado | Materiales visibles para quien consulta; el filtro es opcional |
-| `POST /materiales/` | logueado | Sube un material (`multipart/form-data`); queda **pendiente** |
+| `POST /materiales/` | alumno | Sube un material (`multipart/form-data`); queda **pendiente** |
 | `GET` `PUT` `PATCH` `DELETE /materiales/{id}/` | ver: logueado; modificar: autor (si está pendiente o rechazado) o administrador; borrar: autor o administrador | Detalle / modificar / borrar |
 | `GET /materiales/pendientes/` | administrador | Cola de moderación, los más viejos primero |
 | `POST /materiales/{id}/moderar/` | administrador | Aprueba, rechaza (con motivo) o archiva un material |
@@ -398,11 +400,11 @@ curl http://127.0.0.1:8000/api/materias/ -H "Authorization: Bearer <token>"
 | `GET` `PUT` `PATCH` `DELETE /clases-apoyo/{id}/` | su tutor o administrador | Detalle / modificar / cancelar. Modificar y cancelar avisan a los suscritos |
 | `POST` `DELETE /clases-apoyo/{id}/suscripcion/` | alumno | Suscribirse / dejar de seguir la clase. Responde `{suscrito, cantidad_suscritos}` |
 | `GET /clases-apoyo/{id}/mensajes/` | sus suscritos, su tutor o administrador | Mensajes de la clase, los más nuevos primero |
-| `POST /clases-apoyo/{id}/mensajes/` | su tutor o administrador | `{"texto": "..."}` (hasta 1000 caracteres). Les llega un aviso a todos los suscritos |
-| `GET /notificaciones/` | logueado | Los últimos 50 avisos propios, los más nuevos primero |
+| `POST /clases-apoyo/{id}/mensajes/` | su tutor | `{"texto": "..."}` (hasta 1000 caracteres). Les llega un aviso a todos los suscritos |
+| `GET /notificaciones/` | logueado | Los últimos 50 avisos propios (cambios, cancelaciones y mensajes de las clases que sigue, y rechazos de sus apuntes), los más nuevos primero. Los reciben los alumnos |
 | `POST /notificaciones/marcar-leidas/` | logueado | Marca como leídos todos los avisos propios |
 | `GET /ponderaciones/?material={id}` | logueado | Las estrellas propias (el administrador ve todas) |
-| `POST /ponderaciones/` | logueado | Puntuar un material |
+| `POST /ponderaciones/` | alumno | Puntuar un material |
 | `GET` `PUT` `PATCH` `DELETE /ponderaciones/{id}/` | su dueño o administrador | Detalle / cambiar las estrellas / borrar |
 
 **Cuerpos de ejemplo:**
@@ -435,8 +437,10 @@ Al **leer**, las relaciones vienen anidadas (por ejemplo `material.materia.nombr
 - **Estrellas:** de 1 a 5, un voto por usuario y por material (votar de nuevo cambia el voto). No se puede puntuar el **propio** material ni uno que no esté **aprobado** (pendiente, rechazado o archivado). Cada material trae `estado`, `motivo_rechazo`, `promedio_ponderacion` (con un decimal, o `null` si nadie votó) y `cantidad_ponderaciones`.
 - **Registro:** el legajo se valida contra SySACAD (de ahí salen el nombre y el correo) y la cuenta siempre queda con rol `alumno`. La contraseña debe tener al menos 8 caracteres, no ser una clave común ni solo números.
 - **Clases de apoyo:** las publica un tutor y quedan a su nombre. Un administrador puede modificar o cancelar cualquiera. Cada clase trae `suscrito` (si quien consulta la sigue) y `cantidad_suscritos`.
-- **Día y horario de una clase:** se guardan por separado: `dia` (1 = lunes ... 6 = sábado), `hora_inicio` y `hora_fin` (`"HH:MM"`). Las horas tienen que estar entre las 07:00 y las 23:30, el fin después del inicio, con al menos 30 minutos de clase, y un tutor no puede tener dos clases que se superpongan. Al leer, cada clase trae también `horario` ya armado para mostrar ("lunes de 14:00 a 16:00"), y la lista viene ordenada por día y hora. Las clases creadas antes de este cambio (horario en texto libre) se convirtieron solas al migrar. Las que no se pudieron interpretar quedan "a confirmar" hasta que su tutor las modifique.
+- **Día y horario de una clase:** se guardan por separado: `dia` (1 = lunes ... 6 = sábado), `hora_inicio` y `hora_fin` (`"HH:MM"`). Las horas tienen que estar entre las 09:00 y las 23:30, el fin después del inicio, con al menos 30 minutos de clase, y un tutor no puede tener dos clases que se superpongan. Al leer, cada clase trae también `horario` ya armado para mostrar ("lunes de 14:00 a 16:00"), y la lista viene ordenada por día y hora. Las clases creadas antes de este cambio (horario en texto libre) se convirtieron solas al migrar. Las que no se pudieron interpretar quedan "a confirmar" hasta que su tutor las modifique.
 - **Suscripciones y avisos (patrón Observer, `backend/core/observador.py`):** la clase es el sujeto y los alumnos suscritos son sus observadores. Cuando el tutor la modifica (materia, horario o aula), la cancela o manda un mensaje, cada suscrito recibe una notificación en la app (la campanita, que se consulta cada minuto). Guardar sin cambios no avisa. El aviso de una cancelación queda aunque la clase ya no exista. Para sumar otro canal (por ejemplo, correo) alcanza con otro observador.
+- **Rechazo de un apunte:** cuando un administrador rechaza un material (con motivo), el alumno autor recibe una notificación en la campanita (`tipo: rechazo`) con el motivo. El material no se borra: el alumno lo corrige y lo reenvía, y vuelve a quedar pendiente de revisión.
+- **Roles y tablas:** solo los alumnos suben y puntúan materiales y se suscriben a las clases; solo el tutor de la clase manda mensajes; el administrador modera, archiva y edita. Cada rol tiene su tabla (`alumnos`, `tutores`, `administradores`) y las claves foráneas apuntan a la que corresponde (por ejemplo `materiales.alumno_id`, `clases_apoyo.tutor_id`).
 - **Borrados protegidos:** si algo tiene otros registros que dependen de él (un usuario con material, una especialidad con materias) el borrado responde `409` en vez de romper.
 
 ### Errores

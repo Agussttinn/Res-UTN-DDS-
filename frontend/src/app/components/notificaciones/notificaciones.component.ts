@@ -85,7 +85,8 @@ export class NotificacionesComponent implements OnInit {
   protected readonly icono: Record<TipoNotificacion, string> = {
     modificacion: '✏️',
     cancelacion: '🚫',
-    mensaje: '💬'
+    mensaje: '💬',
+    rechazo: '📄'
   };
 
   ngOnInit(): void {

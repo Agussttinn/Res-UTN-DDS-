@@ -18,7 +18,7 @@ from dataclasses import dataclass
 
 from django.db import IntegrityError, transaction
 
-from .models import ClaseApoyo, Notificacion, Suscripcion, Usuario
+from .models import Alumno, ClaseApoyo, Notificacion, Suscripcion
 
 
 @dataclass(frozen=True)
@@ -37,14 +37,14 @@ class ObservadorClase(ABC):
 
 
 class AvisoEnLaApp(ObservadorClase):
-    """Le deja al usuario una notificación dentro de la aplicación."""
+    """Le deja al alumno una notificación dentro de la aplicación."""
 
-    def __init__(self, usuario: Usuario):
-        self.usuario = usuario
+    def __init__(self, alumno: Alumno):
+        self.alumno = alumno
 
     def actualizar(self, evento: EventoClase) -> None:
         Notificacion.objects.create(
-            usuario=self.usuario,
+            alumno=self.alumno,
             clase=evento.clase,
             tipo=evento.tipo,
             titulo=evento.titulo,
@@ -58,23 +58,23 @@ class SujetoClase:
     def __init__(self, clase: ClaseApoyo):
         self.clase = clase
 
-    def suscribir(self, usuario: Usuario) -> bool:
-        """Registra al usuario como observador. Devuelve False si ya estaba suscrito."""
+    def suscribir(self, alumno: Alumno) -> bool:
+        """Registra al alumno como observador. Devuelve False si ya estaba suscrito."""
         try:
             with transaction.atomic():
-                Suscripcion.objects.create(clase=self.clase, usuario=usuario)
+                Suscripcion.objects.create(clase=self.clase, alumno=alumno)
         except IntegrityError:
             return False
         return True
 
-    def desuscribir(self, usuario: Usuario) -> bool:
-        """Quita al usuario de los observadores. Devuelve False si no estaba suscrito."""
-        borradas, _ = Suscripcion.objects.filter(clase=self.clase, usuario=usuario).delete()
+    def desuscribir(self, alumno: Alumno) -> bool:
+        """Quita al alumno de los observadores. Devuelve False si no estaba suscrito."""
+        borradas, _ = Suscripcion.objects.filter(clase=self.clase, alumno=alumno).delete()
         return borradas > 0
 
     def observadores(self) -> list[ObservadorClase]:
-        suscripciones = self.clase.suscripciones.select_related('usuario')
-        return [AvisoEnLaApp(suscripcion.usuario) for suscripcion in suscripciones]
+        suscripciones = self.clase.suscripciones.select_related('alumno')
+        return [AvisoEnLaApp(suscripcion.alumno) for suscripcion in suscripciones]
 
     @transaction.atomic
     def notificar(self, evento: EventoClase) -> int:

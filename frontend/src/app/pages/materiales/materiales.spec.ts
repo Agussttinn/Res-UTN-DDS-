@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 
 import { Materia, Ponderacion, Usuario } from '../../models/api.models';
 import {
-  ALUMNA, API_URL, crearComponente, estabilizar, iniciarSesionComo, proveedoresDePrueba, textoDe, unMaterial, unaMateria,
+  ADMINISTRADORA, ALUMNA, API_URL, TUTOR, crearComponente, estabilizar, iniciarSesionComo, proveedoresDePrueba, textoDe, unMaterial, unaMateria,
 } from '../../testing/pruebas';
 import { MaterialesComponent } from './materiales';
 
@@ -166,6 +166,17 @@ describe('MaterialesComponent', () => {
       expect(textoDe(fixture)).toContain('Archivado');
       expect(estrellas(fixture).every((e) => e.disabled)).toBe(true);
       expect(textoDe(fixture)).toContain('ya no se puede puntuar');
+    });
+
+    it('un tutor o un administrador no pueden compartir ni puntuar apuntes', async () => {
+      for (const usuario of [TUTOR, ADMINISTRADORA]) {
+        TestBed.resetTestingModule();
+        const fixture = await abrir({ usuario, materiales: [unMaterial({ estado: 'aprobado', validacion: true })] });
+
+        expect(boton(fixture, 'Compartir Apunte')).toBeUndefined();
+        expect(estrellas(fixture).every((e) => e.disabled)).toBe(true);
+        expect(textoDe(fixture)).toContain('Solo los alumnos puntúan');
+      }
     });
 
     it('no se puede puntuar el propio apunte, aunque ya esté validado', async () => {
