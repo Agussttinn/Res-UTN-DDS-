@@ -231,11 +231,15 @@ class MaterialDetail(generics.RetrieveUpdateDestroyAPIView):
     def perform_update(self, serializer):
         # Si el autor corrige un material RECHAZADO, vuelve a la cola de revisión (pendiente).
         reenvia = serializer.instance.estado.nombre == EstadoMaterial.RECHAZADO and not es_administrador(self.request)
+        archivo_anterior = serializer.instance.archivo.name if serializer.instance.archivo else None
         material = serializer.save()
         if reenvia:
             material.estado = EstadoMaterial.objects.get(nombre=EstadoMaterial.PENDIENTE)
             material.motivo_rechazo = None
             material.save(update_fields=['estado', 'motivo_rechazo'])
+        # Si reemplazó el archivo, el anterior ya no se usa: se borra del disco para no dejarlo huérfano.
+        if archivo_anterior and archivo_anterior != (material.archivo.name if material.archivo else None):
+            material.archivo.storage.delete(archivo_anterior)
 
     def perform_destroy(self, instance):
         _eliminar_material_y_archivo(instance)

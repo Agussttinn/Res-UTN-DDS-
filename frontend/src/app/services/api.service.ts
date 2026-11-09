@@ -59,6 +59,12 @@ export class ApiService {
     return this.http.post<Material>(`${API_URL}/materiales/`, formData);
   }
 
+  /** Corrige un apunte propio (pendiente o rechazado). Si estaba rechazado, vuelve a quedar pendiente de revisión.
+   * `formData` lleva solo lo que cambia; el archivo es opcional (si no se manda, se conserva el actual). */
+  editarMaterial(id: number, formData: FormData): Observable<Material> {
+    return this.http.patch<Material>(`${API_URL}/materiales/${id}/`, formData);
+  }
+
   // ---- moderación (solo administradores) ----
   getMaterialesPendientes(): Observable<Material[]> {
     return this.http.get<Material[]>(`${API_URL}/materiales/pendientes/`);

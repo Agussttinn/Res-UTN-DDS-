@@ -46,6 +46,14 @@
         {{ etiquetaTipoPlural[tipo] }}
       </button>
     }
+    @if (auth.esAlumno()) {
+      <span class="mx-1 h-5 w-px bg-slate-200" aria-hidden="true"></span>
+      <button type="button" (click)="soloMios.set(!soloMios())" [attr.aria-pressed]="soloMios()"
+              [class]="soloMios() ? 'bg-brand-600 text-white' : 'bg-white text-slate-700 border border-slate-200'"
+              class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+        📁 Mis apuntes
+      </button>
+    }
   </div>
 
   <!-- Grilla de Tarjetas -->
@@ -58,7 +66,11 @@
     </div>
   } @else if (materialesFiltrados().length === 0) {
     <div class="text-center py-12 bg-white rounded-xl border border-slate-200 text-slate-500">
-      No hay apuntes disponibles para este filtro. ¡Sé el primero en compartir uno!
+      @if (soloMios()) {
+        Todavía no compartiste ningún apunte{{ materiaSeleccionada() ? ' de esta materia' : '' }}.
+      } @else {
+        No hay apuntes disponibles para este filtro. ¡Sé el primero en compartir uno!
+      }
     </div>
   } @else {
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -92,6 +104,19 @@
               <span class="inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-600 uppercase">
                 Archivado
               </span>
+            } @else if (esMio(item)) {
+              <span class="inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 uppercase">
+                Aprobado
+              </span>
+            }
+            @if (puedeEditar(item)) {
+              <div class="mt-2">
+                <button type="button" (click)="abrirEdicion(item)"
+                        [class]="item.estado === 'rechazado' ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'"
+                        class="text-xs font-semibold px-3 py-1.5 rounded-md transition-colors">
+                  {{ item.estado === 'rechazado' ? '✏️ Corregir y reenviar' : '✏️ Editar' }}
+                </button>
+              </div>
             }
           </div>
 
@@ -127,9 +152,15 @@
            class="bg-white w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl shadow-xl flex flex-col max-h-[92vh]">
         <header class="flex items-start justify-between gap-4 px-5 sm:px-6 pt-5 pb-4 border-b border-slate-100">
           <div>
-            <h2 id="titulo-modal" class="text-lg font-bold text-slate-800">Compartir apunte</h2>
+            <h2 id="titulo-modal" class="text-lg font-bold text-slate-800">{{ tituloDelModal() }}</h2>
             <p id="descripcion-modal" class="text-sm text-slate-500 mt-0.5">
-              Un administrador lo revisa antes de que lo vean los demás.
+              @if (editando()?.estado === 'rechazado') {
+                Hacé los cambios que quieras y reenvialo: vuelve a quedar pendiente de revisión.
+              } @else if (editando()) {
+                Mientras esté pendiente podés cambiarlo cuando quieras.
+              } @else {
+                Un administrador lo revisa antes de que lo vean los demás.
+              }
             </p>
           </div>
           <button type="button" (click)="cerrarModal()" [disabled]="subiendo()" aria-label="Cerrar"
@@ -142,6 +173,11 @@
 
         <form (ngSubmit)="subirRecurso()" novalidate class="flex flex-col min-h-0">
           <div class="overflow-y-auto px-5 sm:px-6 py-5 space-y-5">
+            @if (editando()?.estado === 'rechazado' && editando()?.motivo_rechazo) {
+              <p class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+                <span class="font-semibold">Motivo del rechazo:</span> {{ editando()?.motivo_rechazo }}
+              </p>
+            }
             <p class="text-xs text-slate-500">Los campos marcados con <span class="text-red-600">*</span> son obligatorios.</p>
 
             <!-- Año: filtra las materias que ofrece el buscador (no se envía) -->
@@ -222,11 +258,16 @@
                  (dragleave)="arrastrando.set(false)"
                  (drop)="soltarArchivo($event)">
               <span id="etiqueta-archivo" class="block text-sm font-medium text-slate-700 mb-1.5">
-                Archivo <span class="text-red-600" aria-hidden="true">*</span>
+                Archivo
+                @if (!editando()) {
+                  <span class="text-red-600" aria-hidden="true">*</span>
+                } @else {
+                  <span class="font-normal text-slate-400">(opcional: si no elegís otro, se conserva el actual)</span>
+                }
               </span>
               <!-- El input real queda oculto: la zona de abajo es su etiqueta (click para elegir, o arrastrar). -->
               <input id="nuevo-archivo" name="archivo" type="file" class="peer sr-only"
-                     aria-labelledby="etiqueta-archivo" aria-required="true"
+                     aria-labelledby="etiqueta-archivo" [attr.aria-required]="editando() ? null : true"
                      [accept]="extensionesAceptadas" (change)="onFileSelected($event)"
                      [attr.aria-invalid]="errorDe('archivo') ? true : null"
                      [attr.aria-describedby]="errorDe('archivo') ? 'error-archivo' : 'ayuda-archivo'" />
@@ -239,6 +280,18 @@
                   </div>
                   <label for="nuevo-archivo" class="cursor-pointer text-xs font-semibold text-brand-700 hover:underline">Cambiar</label>
                   <button type="button" (click)="quitarArchivo()" class="text-xs font-semibold text-slate-500 hover:text-red-600">Quitar</button>
+                </div>
+              } @else if (editando(); as actual) {
+                <div class="flex items-center gap-3 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500/30">
+                  <span class="text-xl" aria-hidden="true">📄</span>
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-medium text-slate-800">Archivo actual</p>
+                    <p class="truncate text-xs text-slate-500">{{ nombreDelArchivo(actual) }}</p>
+                  </div>
+                  @if (actual.archivo) {
+                    <a [href]="actual.archivo" target="_blank" rel="noopener" class="text-xs font-semibold text-slate-600 hover:underline">Ver</a>
+                  }
+                  <label for="nuevo-archivo" class="cursor-pointer text-xs font-semibold text-brand-700 hover:underline">Reemplazar</label>
                 </div>
               } @else {
                 <label for="nuevo-archivo"
@@ -291,7 +344,7 @@
                 <span class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true"></span>
                 Enviando...
               } @else {
-                Enviar a revisión
+                {{ textoDelBoton() }}
               }
             </button>
           </footer>

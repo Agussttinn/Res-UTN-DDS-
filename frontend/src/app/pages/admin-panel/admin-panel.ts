@@ -25,6 +25,9 @@ export class AdminPanelComponent implements OnInit {
   readonly aviso = signal('');
   /** Id del apunte que se está aprobando o rechazando (para no permitir un doble clic). */
   readonly procesando = signal<number | null>(null);
+  /** Apunte que se está por rechazar: mientras tiene valor se muestra la ventana para escribir el motivo. */
+  readonly rechazando = signal<Material | null>(null);
+  readonly motivo = signal('');
 
   ngOnInit(): void {
     this.cargarPendientes();
@@ -54,18 +57,32 @@ export class AdminPanelComponent implements OnInit {
   }
 
   moderar(item: Material, accion: AccionModeracion): void {
-    let motivo: string | undefined;
     if (accion === 'rechazar') {
       // El apunte no se borra: queda rechazado y el autor ve el motivo para poder corregirlo y reenviarlo.
-      const respuesta = prompt(`¿Por qué se rechaza "${item.titulo}"? El autor va a ver este motivo.`);
-      if (respuesta === null) {
-        return; // canceló
-      }
-      motivo = respuesta.trim() || undefined;
-    } else if (accion === 'archivar' && !confirm(`¿Archivar "${item.titulo}"? Queda solo de lectura y ya no se puede puntuar.`)) {
+      this.motivo.set('');
+      this.rechazando.set(item);
       return;
     }
+    if (accion === 'archivar' && !confirm(`¿Archivar "${item.titulo}"? Queda solo de lectura y ya no se puede puntuar.`)) {
+      return;
+    }
+    this.ejecutar(item, accion);
+  }
 
+  cancelarRechazo(): void {
+    this.rechazando.set(null);
+  }
+
+  confirmarRechazo(): void {
+    const item = this.rechazando();
+    if (!item) {
+      return;
+    }
+    this.rechazando.set(null);
+    this.ejecutar(item, 'rechazar', this.motivo().trim() || undefined);
+  }
+
+  private ejecutar(item: Material, accion: AccionModeracion, motivo?: string): void {
     this.procesando.set(item.id);
     this.aviso.set('');
     this.error.set('');

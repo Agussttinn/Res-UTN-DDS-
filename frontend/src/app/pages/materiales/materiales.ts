@@ -77,13 +77,16 @@ export class MaterialesComponent implements OnInit {
   readonly votando = signal<number | null>(null);
 
   readonly filtroTipo = signal<TipoMaterial | ''>('');
+  /** Solo los apuntes que subió el usuario logueado (con su estado: pendiente, aprobado, rechazado...). */
+  readonly soloMios = signal(false);
   readonly materiaSeleccionadaId = signal<number | null>(null);
   readonly materiaSeleccionada = computed(
     () => this.materias().find((m) => m.id === this.materiaSeleccionadaId()) ?? null
   );
   readonly materialesFiltrados = computed(() => {
     const tipo = this.filtroTipo();
-    return tipo ? this.materiales().filter((m) => m.tipo === tipo) : this.materiales();
+    const mios = this.soloMios();
+    return this.materiales().filter((m) => (!tipo || m.tipo === tipo) && (!mios || this.esMio(m)));
   });
 
   // Formulario de carga
@@ -99,6 +102,8 @@ export class MaterialesComponent implements OnInit {
   readonly anioElegido = signal<FiltroAnio>(1);
   readonly materiaElegida = signal<number | null>(null);
   readonly archivoElegido = signal<File | null>(null);
+  /** Apunte que se está corrigiendo; null si el formulario es para compartir uno nuevo. */
+  readonly editando = signal<Material | null>(null);
   nuevoMaterial = this.materialVacio();
 
   readonly filtrosAnio = FILTROS_ANIO;
@@ -197,9 +202,50 @@ export class MaterialesComponent implements OnInit {
       });
   }
 
+  // ---- mis apuntes ----
+
+  esMio(item: Material): boolean {
+    return item.usuario.legajo === this.auth.usuario()?.legajo;
+  }
+
+  /** El autor corrige su apunte mientras está pendiente o rechazado; aprobado o archivado solo lo toca un administrador. */
+  puedeEditar(item: Material): boolean {
+    return this.auth.esAlumno() && this.esMio(item) && (item.estado === 'pendiente' || item.estado === 'rechazado');
+  }
+
+  /** Nombre del archivo guardado, sacado de su URL. */
+  nombreDelArchivo(item: Material): string {
+    return item.archivo ? decodeURIComponent(item.archivo.split('/').pop() ?? '') : '';
+  }
+
+  tituloDelModal(): string {
+    const item = this.editando();
+    if (!item) {
+      return 'Compartir apunte';
+    }
+    return item.estado === 'rechazado' ? 'Corregir y reenviar apunte' : 'Editar apunte';
+  }
+
+  textoDelBoton(): string {
+    const item = this.editando();
+    if (!item) {
+      return 'Enviar a revisión';
+    }
+    return item.estado === 'rechazado' ? 'Reenviar a revisión' : 'Guardar cambios';
+  }
+
+  abrirEdicion(item: Material): void {
+    this.abrirModal();
+    this.editando.set(item);
+    this.nuevoMaterial = { titulo: item.titulo, tipo: item.tipo, comentario: item.comentario ?? '' };
+    this.anioElegido.set(filtroAnioDe(item.materia));
+    this.materiaElegida.set(item.materia.id);
+  }
+
   // ---- carga de apuntes ----
 
   abrirModal(): void {
+    this.editando.set(null);
     const materia = this.materiaSeleccionada();
     this.nuevoMaterial = this.materialVacio();
     this.anioElegido.set(materia ? filtroAnioDe(materia) : 1);
@@ -327,7 +373,8 @@ export class MaterialesComponent implements OnInit {
     if (!this.nuevoMaterial.titulo.trim()) {
       errores.titulo = 'Escribí un título para el apunte.';
     }
-    if (!this.archivoElegido()) {
+    if (!this.archivoElegido() && !this.editando()) {
+      // Al corregir un apunte el archivo es opcional (si no se elige otro, se conserva el actual).
       // Si se rechazó el archivo elegido, se mantiene el motivo.
       errores.archivo = this.errorDe('archivo') || 'Adjuntá el archivo del apunte.';
     }
@@ -366,17 +413,28 @@ export class MaterialesComponent implements OnInit {
     datos.append('titulo', titulo.trim());
     datos.append('tipo', tipo);
     datos.append('materia_id', String(this.materiaElegida()));
-    if (comentario.trim()) {
-      datos.append('comentario', comentario.trim());
+    const corrigiendo = this.editando();
+    if (comentario.trim() || corrigiendo) {
+      datos.append('comentario', comentario.trim()); // al corregir se manda siempre, para poder borrarlo
     }
-    datos.append('archivo', this.archivoElegido()!);
+    const archivo = this.archivoElegido();
+    if (archivo) {
+      datos.append('archivo', archivo);
+    }
 
-    this.api.subirMaterial(datos).subscribe({
+    const peticion = corrigiendo ? this.api.editarMaterial(corrigiendo.id, datos) : this.api.subirMaterial(datos);
+    peticion.subscribe({
       next: () => {
         this.subiendo.set(false);
         this.mostrarModal.set(false);
-        this.aviso.set('¡Apunte enviado! Queda pendiente de revisión: cuando un administrador lo apruebe lo van a ver todos.');
-        this.cargarMateriales(false); // así el autor ve su apunte pendiente en la lista
+        this.aviso.set(
+          !corrigiendo
+            ? '¡Apunte enviado! Queda pendiente de revisión: cuando un administrador lo apruebe lo van a ver todos.'
+            : corrigiendo.estado === 'rechazado'
+              ? '¡Apunte reenviado! Vuelve a quedar pendiente de revisión.'
+              : 'Guardamos los cambios de tu apunte.'
+        );
+        this.cargarMateriales(false); // así el autor ve su apunte actualizado en la lista
       },
       error: (err: unknown) => {
         this.subiendo.set(false);

@@ -81,4 +81,33 @@
       }
     </div>
   }
+
+  <!-- Ventana para escribir el motivo del rechazo -->
+  @if (rechazando(); as item) {
+    <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center sm:p-4">
+      <div role="dialog" aria-modal="true" aria-labelledby="titulo-rechazo" (keydown.escape)="cancelarRechazo()"
+           class="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-xl">
+        <form (submit)="$event.preventDefault(); confirmarRechazo()" novalidate>
+          <header class="px-5 sm:px-6 pt-5 pb-3 border-b border-slate-100">
+            <h2 id="titulo-rechazo" class="text-lg font-bold text-slate-800">Rechazar apunte</h2>
+            <p class="text-sm text-slate-500 mt-0.5">"{{ item.titulo }}" · {{ item.usuario.nombre_y_apellido }}</p>
+          </header>
+          <div class="px-5 sm:px-6 py-4 space-y-2">
+            <label for="motivo-rechazo" class="block text-sm font-medium text-slate-700">Motivo (opcional)</label>
+            <textarea id="motivo-rechazo" name="motivo" rows="3" autofocus
+                      [value]="motivo()" (input)="motivo.set($any($event.target).value)"
+                      class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                      placeholder="Por ejemplo: ilegible, repetido o con errores"></textarea>
+            <p class="text-xs text-slate-500">El alumno recibe un aviso con este motivo y puede corregir el apunte y reenviarlo.</p>
+          </div>
+          <footer class="flex justify-end gap-2 px-5 sm:px-6 pb-5">
+            <button type="button" (click)="cancelarRechazo()"
+                    class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">Cancelar</button>
+            <button type="submit"
+                    class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-rose-600 hover:bg-rose-700 text-white">Rechazar apunte</button>
+          </footer>
+        </form>
+      </div>
+    </div>
+  }
 </section>

@@ -505,4 +505,128 @@ describe('MaterialesComponent', () => {
       expect(elemento(fixture).querySelector('[role="dialog"]')).toBeNull();
     });
   });
+
+  describe('mis apuntes y corrección', () => {
+    const MIO = (cambios: Partial<ReturnType<typeof unMaterial>> = {}) =>
+      unMaterial({ id: 7, titulo: 'Mi resumen', usuario: AUTORA_ALUMNA, estado: 'pendiente', validacion: false, ...cambios });
+    const AJENO = unMaterial({ id: 8, titulo: 'Apunte de otra persona' });
+
+    const guardar = async (fixture: ComponentFixture<MaterialesComponent>, texto: string) => {
+      boton(fixture, texto)!.click();
+      await estabilizar(fixture);
+    };
+
+    it('el filtro "Mis apuntes" muestra solo los propios, de cualquier estado, y se puede apagar', async () => {
+      const fixture = await abrir({ materiales: [MIO(), MIO({ id: 9, titulo: 'Mi parcial', estado: 'rechazado' }), AJENO] });
+      expect(textoDe(fixture)).toContain('Apunte de otra persona');
+
+      boton(fixture, 'Mis apuntes')!.click();
+      await estabilizar(fixture);
+
+      expect(textoDe(fixture)).toContain('Mi resumen');
+      expect(textoDe(fixture)).toContain('Mi parcial');
+      expect(textoDe(fixture)).not.toContain('Apunte de otra persona');
+
+      boton(fixture, 'Mis apuntes')!.click();
+      await estabilizar(fixture);
+      expect(textoDe(fixture)).toContain('Apunte de otra persona');
+    });
+
+    it('si todavía no subió nada, "Mis apuntes" lo dice', async () => {
+      const fixture = await abrir({ materiales: [AJENO] });
+
+      boton(fixture, 'Mis apuntes')!.click();
+      await estabilizar(fixture);
+
+      expect(textoDe(fixture)).toContain('Todavía no compartiste ningún apunte');
+    });
+
+    it('el botón Mis apuntes es solo para alumnos', async () => {
+      const fixture = await abrir({ usuario: TUTOR, materiales: [AJENO] });
+      expect(boton(fixture, 'Mis apuntes')).toBeUndefined();
+    });
+
+    it('un apunte propio aprobado lleva su estado pero no se puede editar', async () => {
+      const fixture = await abrir({ materiales: [MIO({ estado: 'aprobado', validacion: true })] });
+
+      expect(textoDe(fixture)).toContain('Aprobado');
+      expect(boton(fixture, 'Editar')).toBeUndefined();
+      expect(boton(fixture, 'Corregir y reenviar')).toBeUndefined();
+    });
+
+    it('los apuntes de otros no se pueden editar', async () => {
+      const fixture = await abrir({ materiales: [unMaterial({ id: 8, titulo: 'Ajeno pendiente', estado: 'pendiente', validacion: false })] });
+      expect(boton(fixture, 'Editar')).toBeUndefined();
+    });
+
+    it('editar un apunte pendiente: abre el formulario con sus datos y guarda solo los cambios (sin tocar el archivo)', async () => {
+      const fixture = await abrir({ materiales: [MIO({ comentario: 'Con ejercicios' })] });
+
+      boton(fixture, 'Editar')!.click();
+      await estabilizar(fixture);
+
+      expect(textoDe(fixture)).toContain('Editar apunte');
+      expect(elemento(fixture).querySelector<HTMLInputElement>('#nuevo-titulo')!.value).toBe('Mi resumen');
+      expect(elemento(fixture).querySelector<HTMLTextAreaElement>('#nuevo-comentario')!.value).toBe('Con ejercicios');
+      expect(textoDe(fixture)).toContain('Archivo actual');
+
+      escribir(fixture, '#nuevo-titulo', 'Mi resumen corregido');
+      await guardar(fixture, 'Guardar cambios');
+
+      const peticion = http.expectOne((r) => r.method === 'PATCH' && r.url === `${API_URL}/materiales/7/`);
+      const datos = peticion.request.body as FormData;
+      expect(datos.get('titulo')).toBe('Mi resumen corregido');
+      expect(datos.get('comentario')).toBe('Con ejercicios');
+      expect(datos.has('archivo')).toBe(false);
+      peticion.flush(MIO({ titulo: 'Mi resumen corregido' }));
+      http.expectOne((r) => r.method === 'GET' && r.url === `${API_URL}/materiales/`).flush([MIO({ titulo: 'Mi resumen corregido' })]);
+      await estabilizar(fixture);
+
+      expect(textoDe(fixture)).toContain('Guardamos los cambios de tu apunte');
+      expect(textoDe(fixture)).toContain('Mi resumen corregido');
+    });
+
+    it('un apunte rechazado se corrige y se reenvía: muestra el motivo y avisa que vuelve a revisión', async () => {
+      const fixture = await abrir({ materiales: [MIO({ estado: 'rechazado', motivo_rechazo: 'Ilegible' })] });
+      expect(textoDe(fixture)).toContain('Corregir y reenviar');
+
+      boton(fixture, 'Corregir y reenviar')!.click();
+      await estabilizar(fixture);
+
+      expect(textoDe(fixture)).toContain('Corregir y reenviar apunte');
+      expect(textoDe(fixture)).toContain('Motivo del rechazo: Ilegible');
+
+      await guardar(fixture, 'Reenviar a revisión');
+      const peticion = http.expectOne((r) => r.method === 'PATCH' && r.url === `${API_URL}/materiales/7/`);
+      peticion.flush(MIO());
+      http.expectOne((r) => r.method === 'GET' && r.url === `${API_URL}/materiales/`).flush([MIO()]);
+      await estabilizar(fixture);
+
+      expect(textoDe(fixture)).toContain('Apunte reenviado');
+      expect(textoDe(fixture)).toContain('Pendiente de revisión');
+    });
+
+    it('al corregir se puede reemplazar el archivo, y el título sigue siendo obligatorio', async () => {
+      const fixture = await abrir({ materiales: [MIO({ estado: 'rechazado', motivo_rechazo: 'Ilegible' })] });
+      boton(fixture, 'Corregir y reenviar')!.click();
+      await estabilizar(fixture);
+
+      escribir(fixture, '#nuevo-titulo', '   ');
+      await guardar(fixture, 'Reenviar a revisión');
+      expect(textoDe(fixture)).toContain('Escribí un título para el apunte.');
+      http.expectNone((r) => r.method === 'PATCH');
+
+      escribir(fixture, '#nuevo-titulo', 'Versión legible');
+      const campo = elemento(fixture).querySelector<HTMLInputElement>('#nuevo-archivo')!;
+      Object.defineProperty(campo, 'files', { value: [new File(['x'], 'nuevo.pdf')], configurable: true });
+      campo.dispatchEvent(new Event('change'));
+      await estabilizar(fixture);
+      await guardar(fixture, 'Reenviar a revisión');
+
+      const peticion = http.expectOne((r) => r.method === 'PATCH');
+      expect((peticion.request.body as FormData).get('archivo')).toBeInstanceOf(File);
+      peticion.flush(MIO());
+      http.expectOne((r) => r.method === 'GET' && r.url === `${API_URL}/materiales/`).flush([MIO()]);
+    });
+  });
 });

@@ -71,21 +71,47 @@ describe('AdminPanelComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('h3')).toHaveLength(1);
   });
 
-  it('rechazar pide el motivo: si se cancela no pasa nada', async () => {
+  const campoMotivo = (fixture: ComponentFixture<unknown>) =>
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLTextAreaElement>('#motivo-rechazo');
+  const escribirMotivo = async (fixture: ComponentFixture<unknown>, texto: string) => {
+    const campo = campoMotivo(fixture)!;
+    campo.value = texto;
+    campo.dispatchEvent(new Event('input'));
+    await estabilizar(fixture);
+  };
+
+  it('rechazar abre una ventana para escribir el motivo (no usa el cuadro del navegador)', async () => {
     const fixture = await abrir([pendiente(7, 'Resumen Unidad 1')]);
-    const pedir = vi.spyOn(window, 'prompt').mockReturnValue(null);
+    const pedir = vi.spyOn(window, 'prompt');
 
     boton(fixture, 'Rechazar').click();
+    await estabilizar(fixture);
 
-    expect(pedir).toHaveBeenCalledWith(expect.stringContaining('Resumen Unidad 1'));
+    expect(pedir).not.toHaveBeenCalled();
+    expect(campoMotivo(fixture)).toBeTruthy();
+    expect(textoDe(fixture)).toContain('Rechazar apunte');
+    http.expectNone(`${API_URL}/materiales/7/moderar/`);
+  });
+
+  it('si se cancela la ventana no pasa nada', async () => {
+    const fixture = await abrir([pendiente(7, 'Resumen Unidad 1')]);
+
+    boton(fixture, 'Rechazar').click();
+    await estabilizar(fixture);
+    boton(fixture, 'Cancelar').click();
+    await estabilizar(fixture);
+
+    expect(campoMotivo(fixture)).toBeNull();
     http.expectNone(`${API_URL}/materiales/7/moderar/`);
   });
 
   it('rechazar manda el motivo, saca el apunte de la cola y avisa que el autor puede reenviarlo', async () => {
     const fixture = await abrir([pendiente(7, 'Resumen Unidad 1')]);
-    vi.spyOn(window, 'prompt').mockReturnValue('Ilegible');
 
     boton(fixture, 'Rechazar').click();
+    await estabilizar(fixture);
+    await escribirMotivo(fixture, '  Ilegible  ');
+    boton(fixture, 'Rechazar apunte').click();
     const peticion = http.expectOne(`${API_URL}/materiales/7/moderar/`);
     expect(peticion.request.body).toEqual({ accion: 'rechazar', motivo: 'Ilegible' });
     peticion.flush(unMaterial({ id: 7, estado: 'rechazado', validacion: false, motivo_rechazo: 'Ilegible' }));
@@ -94,6 +120,19 @@ describe('AdminPanelComponent', () => {
     expect(textoDe(fixture)).toContain('fue rechazado');
     expect(textoDe(fixture)).toContain('puede corregirlo y reenviarlo');
     expect(textoDe(fixture)).toContain('No hay documentos pendientes');
+    expect(campoMotivo(fixture)).toBeNull();
+  });
+
+  it('el motivo es opcional: se puede rechazar sin escribirlo', async () => {
+    const fixture = await abrir([pendiente(7, 'Resumen Unidad 1')]);
+
+    boton(fixture, 'Rechazar').click();
+    await estabilizar(fixture);
+    boton(fixture, 'Rechazar apunte').click();
+
+    const peticion = http.expectOne(`${API_URL}/materiales/7/moderar/`);
+    expect(peticion.request.body).toEqual({ accion: 'rechazar' });
+    peticion.flush(unMaterial({ id: 7, estado: 'rechazado', validacion: false }));
   });
 
   it('archivar: lista los aprobados, pide confirmación y manda la acción', async () => {

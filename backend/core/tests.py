@@ -899,6 +899,35 @@ class ModeracionTests(ApiTestCase):
         self.como(self.otro_alumno)
         self.assertEqual(self.client.get('/api/notificaciones/').data, [])
 
+    def test_el_autor_reemplaza_el_archivo_de_un_material_rechazado_y_reenvia(self):
+        material = self.crear_material(autor=self.alumno)
+        archivo_viejo = material.archivo.path
+        self.como(self.admin)
+        self.client.post(f'/api/materiales/{material.id}/moderar/', {'accion': 'rechazar', 'motivo': 'Ilegible'}, format='json')
+
+        self.como(self.alumno)
+        nuevo = SimpleUploadedFile('corregido.pdf', b'%PDF-1.4 version corregida', content_type='application/pdf')
+        response = self.client.patch(f'/api/materiales/{material.id}/', {'titulo': 'Resumen corregido', 'archivo': nuevo}, format='multipart')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        material.refresh_from_db()
+        self.assertEqual(material.estado.nombre, 'pendiente')
+        self.assertIsNone(material.motivo_rechazo)
+        self.assertEqual(material.titulo, 'Resumen corregido')
+        self.assertTrue(response.data['archivo'])  # la respuesta trae el archivo nuevo
+        self.assertTrue(os.path.exists(material.archivo.path))
+        self.assertFalse(os.path.exists(archivo_viejo))  # el anterior no queda huérfano en el disco
+
+    def test_editar_sin_cambiar_el_archivo_lo_conserva(self):
+        material = self.crear_material(autor=self.alumno)
+        ruta = material.archivo.path
+        self.como(self.alumno)
+
+        response = self.client.patch(f'/api/materiales/{material.id}/', {'comentario': 'Con ejercicios'}, format='multipart')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(os.path.exists(ruta))
+
     def test_aprobar_o_archivar_no_generan_notificacion_de_rechazo(self):
         pendiente = self.crear_material(autor=self.alumno)
         self.como(self.admin)
