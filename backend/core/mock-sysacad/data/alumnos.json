@@ -8,9 +8,9 @@
     "aprobadas": []
   },
   {
-    "legajo": "47110",
-    "nombre": "Nicolás Fernández",
-    "correo": "nfernandez@frd.utn.edu.ar",
+    "legajo": "13459",
+    "nombre": "Geronimo Centuperis",
+    "correo": "Gero@frd.utn.edu.ar",
     "carrera": "ISI",
     "cursadas": [
       "5-2023-104",
@@ -23,9 +23,9 @@
     ]
   },
   {
-    "legajo": "45820",
-    "nombre": "Camila Rodríguez",
-    "correo": "crodriguez@frd.utn.edu.ar",
+    "legajo": "13692",
+    "nombre": "Alexis Naim Molina",
+    "correo": "ale@frd.utn.edu.ar",
     "carrera": "ISI",
     "cursadas": [
       "5-2023-201",
@@ -43,9 +43,9 @@
     ]
   },
   {
-    "legajo": "44005",
-    "nombre": "Tomás López",
-    "correo": "tlopez@frd.utn.edu.ar",
+    "legajo": "13914",
+    "nombre": "Tomás Ithurburu",
+    "correo": "tomi@frd.utn.edu.ar",
     "carrera": "ISI",
     "cursadas": [
       "5-2023-203",
