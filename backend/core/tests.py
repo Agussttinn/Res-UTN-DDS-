@@ -1952,3 +1952,35 @@ class TriggerEstadosDeMaterialTests(ApiTestCase):
         material.refresh_from_db()
 
         self.assertIsNone(material.motivo_rechazo)
+
+
+class VerificarErTests(ApiTestCase):
+    """`python manage.py verificar_er` compara la base real con el diagrama E-R."""
+
+    def correr(self):
+        salida = io.StringIO()
+        call_command('verificar_er', stdout=salida)
+        return salida.getvalue()
+
+    def test_la_base_de_los_tests_coincide_con_el_diagrama(self):
+        salida = self.correr()
+
+        self.assertIn('La base de datos coincide con el diagrama', salida)
+        self.assertNotIn('✘', salida)
+        self.assertIn('materiales_estado_bu', salida)
+
+    def test_avisa_si_un_usuario_no_esta_en_la_tabla_de_su_rol(self):
+        with connection.cursor() as cursor:
+            cursor.execute('DELETE FROM alumnos WHERE legajo = %s', [self.alumno.legajo])
+
+        with self.assertRaises(CommandError) as ctx:
+            self.correr()
+
+        self.assertIn('NO coincide', str(ctx.exception))
+
+    def test_avisa_si_un_usuario_figura_en_la_tabla_de_otro_rol(self):
+        with connection.cursor() as cursor:
+            cursor.execute('INSERT INTO tutores (legajo) VALUES (%s)', [self.alumno.legajo])
+
+        with self.assertRaises(CommandError):
+            self.correr()
