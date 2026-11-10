@@ -53,6 +53,16 @@ export class AuthService {
     return this.http.post(`${API_URL}/registro/`, { legajo, contraseña: contrasena });
   }
 
+  /** Pide el mail de recuperación. La API responde igual exista o no el legajo. */
+  pedirRecuperacion(legajo: string): Observable<unknown> {
+    return this.http.post(`${API_URL}/recuperar-contrasena/`, { legajo });
+  }
+
+  /** Cambia la contraseña con el token del link que llegó por mail. */
+  restablecerContrasena(token: string, contrasena: string): Observable<unknown> {
+    return this.http.post(`${API_URL}/restablecer-contrasena/`, { token, contraseña: contrasena });
+  }
+
   cerrarSesion(): void {
     this.limpiarSesion();
     void this.router.navigate(['/login']);

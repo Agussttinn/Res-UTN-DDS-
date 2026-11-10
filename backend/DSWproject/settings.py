@@ -169,8 +169,24 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'login': '10/min',
         'registro': '10/min',
+        'recuperacion': '5/min',
     },
 }
 
 # Duración del token de login, en horas.
 JWT_EXPIRACION_HORAS = 8
+
+
+# Recuperación de contraseña: el link llega por mail y vence a los RECUPERACION_MINUTOS.
+# En desarrollo el mail no se envía: se imprime en la consola del backend (EMAIL_BACKEND por defecto).
+# Para enviar mails de verdad, definir en el .env EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+# junto con EMAIL_HOST, EMAIL_PORT, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD y EMAIL_USE_TLS.
+RECUPERACION_MINUTOS = 30
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:4200')
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'localhost')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '25'))
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'False').lower() in ('1', 'true', 'yes')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'RES-UTN <no-responder@res-utn.local>')

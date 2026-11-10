@@ -4,6 +4,8 @@ from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core import signing
+from django.core.mail import send_mail
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Exists, OuterRef, Q
 from django.db.models.deletion import ProtectedError
@@ -627,3 +629,91 @@ class RegistroAlumno(APIView):
             {"legajo": nuevo_usuario.legajo, "nombre_y_apellido": nuevo_usuario.nombre_y_apellido},
             status=status.HTTP_201_CREATED
         )
+
+
+# ---------- recuperación de contraseña (pública) ----------
+
+SAL_RECUPERACION = 'recuperar-contrasena'
+
+
+def _sal_de(usuario):
+    """La sal incluye el hash actual de la contraseña: apenas se cambia, el link usado deja de servir."""
+    return f'{SAL_RECUPERACION}:{usuario.contraseña[-16:]}'
+
+
+def crear_token_recuperacion(usuario):
+    """Token 'legajo~firma'. El legajo va a la vista (solo sirve para buscar al usuario); lo que vale es la firma."""
+    return f'{usuario.pk}~{signing.dumps(usuario.pk, salt=_sal_de(usuario))}'
+
+
+def usuario_de_token_recuperacion(token):
+    """Devuelve el Usuario dueño del token, o None si está vencido, alterado o ya se usó."""
+    if not isinstance(token, str) or '~' not in token:
+        return None
+    legajo, firma = token.split('~', 1)
+    usuario = Usuario.objects.filter(pk=legajo).first()
+    if usuario is None:
+        return None
+    try:
+        if signing.loads(firma, salt=_sal_de(usuario), max_age=settings.RECUPERACION_MINUTOS * 60) != usuario.pk:
+            return None
+    except signing.BadSignature:
+        return None
+    return usuario
+
+
+class RecuperarContrasena(APIView):
+    """POST {"legajo": "..."} -> manda un mail con un link para elegir una contraseña nueva.
+    Responde siempre lo mismo, exista o no el legajo, para no revelar qué legajos están registrados."""
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'recuperacion'
+
+    def post(self, request):
+        legajo = _datos(request).get('legajo')
+        if not legajo:
+            return Response({"error": "Ingresá tu legajo"}, status=status.HTTP_400_BAD_REQUEST)
+
+        usuario = Usuario.objects.filter(pk=str(legajo)).first()
+        if usuario is not None:
+            link = f"{settings.FRONTEND_URL}/restablecer?token={crear_token_recuperacion(usuario)}"
+            send_mail(
+                'RES-UTN: recuperación de contraseña',
+                f'Hola {usuario.nombre_y_apellido},\n\n'
+                f'Pediste restablecer tu contraseña. Entrá a este link para elegir una nueva '
+                f'(vence en {settings.RECUPERACION_MINUTOS} minutos y sirve una sola vez):\n\n{link}\n\n'
+                'Si no fuiste vos, ignorá este mensaje: tu contraseña sigue igual.',
+                None,
+                [usuario.correo],
+            )
+        return Response({"mensaje": "Si el legajo está registrado, te enviamos un mail con las instrucciones."})
+
+
+class RestablecerContrasena(APIView):
+    """POST {"token": "...", "contraseña": "..."} -> cambia la contraseña si el link es válido."""
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'recuperacion'
+
+    def post(self, request):
+        datos = _datos(request)
+        contrasena = datos.get('contraseña')
+        if not isinstance(contrasena, str) or not contrasena:
+            return Response({"error": "Ingresá la contraseña nueva"}, status=status.HTTP_400_BAD_REQUEST)
+
+        usuario = usuario_de_token_recuperacion(datos.get('token'))
+        if usuario is None:
+            return Response(
+                {"error": "El link no es válido o venció. Pedí uno nuevo."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            validate_password(contrasena, user=None)
+        except DjangoValidationError as exc:
+            return Response({"error": " ".join(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
+
+        usuario.contraseña = make_password(contrasena)
+        usuario.save(update_fields=['contraseña'])
+        return Response({"mensaje": "Contraseña actualizada. Ya podés iniciar sesión."})

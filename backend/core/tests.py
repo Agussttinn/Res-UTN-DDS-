@@ -11,6 +11,7 @@ import requests
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.hashers import check_password, make_password
+from django.core import mail
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import CommandError, call_command
@@ -1762,3 +1763,78 @@ class MigracionHorarioTests(TestCase):
         for texto, esperado in casos.items():
             with self.subTest(texto=texto):
                 self.assertEqual(interpretar(texto), esperado)
+
+
+class RecuperarContrasenaTests(ApiTestCase):
+    pedir_url = '/api/recuperar-contrasena/'
+    restablecer_url = '/api/restablecer-contrasena/'
+
+    def pedir(self, legajo):
+        return self.client.post(self.pedir_url, {"legajo": legajo}, format='json')
+
+    def restablecer(self, token, contrasena='otraclave987'):
+        return self.client.post(self.restablecer_url, {"token": token, "contraseña": contrasena}, format='json')
+
+    def token_enviado(self):
+        """Saca el token del link que viajó en el mail."""
+        cuerpo = mail.outbox[-1].body
+        return cuerpo.split('token=')[1].split()[0]
+
+    def test_manda_el_mail_al_correo_del_usuario(self):
+        response = self.pedir(self.alumno.legajo)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [self.alumno.correo])
+
+    def test_legajo_inexistente_responde_igual_y_no_manda_mail(self):
+        existente = self.pedir(self.alumno.legajo)
+        inexistente = self.pedir('99999')
+
+        self.assertEqual(inexistente.status_code, status.HTTP_200_OK)
+        self.assertEqual(inexistente.data, existente.data)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_pedir_sin_legajo_es_400(self):
+        self.assertEqual(self.client.post(self.pedir_url, {}, format='json').status_code, 400)
+
+    def test_el_link_cambia_la_contrasena_y_se_puede_loguear(self):
+        self.pedir(self.alumno.legajo)
+
+        response = self.restablecer(self.token_enviado())
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        login = self.client.post('/api/login/', {"legajo": self.alumno.legajo, "contraseña": 'otraclave987'}, format='json')
+        self.assertEqual(login.status_code, status.HTTP_200_OK)
+        vieja = self.client.post('/api/login/', {"legajo": self.alumno.legajo, "contraseña": CONTRASENA}, format='json')
+        self.assertEqual(vieja.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_el_link_sirve_una_sola_vez(self):
+        self.pedir(self.alumno.legajo)
+        token = self.token_enviado()
+
+        self.assertEqual(self.restablecer(token).status_code, 200)
+        self.assertEqual(self.restablecer(token, 'unaterceraclave55').status_code, 400)
+
+    def test_token_alterado_o_de_otro_usuario_no_sirve(self):
+        self.pedir(self.alumno.legajo)
+        token = self.token_enviado()
+        firma = token.split('~', 1)[1]
+
+        self.assertEqual(self.restablecer('basura').status_code, 400)
+        self.assertEqual(self.restablecer(f'{self.otro_alumno.legajo}~{firma}').status_code, 400)
+        self.assertEqual(self.restablecer(token + 'x').status_code, 400)
+
+    def test_el_link_vence(self):
+        self.pedir(self.alumno.legajo)
+        token = self.token_enviado()
+
+        with override_settings(RECUPERACION_MINUTOS=-1):
+            self.assertEqual(self.restablecer(token).status_code, 400)
+
+    def test_rechaza_contrasenas_debiles_y_el_link_sigue_valido(self):
+        self.pedir(self.alumno.legajo)
+        token = self.token_enviado()
+
+        self.assertEqual(self.restablecer(token, '123').status_code, 400)
+        self.assertEqual(self.restablecer(token).status_code, 200)

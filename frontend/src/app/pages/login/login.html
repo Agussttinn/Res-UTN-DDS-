@@ -50,7 +50,10 @@
         </div>
 
         <div>
-          <label for="contrasena" class="block text-xs font-bold text-slate-700 uppercase mb-1">Contraseña</label>
+          <div class="flex items-baseline justify-between mb-1">
+            <label for="contrasena" class="block text-xs font-bold text-slate-700 uppercase">Contraseña</label>
+            <a routerLink="/recuperar" class="text-[11px] font-semibold text-brand-700 hover:text-brand-800">¿Olvidaste tu contraseña?</a>
+          </div>
           <input id="contrasena" type="password" [(ngModel)]="contrasena" name="contrasena" required autocomplete="current-password"
                  placeholder="••••••••"
                  class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors" />

@@ -32,4 +32,6 @@ urlpatterns = [
 
     path('login/', views.LoginAlumno.as_view()),
     path('registro/', views.RegistroAlumno.as_view()),
+    path('recuperar-contrasena/', views.RecuperarContrasena.as_view()),
+    path('restablecer-contrasena/', views.RestablecerContrasena.as_view()),
 ]

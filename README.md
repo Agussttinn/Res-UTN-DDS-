@@ -262,6 +262,8 @@ DB_PORT=3306
 ```
 `.env.example` también lista algunas variables **opcionales** (`SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS`, `SYSACAD_API_URL`) que en desarrollo ya tienen un valor por defecto. `SECRET_KEY` (firma los tokens de login) solo es obligatoria en producción.
 
+**Recuperación de contraseña:** desde el login, "¿Olvidaste tu contraseña?" pide el legajo y manda un mail al correo registrado con un link (`/restablecer?token=...`). El token está firmado (sin tabla nueva) e incluye el hash de la contraseña actual, por eso deja de servir apenas se usa. En desarrollo el mail **no se envía**: se imprime en la consola del backend, de donde se copia el link. Para mandar mails reales se definen en el `.env` `EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS` y `FRONTEND_URL` (la URL pública del frontend, por defecto `http://localhost:4200`).
+
 ### 5. Migraciones y Superusuario
 Con el entorno virtual activado, desde `backend/`:
 ```bash
@@ -381,6 +383,8 @@ curl http://127.0.0.1:8000/api/materias/ -H "Authorization: Bearer <token>"
 | :--- | :--- | :--- |
 | `POST /login/` | público | Devuelve el token y los datos del usuario |
 | `POST /registro/` | público | Crea la cuenta de un alumno validando el legajo contra SySACAD |
+| `POST /recuperar-contrasena/` | público | Manda al correo del usuario un link para elegir una contraseña nueva (responde siempre igual, exista o no el legajo) |
+| `POST /restablecer-contrasena/` | público | Cambia la contraseña con el `token` del link; el link vence a los 30 minutos y sirve una sola vez |
 | `GET` `POST /usuarios/` | administrador | Listar / dar de alta usuarios |
 | `GET` `PUT` `PATCH` `DELETE /usuarios/{legajo}/` | `GET`: uno mismo o administrador; el resto, administrador | Ver / modificar / borrar |
 | `GET /roles/` | administrador | Roles disponibles (solo lectura) |
