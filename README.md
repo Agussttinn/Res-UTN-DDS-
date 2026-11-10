@@ -129,6 +129,8 @@ Representa las entidades del negocio:
 - **`ROL`**: `(PK: id, nombre)`. Los roles son datos: agregar uno no cambia el esquema.
 - **`USUARIO`**: `(PK: legajo, nombre, correo, contraseña, FK: rol_id)`
 - **`ALUMNO`**, **`TUTOR`** y **`ADMINISTRADOR`**: `(PK y FK: legajo)`, una tabla por rol, cada una 1 a 0..1 con `USUARIO`. Las tablas son `alumnos`, `tutores` y `administradores`. Al crear un usuario o cambiarle el rol, la fila se crea y se mueve sola: lo hacen **triggers de MariaDB** (migración `0015`), así que funciona venga el cambio de donde venga (la app, el panel de Django o un `UPDATE` directo desde DBeaver). Esas tablas tienen **solo** a quienes cumplen el rol; todos los usuarios, sin distinción, están únicamente en `usuarios`. Si alguien tiene registros que dependen de su rol (un alumno con apuntes o puntuaciones, un tutor con clases o mensajes), **no se le puede cambiar el rol**: la API, el panel de Django y la propia base (migración `0016`) lo rechazan con un mensaje que explica por qué. Hay que borrar o reasignar esos registros primero. Al cambiar de alumno a otro rol se borran sus suscripciones y avisos. Para completar filas faltantes de datos viejos: `python manage.py sincronizar_subtipos`.
+
+**Estados de un apunte (trigger, migración `0017`).** La base también cuida la tabla `materiales`: solo permite pasar de pendiente a aprobado o rechazado, de aprobado a pendiente, rechazado o archivado, y de rechazado a pendiente; un archivado no vuelve atrás. Cualquier otro `UPDATE` directo del estado se rechaza con un mensaje, y el `motivo_rechazo` se borra solo al salir del estado rechazado.
 - **`ESPECIALIDAD`**: `(PK: idEspecialidad, nombre)`
 - **`MATERIA`**: `(PK: idMateria, FK: idEspecialidad, nombre, año)`
 - **`ESTADO_MATERIAL`**: `(PK: id, nombre)` con `pendiente`, `aprobado`, `rechazado` y `archivado`.
@@ -398,14 +400,14 @@ curl http://127.0.0.1:8000/api/materias/ -H "Authorization: Bearer <token>"
 | `POST /materiales/` | alumno | Sube un material (`multipart/form-data`); queda **pendiente** |
 | `GET` `PUT` `PATCH` `DELETE /materiales/{id}/` | ver: logueado; modificar: autor (si está pendiente o rechazado) o administrador; borrar: autor o administrador | Detalle / modificar / borrar |
 | `GET /materiales/pendientes/` | administrador | Cola de moderación, los más viejos primero |
-| `POST /materiales/{id}/moderar/` | administrador | Aprueba, rechaza (con motivo) o archiva un material |
+| `POST /materiales/{id}/moderar/` | administrador | Aprueba, rechaza (con motivo), desaprueba (vuelve a pendiente) o archiva un material |
 | `GET /clases-apoyo/?materia={id}` | logueado | Listar clases; el filtro es opcional |
 | `POST /clases-apoyo/` | tutor o administrador | Publicar una clase |
 | `GET` `PUT` `PATCH` `DELETE /clases-apoyo/{id}/` | su tutor o administrador | Detalle / modificar / cancelar. Modificar y cancelar avisan a los suscritos |
 | `POST` `DELETE /clases-apoyo/{id}/suscripcion/` | alumno | Suscribirse / dejar de seguir la clase. Responde `{suscrito, cantidad_suscritos}` |
 | `GET /clases-apoyo/{id}/mensajes/` | sus suscritos, su tutor o administrador | Mensajes de la clase, los más nuevos primero |
 | `POST /clases-apoyo/{id}/mensajes/` | su tutor | `{"texto": "..."}` (hasta 1000 caracteres). Les llega un aviso a todos los suscritos |
-| `GET /notificaciones/` | logueado | Los últimos 50 avisos propios (cambios, cancelaciones y mensajes de las clases que sigue, y rechazos de sus apuntes), los más nuevos primero. Los reciben los alumnos |
+| `GET /notificaciones/` | logueado | Los últimos 50 avisos propios (cambios, cancelaciones y mensajes de las clases que sigue, y todo cambio de estado de sus apuntes: aprobado, rechazado, vuelto a revisión o archivado), los más nuevos primero. Los reciben los alumnos |
 | `POST /notificaciones/marcar-leidas/` | logueado | Marca como leídos todos los avisos propios |
 | `GET /ponderaciones/?material={id}` | logueado | Las estrellas propias (el administrador ve todas) |
 | `POST /ponderaciones/` | alumno | Puntuar un material |
@@ -424,7 +426,8 @@ curl http://127.0.0.1:8000/api/materias/ -H "Authorization: Bearer <token>"
 
 // POST /materiales/7/moderar/  (administrador)
 { "accion": "aprobar" }                              // pendiente -> aprobado
-{ "accion": "rechazar", "motivo": "Ilegible" }       // pendiente -> rechazado (el motivo es opcional)
+{ "accion": "rechazar", "motivo": "Ilegible" }       // pendiente o aprobado -> rechazado (el motivo es opcional)
+{ "accion": "desaprobar" }                           // aprobado -> pendiente (por si se aprobó sin querer)
 { "accion": "archivar" }                             // aprobado -> archivado
 
 // POST /clases-apoyo/  (tutor; un administrador debe agregar además "tutor_id": "<legajo del tutor>")

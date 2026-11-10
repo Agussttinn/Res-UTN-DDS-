@@ -151,6 +151,37 @@ describe('AdminPanelComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('h3')).toHaveLength(0);
   });
 
+  it('volver a pendiente: deshace una aprobación hecha sin querer y el apunte reaparece en la cola', async () => {
+    const fixture = await abrir([], [unMaterial({ id: 9, titulo: 'Final 2023' })]);
+
+    boton(fixture, 'Volver a pendiente').click();
+    const peticion = http.expectOne(`${API_URL}/materiales/9/moderar/`);
+    expect(peticion.request.body).toEqual({ accion: 'desaprobar' });
+    peticion.flush(unMaterial({ id: 9, titulo: 'Final 2023', estado: 'pendiente', validacion: false }));
+    http.expectOne(`${API_URL}/materiales/pendientes/`).flush([pendiente(9, 'Final 2023')]);
+    await estabilizar(fixture);
+
+    expect(textoDe(fixture)).toContain('volvió a pendiente');
+    expect(boton(fixture, 'Aprobar')).toBeTruthy();
+    expect(boton(fixture, 'Volver a pendiente')).toBeUndefined();
+  });
+
+  it('un aprobado también se puede rechazar con motivo', async () => {
+    const fixture = await abrir([], [unMaterial({ id: 9, titulo: 'Final 2023' })]);
+
+    boton(fixture, 'Rechazar').click();
+    await estabilizar(fixture);
+    boton(fixture, 'Rechazar apunte').click();
+
+    const peticion = http.expectOne(`${API_URL}/materiales/9/moderar/`);
+    expect(peticion.request.body).toEqual({ accion: 'rechazar' });
+    peticion.flush(unMaterial({ id: 9, estado: 'rechazado', validacion: false }));
+    await estabilizar(fixture);
+
+    expect(textoDe(fixture)).toContain('"Final 2023" fue rechazado');
+    expect(fixture.nativeElement.querySelectorAll('h3')).toHaveLength(0);
+  });
+
   describe('filtro por antigüedad', () => {
     const haceDias = (dias: number) => new Date(Date.now() - dias * 24 * 60 * 60 * 1000).toISOString();
     const titulos = (fixture: ComponentFixture<unknown>) =>

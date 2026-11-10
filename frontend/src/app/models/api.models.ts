@@ -133,7 +133,7 @@ export interface MensajeClase {
   fecha: string;
 }
 
-export type TipoNotificacion = 'modificacion' | 'cancelacion' | 'mensaje' | 'rechazo';
+export type TipoNotificacion = 'modificacion' | 'cancelacion' | 'mensaje' | 'rechazo' | 'aprobacion' | 'revision' | 'archivo';
 
 export interface Notificacion {
   id: number;
@@ -159,7 +159,7 @@ export interface RespuestaLogin {
   usuario: Usuario;
 }
 
-export type AccionModeracion = 'aprobar' | 'rechazar' | 'archivar';
+export type AccionModeracion = 'aprobar' | 'rechazar' | 'desaprobar' | 'archivar';
 
 export type EstadoMaterial = 'pendiente' | 'aprobado' | 'rechazado' | 'archivado';
 

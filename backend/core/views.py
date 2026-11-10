@@ -263,56 +263,69 @@ class MaterialPendientes(generics.ListAPIView):
 
 class MaterialModerar(APIView):
     """Body: {"accion": "aprobar"}  -> pendiente -> aprobado (visible para todos).
-             {"accion": "rechazar", "motivo": "..."} -> pendiente -> rechazado (solo lo ven el autor y los administradores,
-                                                      que lo puede corregir y reenviar).
+             {"accion": "rechazar", "motivo": "..."} -> pendiente o aprobado -> rechazado (solo lo ven el autor y los
+                                                      administradores, que lo puede corregir y reenviar).
+             {"accion": "desaprobar"} -> aprobado -> pendiente (por si se aprobó sin querer: deja de verse y vuelve a la cola).
              {"accion": "archivar"} -> aprobado -> archivado (solo lectura, ya no se puede puntuar)."""
     permission_classes = [EsAdministrador]
 
+    # acción -> (estados desde los que se puede hacer, estado al que pasa)
     ACCIONES = {
-        'aprobar': (EstadoMaterial.PENDIENTE, EstadoMaterial.APROBADO),
-        'rechazar': (EstadoMaterial.PENDIENTE, EstadoMaterial.RECHAZADO),
-        'archivar': (EstadoMaterial.APROBADO, EstadoMaterial.ARCHIVADO),
+        'aprobar': ((EstadoMaterial.PENDIENTE,), EstadoMaterial.APROBADO),
+        'rechazar': ((EstadoMaterial.PENDIENTE, EstadoMaterial.APROBADO), EstadoMaterial.RECHAZADO),
+        'desaprobar': ((EstadoMaterial.APROBADO,), EstadoMaterial.PENDIENTE),
+        'archivar': ((EstadoMaterial.APROBADO,), EstadoMaterial.ARCHIVADO),
     }
- 
+
     def post(self, request, pk):
         material = get_object_or_404(
             Material.objects.select_related('materia__especialidad', 'alumno__usuario__rol', 'estado'), pk=pk,
         )
         accion = _datos(request).get('accion')
- 
+
         if accion not in self.ACCIONES:
             return Response(
-                {"error": 'La acción tiene que ser "aprobar", "rechazar" o "archivar".'},
+                {"error": 'La acción tiene que ser "aprobar", "rechazar", "desaprobar" o "archivar".'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
- 
-        estado_requerido, estado_nuevo = self.ACCIONES[accion]
-        if material.estado.nombre != estado_requerido:
+
+        estados_permitidos, estado_nuevo = self.ACCIONES[accion]
+        if material.estado.nombre not in estados_permitidos:
             return Response(
                 {"error": f'No se puede {accion} un material que está {material.estado.nombre}.'},
                 status=status.HTTP_409_CONFLICT,
             )
- 
+
         material.estado = EstadoMaterial.objects.get(nombre=estado_nuevo)
         if accion == 'rechazar':
             material.motivo_rechazo = str(_datos(request).get('motivo') or '').strip() or None
         material.save(update_fields=['estado', 'motivo_rechazo'])
-        if accion == 'rechazar':
-            self._avisar_rechazo(material)
+        self._avisar_al_autor(material, accion)
         return Response(MaterialSerializer(material, context={'request': request}).data)
 
     @staticmethod
-    def _avisar_rechazo(material):
-        """Le llega al alumno autor una notificación (la campanita) con el motivo y cómo corregirlo."""
-        texto = 'Podés corregirlo y reenviarlo desde Materiales: vuelve a quedar pendiente de revisión.'
-        if material.motivo_rechazo:
-            texto = f'Motivo: {material.motivo_rechazo}. ' + texto
-        Notificacion.objects.create(
-            alumno=material.alumno,
-            tipo=Notificacion.RECHAZO,
-            titulo=f'Rechazaron tu apunte "{material.titulo}"',
-            texto=texto,
-        )
+    def _avisar_al_autor(material, accion):
+        """Le llega al alumno autor una notificación (la campanita) cada vez que un administrador cambia
+        el estado de su apunte."""
+        if accion == 'rechazar':
+            tipo = Notificacion.RECHAZO
+            titulo = f'Rechazaron tu apunte "{material.titulo}"'
+            texto = 'Podés corregirlo y reenviarlo desde Materiales: vuelve a quedar pendiente de revisión.'
+            if material.motivo_rechazo:
+                texto = f'Motivo: {material.motivo_rechazo}. ' + texto
+        elif accion == 'aprobar':
+            tipo = Notificacion.APROBACION
+            titulo = f'Aprobaron tu apunte "{material.titulo}"'
+            texto = 'Ya lo ven todos los alumnos en Materiales. ¡Gracias por compartirlo!'
+        elif accion == 'desaprobar':
+            tipo = Notificacion.REVISION
+            titulo = f'Tu apunte "{material.titulo}" volvió a revisión'
+            texto = 'Dejó de verse para los demás alumnos hasta que un administrador lo revise de nuevo.'
+        else:  # archivar
+            tipo = Notificacion.ARCHIVO
+            titulo = f'Archivaron tu apunte "{material.titulo}"'
+            texto = 'Sigue disponible para consulta, pero ya no se puede puntuar.'
+        Notificacion.objects.create(alumno=material.alumno, tipo=tipo, titulo=titulo, texto=texto)
 
 
 # ---------- clases de apoyo ----------

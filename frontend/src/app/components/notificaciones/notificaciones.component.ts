@@ -86,7 +86,10 @@ export class NotificacionesComponent implements OnInit {
     modificacion: '✏️',
     cancelacion: '🚫',
     mensaje: '💬',
-    rechazo: '📄'
+    rechazo: '📄',
+    aprobacion: '✅',
+    revision: '🔁',
+    archivo: '🗄️'
   };
 
   ngOnInit(): void {

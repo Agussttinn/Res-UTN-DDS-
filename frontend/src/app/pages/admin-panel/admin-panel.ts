@@ -39,7 +39,7 @@ export class AdminPanelComponent implements OnInit {
   readonly etiquetaTipo = ETIQUETA_TIPO;
 
   readonly pendientes = signal<Material[]>([]);
-  /** Aprobados que se pueden archivar (fin de ciclo lectivo o cambio de plan de estudio). */
+  /** Aprobados: se pueden desaprobar (si se aprobaron sin querer), rechazar o archivar (fin de ciclo o cambio de plan). */
   readonly aprobados = signal<Material[]>([]);
   readonly cargando = signal(true);
   readonly error = signal('');
@@ -132,7 +132,10 @@ export class AdminPanelComponent implements OnInit {
         this.pendientes.update((lista) => lista.filter((p) => p.id !== item.id));
         this.aprobados.update((lista) => lista.filter((p) => p.id !== item.id));
         if (accion === 'aprobar') {
-          this.cargarAprobados(); // el recién aprobado pasa a la lista de archivables
+          this.cargarAprobados(); // el recién aprobado pasa a la lista de aprobados
+        }
+        if (accion === 'desaprobar') {
+          this.cargarPendientes(); // el que volvió a pendiente reaparece en la cola
         }
         this.aviso.set(this.mensajeDe(accion, item.titulo));
         this.procesando.set(null);
@@ -150,6 +153,8 @@ export class AdminPanelComponent implements OnInit {
         return `"${titulo}" fue aprobado y ya lo ven todos.`;
       case 'rechazar':
         return `"${titulo}" fue rechazado. El autor puede corregirlo y reenviarlo.`;
+      case 'desaprobar':
+        return `"${titulo}" volvió a pendiente: ya no lo ven los demás hasta que lo apruebes de nuevo.`;
       case 'archivar':
         return `"${titulo}" fue archivado.`;
     }

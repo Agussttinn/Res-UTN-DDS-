@@ -296,11 +296,14 @@ class MensajeClase(models.Model):
 
 class Notificacion(models.Model):
     """Aviso que recibe un alumno en la app (la campanita). Los de clases los genera el patrón Observer;
-    el de rechazo de un material, la moderación."""
+    los de un material (aprobado, rechazado, vuelto a revisión o archivado), la moderación."""
     MODIFICACION = 'modificacion'
     CANCELACION = 'cancelacion'
     MENSAJE = 'mensaje'
     RECHAZO = 'rechazo'
+    APROBACION = 'aprobacion'
+    REVISION = 'revision'
+    ARCHIVO = 'archivo'
 
     alumno = models.ForeignKey(Alumno, on_delete=models.CASCADE, related_name='notificaciones')
     # Si la clase se cancela (se borra), el aviso queda igual: por eso SET_NULL y no CASCADE.
@@ -310,6 +313,9 @@ class Notificacion(models.Model):
         (CANCELACION, 'Cancelación'),
         (MENSAJE, 'Mensaje'),
         (RECHAZO, 'Rechazo de un material'),
+        (APROBACION, 'Aprobación de un material'),
+        (REVISION, 'Material vuelto a revisión'),
+        (ARCHIVO, 'Material archivado'),
     ])
     titulo = models.CharField(max_length=150)
     texto = models.TextField()

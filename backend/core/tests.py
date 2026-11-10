@@ -930,13 +930,13 @@ class ModeracionTests(ApiTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(os.path.exists(ruta))
 
-    def test_aprobar_o_archivar_no_generan_notificacion_de_rechazo(self):
+    def test_aprobar_o_archivar_no_generan_aviso_de_rechazo(self):
         pendiente = self.crear_material(autor=self.alumno)
         self.como(self.admin)
         self.client.post(f'/api/materiales/{pendiente.id}/moderar/', {'accion': 'aprobar'}, format='json')
         self.client.post(f'/api/materiales/{pendiente.id}/moderar/', {'accion': 'archivar'}, format='json')
 
-        self.assertEqual(Notificacion.objects.count(), 0)
+        self.assertFalse(Notificacion.objects.filter(tipo=Notificacion.RECHAZO).exists())
 
     def test_el_autor_corrige_un_material_rechazado_y_vuelve_a_pendiente(self):
         material = self.crear_material(autor=self.alumno)
@@ -950,6 +950,70 @@ class ModeracionTests(ApiTestCase):
         material.refresh_from_db()
         self.assertEqual(material.estado.nombre, 'pendiente')
         self.assertIsNone(material.motivo_rechazo)
+
+    def test_desaprobar_un_aprobado_lo_oculta_y_vuelve_a_pendiente(self):
+        aprobado = self.crear_material(autor=self.alumno, validado=True)
+        self.como(self.otro_alumno)
+        self.assertEqual(len(self.client.get('/api/materiales/').data), 1)
+
+        self.como(self.admin)
+        response = self.client.post(f'/api/materiales/{aprobado.id}/moderar/', {'accion': 'desaprobar'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        aprobado.refresh_from_db()
+        self.assertEqual(aprobado.estado.nombre, 'pendiente')
+        self.assertEqual(len(self.client.get('/api/materiales/pendientes/').data), 1)
+        self.como(self.otro_alumno)
+        self.assertEqual(len(self.client.get('/api/materiales/').data), 0)
+
+    def _avisos_del_autor(self):
+        return list(Notificacion.objects.filter(alumno_id=self.alumno.pk).order_by('id'))
+
+    def test_aprobar_vuelta_a_revision_y_archivar_avisan_al_autor(self):
+        material = self.crear_material(autor=self.alumno)
+        self.como(self.admin)
+        moderar = lambda accion: self.client.post(f'/api/materiales/{material.id}/moderar/', {'accion': accion}, format='json')
+
+        moderar('aprobar')
+        moderar('desaprobar')
+        moderar('aprobar')
+        moderar('archivar')
+
+        tipos = [a.tipo for a in self._avisos_del_autor()]
+        self.assertEqual(tipos, [
+            Notificacion.APROBACION, Notificacion.REVISION, Notificacion.APROBACION, Notificacion.ARCHIVO,
+        ])
+        self.assertIn(material.titulo, self._avisos_del_autor()[0].titulo)
+
+    def test_una_accion_que_falla_no_genera_aviso(self):
+        material = self.crear_material(autor=self.alumno)  # pendiente: no se puede desaprobar
+        self.como(self.admin)
+
+        self.client.post(f'/api/materiales/{material.id}/moderar/', {'accion': 'desaprobar'}, format='json')
+
+        self.assertEqual(self._avisos_del_autor(), [])
+
+    def test_desaprobar_solo_funciona_con_aprobados(self):
+        pendiente = self.crear_material(autor=self.alumno)
+        self.como(self.admin)
+
+        response = self.client.post(f'/api/materiales/{pendiente.id}/moderar/', {'accion': 'desaprobar'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+
+    def test_rechazar_un_aprobado_avisa_al_autor(self):
+        aprobado = self.crear_material(autor=self.alumno, validado=True)
+        self.como(self.admin)
+
+        response = self.client.post(
+            f'/api/materiales/{aprobado.id}/moderar/', {'accion': 'rechazar', 'motivo': 'Tenía errores'}, format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        aprobado.refresh_from_db()
+        self.assertEqual(aprobado.estado.nombre, 'rechazado')
+        self.assertEqual(aprobado.motivo_rechazo, 'Tenía errores')
+        self.assertEqual(Notificacion.objects.filter(alumno_id=self.alumno.pk, tipo=Notificacion.RECHAZO).count(), 1)
 
     def test_archivar_solo_desde_aprobado_y_no_se_puede_puntuar(self):
         pendiente = self.crear_material(autor=self.alumno)
@@ -1838,3 +1902,53 @@ class RecuperarContrasenaTests(ApiTestCase):
 
         self.assertEqual(self.restablecer(token, '123').status_code, 400)
         self.assertEqual(self.restablecer(token).status_code, 200)
+
+
+class TriggerEstadosDeMaterialTests(ApiTestCase):
+    """La base también cuida los estados: valen aunque el cambio se haga con SQL directo (DBeaver, etc.)."""
+
+    def _cambiar_estado(self, material, nombre):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                'UPDATE materiales SET estado_id = %s WHERE id = %s',
+                [EstadoMaterial.objects.get(nombre=nombre).id, material.id],
+            )
+
+    def test_una_transicion_valida_con_sql_directo_funciona(self):
+        material = self.crear_material(autor=self.alumno, validado=True)
+
+        self._cambiar_estado(material, 'pendiente')
+        material.refresh_from_db()
+
+        self.assertEqual(material.estado.nombre, 'pendiente')
+
+    def test_una_transicion_invalida_se_rechaza_con_un_mensaje(self):
+        material = self.crear_material(autor=self.alumno)  # pendiente
+
+        with self.assertRaises(DatabaseError) as ctx:
+            with transaction.atomic():
+                self._cambiar_estado(material, 'archivado')
+
+        self.assertIn('Cambio de estado no permitido', str(ctx.exception))
+        material.refresh_from_db()
+        self.assertEqual(material.estado.nombre, 'pendiente')
+
+    def test_un_archivado_no_vuelve_atras(self):
+        material = self.crear_material(autor=self.alumno, validado=True)
+        self._cambiar_estado(material, 'archivado')
+
+        with self.assertRaises(DatabaseError):
+            with transaction.atomic():
+                self._cambiar_estado(material, 'aprobado')
+
+    def test_el_motivo_se_borra_solo_al_salir_de_rechazado(self):
+        material = self.crear_material(autor=self.alumno)
+        self.como(self.admin)
+        self.client.post(f'/api/materiales/{material.id}/moderar/', {'accion': 'rechazar', 'motivo': 'Ilegible'}, format='json')
+        material.refresh_from_db()
+        self.assertEqual(material.motivo_rechazo, 'Ilegible')
+
+        self._cambiar_estado(material, 'pendiente')
+        material.refresh_from_db()
+
+        self.assertIsNone(material.motivo_rechazo)
