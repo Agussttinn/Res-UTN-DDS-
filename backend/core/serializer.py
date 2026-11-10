@@ -345,7 +345,7 @@ class PonderacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ponderacion
         fields = ('material','usuario','valor','fecha','material_id')
-        #Una ponderacion no tiene sentido que tenga un id, por eso la API no lo va a devolver en el JSON
+        # Una ponderación no tiene sentido que tenga un id, por eso la API no lo va a devolver en el JSON
         # El alumno que puntúa sale del token (la vista hace serializer.save(alumno=...)):
         # nadie puede puntuar a nombre de otro.
 

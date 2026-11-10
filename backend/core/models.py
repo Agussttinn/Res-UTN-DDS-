@@ -29,7 +29,7 @@ class Usuario(models.Model):
  
     class Meta:
         db_table = 'usuarios'
-    # aca cuando haga usuario.rol deberia devolver el valor de la tupla, no el string que se le asigna al campo rol
+    # Acá, cuando se haga usuario.rol, debería devolver la fila de Rol, no el texto que se le asigna al campo rol
     def __str__(self):
         return self.nombre_y_apellido
 
@@ -146,7 +146,7 @@ class Especialidad(models.Model):
 class Materia(models.Model):
     nombre = models.CharField(max_length=100)
     anio = models.IntegerField()
-    especialidad = models.ForeignKey(Especialidad, on_delete=models.PROTECT, related_name='materias')#aca va a buscar en la tabla Especialidad y va a traer el id de la especialidad que le corresponde a la materia. El related_name es para poder acceder a las materias desde la especialidad.
+    especialidad = models.ForeignKey(Especialidad, on_delete=models.PROTECT, related_name='materias')# Acá va a buscar en la tabla Especialidad y va a traer el id de la especialidad que le corresponde a la materia. El related_name es para poder acceder a las materias desde la especialidad.
     # idMateria en SySACAD (ej. "QUI-2023-301"), usado para sincronizar y para consultar el estado de un alumno en esta materia. Null si la materia no viene de SySACAD.
     id_sysacad = models.CharField(max_length=30, unique=True, null=True, blank=True)
     # Electiva del plan de estudio. `anio` es igual el nivel desde el que se puede cursar.
