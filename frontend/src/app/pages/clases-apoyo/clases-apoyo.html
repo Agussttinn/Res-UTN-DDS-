@@ -117,7 +117,7 @@
                         class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">
                   Modificar
                 </button>
-                <button type="button" (click)="cancelarClase(clase)"
+                <button type="button" (click)="pedirCancelacion(clase)"
                         class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600">
                   Cancelar clase
                 </button>
@@ -307,5 +307,10 @@
         </div>
       </div>
     </div>
+  }
+
+  @if (claseACancelar(); as clase) {
+    <app-dialogo-confirmacion titulo="Cancelar clase" [mensaje]="mensajeDeCancelacion(clase)" textoConfirmar="Cancelar clase"
+                              [peligro]="true" (confirmado)="confirmarCancelacion()" (cancelado)="claseACancelar.set(null)" />
   }
 </section>

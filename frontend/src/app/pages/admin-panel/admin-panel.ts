@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 
+import { DialogoConfirmacionComponent } from '../../components/dialogo-confirmacion/dialogo-confirmacion.component';
 import { AccionModeracion, ETIQUETA_TIPO, Material } from '../../models/api.models';
 import { ApiService } from '../../services/api.service';
 import { mensajeDeError } from '../../utils/errores';
@@ -29,7 +30,7 @@ const ANTIGUEDADES: { valor: Antiguedad; etiqueta: string }[] = [
 @Component({
   selector: 'app-admin-panel',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, DialogoConfirmacionComponent],
   templateUrl: './admin-panel.html',
   styleUrl: './admin-panel.css'
 })
@@ -56,6 +57,8 @@ export class AdminPanelComponent implements OnInit {
   readonly pendientesFiltrados = computed(() => this.aplicar(this.pendientes()));
   readonly aprobadosFiltrados = computed(() => this.aplicar(this.aprobados()));
   readonly motivo = signal('');
+  /** Apunte que se está por archivar: mientras tiene valor se muestra la ventana de confirmación. */
+  readonly archivando = signal<Material | null>(null);
 
   ngOnInit(): void {
     this.cargarPendientes();
@@ -103,10 +106,20 @@ export class AdminPanelComponent implements OnInit {
       this.rechazando.set(item);
       return;
     }
-    if (accion === 'archivar' && !confirm(`¿Archivar "${item.titulo}"? Queda solo de lectura y ya no se puede puntuar.`)) {
+    if (accion === 'archivar') {
+      this.archivando.set(item); // antes de archivar se pide confirmación en una ventana de la app
       return;
     }
     this.ejecutar(item, accion);
+  }
+
+  confirmarArchivo(): void {
+    const item = this.archivando();
+    if (!item) {
+      return;
+    }
+    this.archivando.set(null);
+    this.ejecutar(item, 'archivar');
   }
 
   cancelarRechazo(): void {

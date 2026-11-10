@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { DialogoConfirmacionComponent } from '../../components/dialogo-confirmacion/dialogo-confirmacion.component';
 import { BuscadorMateriaComponent } from '../../components/buscador-materia/buscador-materia.component';
 import {
   ClaseApoyo, DIAS_SEMANA, DURACION_MINIMA_CLASE_MIN, EstadoSuscripcion, HORA_MAXIMA_CLASE, HORA_MINIMA_CLASE, Materia,
@@ -42,7 +43,7 @@ function minutos(hora: string): number {
 @Component({
   selector: 'app-clases-apoyo',
   standalone: true,
-  imports: [DatePipe, FormsModule, BuscadorMateriaComponent],
+  imports: [DatePipe, FormsModule, BuscadorMateriaComponent, DialogoConfirmacionComponent],
   templateUrl: './clases-apoyo.html',
   styleUrl: './clases-apoyo.css'
 })
@@ -367,11 +368,24 @@ export class ClasesApoyoComponent implements OnInit {
     });
   }
 
-  cancelarClase(clase: ClaseApoyo): void {
+  /** Clase que se está por cancelar: mientras tiene valor se muestra la ventana de confirmación. */
+  readonly claseACancelar = signal<ClaseApoyo | null>(null);
+
+  pedirCancelacion(clase: ClaseApoyo): void {
+    this.claseACancelar.set(clase);
+  }
+
+  mensajeDeCancelacion(clase: ClaseApoyo): string {
     const aviso = clase.cantidad_suscritos > 0 ? ` Se les va a avisar a los ${clase.cantidad_suscritos} alumnos suscritos.` : '';
-    if (!confirm(`¿Cancelar la clase de ${clase.materia.nombre} (${textoHorario(clase)})? Esta acción no se puede deshacer.${aviso}`)) {
+    return `¿Cancelar la clase de ${clase.materia.nombre} (${textoHorario(clase)})? Esta acción no se puede deshacer.${aviso}`;
+  }
+
+  confirmarCancelacion(): void {
+    const clase = this.claseACancelar();
+    if (!clase) {
       return;
     }
+    this.claseACancelar.set(null);
     this.errorAccion.set('');
     this.api.eliminarClaseApoyo(clase.id).subscribe({
       next: () => {

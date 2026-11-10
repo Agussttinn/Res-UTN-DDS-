@@ -225,28 +225,36 @@ describe('ClasesApoyoComponent', () => {
     expect(boton(fixture, 'Guardar')).toBeTruthy(); // el formulario sigue abierto para corregir
   });
 
-  it('cancelar una clase pide confirmación y la saca de la lista', async () => {
+  it('cancelar una clase pide confirmación en una ventana de la app y la saca de la lista', async () => {
     const fixture = await abrir(TUTOR, [unaClase({ id: 3 })]);
-    const confirmar = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const confirmarDelNavegador = vi.spyOn(window, 'confirm');
 
     boton(fixture, 'Cancelar clase')!.click();
+    await estabilizar(fixture);
+    http.expectNone(`${API_URL}/clases-apoyo/3/`); // todavía no: falta confirmar
+    expect(textoDe(fixture)).toContain('Esta acción no se puede deshacer.');
+
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>('[role=alertdialog] button + button')!.click();
     const peticion = http.expectOne(`${API_URL}/clases-apoyo/3/`);
     expect(peticion.request.method).toBe('DELETE');
     peticion.flush(null, { status: 204, statusText: 'No Content' });
     await estabilizar(fixture);
 
-    expect(confirmar).toHaveBeenCalled();
+    expect(confirmarDelNavegador).not.toHaveBeenCalled();
     expect(textoDe(fixture)).toContain('Clase cancelada.');
     expect(textoDe(fixture)).toContain('No hay clases de apoyo programadas');
   });
 
-  it('si no confirma, la clase no se cancela', async () => {
+  it('si en la ventana elige "Volver", la clase no se cancela', async () => {
     const fixture = await abrir(TUTOR, [unaClase({ id: 3 })]);
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
 
     boton(fixture, 'Cancelar clase')!.click();
+    await estabilizar(fixture);
+    boton(fixture, 'Volver')!.click();
+    await estabilizar(fixture);
 
     http.expectNone(`${API_URL}/clases-apoyo/3/`);
+    expect((fixture.nativeElement as HTMLElement).querySelector('[role=alertdialog]')).toBeNull();
   });
 
   it('filtrar por materia vuelve a pedir las clases de esa materia', async () => {
@@ -404,11 +412,11 @@ describe('ClasesApoyoComponent', () => {
 
     it('cancelar una clase con suscritos avisa en la confirmación que se les va a notificar', async () => {
       const fixture = await abrir(TUTOR, [unaClase({ id: 3, cantidad_suscritos: 2 })]);
-      const confirmar = vi.spyOn(window, 'confirm').mockReturnValue(false);
 
       boton(fixture, 'Cancelar clase')!.click();
+      await estabilizar(fixture);
 
-      expect(confirmar.mock.calls[0][0]).toContain('Se les va a avisar a los 2 alumnos suscritos.');
+      expect(textoDe(fixture)).toContain('Se les va a avisar a los 2 alumnos suscritos.');
     });
   });
 });

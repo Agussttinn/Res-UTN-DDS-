@@ -149,3 +149,9 @@
     </div>
   }
 </section>
+
+@if (archivando(); as item) {
+  <app-dialogo-confirmacion titulo="Archivar apunte"
+                            [mensaje]="'¿Archivar &quot;' + item.titulo + '&quot;? Queda solo de lectura y ya no se puede puntuar.'"
+                            textoConfirmar="Archivar" (confirmado)="confirmarArchivo()" (cancelado)="archivando.set(null)" />
+}

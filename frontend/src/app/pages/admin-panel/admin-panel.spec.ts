@@ -140,8 +140,11 @@ describe('AdminPanelComponent', () => {
     expect(textoDe(fixture)).toContain('Final 2023');
     expect(textoDe(fixture)).not.toContain('Ya archivado');
 
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     boton(fixture, 'Archivar').click();
+    await estabilizar(fixture);
+    http.expectNone(`${API_URL}/materiales/9/moderar/`); // primero pide confirmación, en una ventana de la app
+    expect(textoDe(fixture)).toContain('Queda solo de lectura');
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>('[role=alertdialog] button + button')!.click();
     const peticion = http.expectOne(`${API_URL}/materiales/9/moderar/`);
     expect(peticion.request.body).toEqual({ accion: 'archivar' });
     peticion.flush(unMaterial({ id: 9, estado: 'archivado' }));
@@ -149,6 +152,18 @@ describe('AdminPanelComponent', () => {
 
     expect(textoDe(fixture)).toContain('"Final 2023" fue archivado');
     expect(fixture.nativeElement.querySelectorAll('h3')).toHaveLength(0);
+  });
+
+  it('archivar: si elige "Volver" en la ventana no se archiva', async () => {
+    const fixture = await abrir([], [unMaterial({ id: 9, titulo: 'Final 2023' })]);
+
+    boton(fixture, 'Archivar').click();
+    await estabilizar(fixture);
+    boton(fixture, 'Volver').click();
+    await estabilizar(fixture);
+
+    http.expectNone(`${API_URL}/materiales/9/moderar/`);
+    expect(textoDe(fixture)).toContain('Final 2023');
   });
 
   it('volver a pendiente: deshace una aprobación hecha sin querer y el apunte reaparece en la cola', async () => {
